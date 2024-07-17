@@ -47,6 +47,19 @@ class PatchedModel(object, ABC):
         raise NotImplementedError("Instantiate a subclass of PatchedModel and implement the _forward method")
 
 
+    def _patch_residual_component(
+        corrupted_component: Float[torch.Tensor, "batch pos d_model"],
+        hook,
+        pos,
+        clean_cache,
+    ):
+        '''
+        Patches a given sequence position in the residual stream, using the value
+        from the clean cache.
+        '''
+        corrupted_component[:, pos, :] = clean_cache[hook.name][:, pos, :]
+        return corrupted_component
+
     def _patch_head_vector(
         corrupted_head_vector: Float[torch.Tensor, "batch pos head_index d_head"],
         hook, #: HookPoint, 
