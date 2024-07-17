@@ -83,10 +83,9 @@ class Dot(PatchedModel):
             for layer in tqdm(range(self._model.cfg.n_layers)):
                 for position in range(seq_len):
                     hook_fn = partial(self._patch_residual_component, pos=position, clean_cache=clean_cache)
-                    patched_outputs = self._model.run_with_hooks(
+                    patched_outputs =  self._model_run_with_hooks(
                         corrupted_tokens["input_ids"],
                         one_zero_attention_mask=corrupted_tokens["attention_mask"],
-                        return_type="embeddings",
                         fwd_hooks = [(utils.get_act_name(component, layer), hook_fn)],
                     )
                     results[component_idx, layer, position] = patching_metric(patched_outputs, reps_q, scores, scores_p)
