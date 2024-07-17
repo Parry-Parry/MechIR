@@ -1,10 +1,12 @@
 class MonoT5DataCollator:
     def __init__(self, 
                  tokenizer,
+                 transformation_func : callable,
                  q_max_length=30,
                  d_max_length=200,
                  ) -> None:
         self.tokenizer = tokenizer
+        self.transformation_func = transformation_func
         self.q_max_length = q_max_length
         self.d_max_length = d_max_length
 
@@ -21,6 +23,8 @@ class MonoT5DataCollator:
             if len(args) == 0:
                 continue
             batch_scores.extend(args[0])
+        
+        batch_docs = [self.transformation_func(dx, query=q) for q, dx in zip(batch_queries, batch_docs)]
 
         tokenized_sequences = self.tokenizer(
             [self.prompt(q, dx) for q, dx in zip(batch_queries, batch_docs)],
