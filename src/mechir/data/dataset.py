@@ -29,11 +29,6 @@ class PairDataset(Dataset):
     '''
     def __len__(self):
         return len(self.pairs)
-    
-    def _teacher(self, qid, doc_id, positive=False):
-        assert self.labels, "No teacher file provided"
-        try: return self.teacher[str(qid)][str(doc_id)] 
-        except KeyError: return 0.
 
     def __getitem__(self, idx):
         item = self.pairs.iloc[idx]
