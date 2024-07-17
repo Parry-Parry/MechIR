@@ -4,7 +4,7 @@ import logging
 import torch 
 from tqdm import tqdm
 from jaxtyping import Float
-from transformers import AutoModelForSeq2Seq, AutoTokenizer
+from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
 from transformer_lens import HookedEncoderDecoder, ActivationCache
 import transformer_lens.utils as utils
 from . import PatchedModel
@@ -27,7 +27,7 @@ class MonoT5(PatchedModel):
                  pos_token : str = "true",
                  neg_token : str = "false",
                  ) -> None:
-        super().__init__(model_name_or_path, partial(AutoModelForSeq2Seq.from_pretrained, num_labels=True), HookedEncoderDecoder)
+        super().__init__(model_name_or_path, partial(AutoModelForSeq2SeqLM.from_pretrained, num_labels=True), HookedEncoderDecoder)
 
         tokenizer = AutoTokenizer.from_pretrained(model_name_or_path)
 
