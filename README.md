@@ -1,3 +1,3 @@
-# Python Template
+# MechIR
 
-## Basic Repo to get started with a python project
+## An IR library for mechanistic interpretability
