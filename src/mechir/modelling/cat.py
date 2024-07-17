@@ -153,31 +153,31 @@ class Cat(PatchedModel):
     
 
     def score(self,
-            sequence : dict,
+            sequences : dict,
             cache=False
     ):
         if cache: 
-            logits, cache = self._forward_cache(sequence['input_ids'], sequence['attention_mask'])
+            logits, cache = self._forward_cache(sequences['input_ids'], sequences['attention_mask'])
             return logits.softmax(dim=-1)[:, :, -1], logits, cache
        
-        logits = self._forward(sequence['input_ids'], sequence['attention_mask'])
+        logits = self._forward(sequences['input_ids'], sequences['attention_mask'])
         return logits.softmax(dim=-1)[:, :, -1], logits
     
 
     def __call__(
             self, 
-            sequence : dict, 
-            sequence_p : dict,
+            sequences : dict, 
+            sequences_p : dict,
             patch_type : str = 'block_all',
             layer_head_list : list = [],
             patching_metric: Callable = cat_linear_ranking_function,
     ):  
         assert patch_type in self._patch_funcs, f"Patch type {patch_type} not recognized. Choose from {self._patch_funcs.keys()}"
-        scores, _ = self.score(sequence)
-        scores_p, _, cache = self.score(sequence_p, cache=True)
+        scores, _ = self.score(sequences)
+        scores_p, _, cache = self.score(sequences_p, cache=True)
 
         patching_kwargs = {
-            'corrupted_tokens' : sequence,
+            'corrupted_tokens' : sequences,
             'clean_cache' : cache,
             'patching_metric' : patching_metric,
             'layer_head_list' : layer_head_list,
