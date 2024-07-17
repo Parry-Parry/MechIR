@@ -153,34 +153,31 @@ class Cat(PatchedModel):
     
 
     def score(self,
-            queries : dict,
-            documents : dict,
+            sequence : dict,
             cache=False
     ):
         if cache: 
-            logits, cache = self._forward_cache(queries['input_ids'], queries['attention_mask'], documents['input_ids'], documents['attention_mask'])
+            logits, cache = self._forward_cache(sequence['input_ids'], sequence['attention_mask'])
             return logits.softmax(dim=-1)[:, :, -1], logits, cache
        
-        logits = self._forward(queries['input_ids'], queries['attention_mask'], documents['input_ids'], documents['attention_mask'])
+        logits = self._forward(sequence['input_ids'], sequence['attention_mask'])
         return logits.softmax(dim=-1)[:, :, -1], logits
     
 
     def __call__(
             self, 
-            queries : dict, 
-            documents : dict,
-            queries_p : dict,
-            documents_p : dict,
+            sequence : dict, 
+            sequence_p : dict,
             patch_type : str = 'block_all',
             layer_head_list : list = [],
             patching_metric: Callable = cat_linear_ranking_function,
     ):  
         assert patch_type in self._patch_funcs, f"Patch type {patch_type} not recognized. Choose from {self._patch_funcs.keys()}"
-        scores, _ = self.score(queries, documents)
-        scores_p, _, cache = self.score(queries_p, documents_p, cache=True)
+        scores, _ = self.score(sequence)
+        scores_p, _, cache = self.score(sequence_p, cache=True)
 
         patching_kwargs = {
-            'corrupted_tokens' : documents,
+            'corrupted_tokens' : sequence,
             'clean_cache' : cache,
             'patching_metric' : patching_metric,
             'layer_head_list' : layer_head_list,
