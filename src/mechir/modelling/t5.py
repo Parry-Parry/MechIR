@@ -38,6 +38,7 @@ class MonoT5(PatchedModel):
         self._model_run_with_cache = partial(self._model.run_with_cache, return_type="logits")
         self._model_run_with_hooks = partial(self._model.run_with_hooks, return_type="logits")
 
+
     def _forward(self, 
                 input_ids : torch.Tensor,
                 attention_mask : torch.Tensor,
