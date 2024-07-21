@@ -27,7 +27,7 @@ class MonoT5(PatchedModel):
                  pos_token : str = "true",
                  neg_token : str = "false",
                  ) -> None:
-        super().__init__(model_name_or_path, partial(AutoModelForSeq2SeqLM.from_pretrained, num_labels=True), HookedEncoderDecoder)
+        super().__init__(model_name_or_path, AutoModelForSeq2SeqLM.from_pretrained, HookedEncoderDecoder)
 
         tokenizer = AutoTokenizer.from_pretrained(model_name_or_path)
 
