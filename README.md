@@ -8,4 +8,3 @@ Heavily inspired by the paper **Axiomatic Causal Interventions for Reverse Engin
 
 * Add dataset details
 * Add Axioms
-* Add Index functionality
