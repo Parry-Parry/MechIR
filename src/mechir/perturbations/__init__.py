@@ -1,4 +1,6 @@
 from abc import ABC, abstractmethod
+from pyterrier.datasets import IRDSDataset as _IRDSDataset
+IRDSDataset = _IRDSDataset
 
 class AbstractPerturbation(object, ABC):
     @abstractmethod
@@ -11,3 +13,5 @@ class AbstractPerturbation(object, ABC):
 class IdentityPerturbation(AbstractPerturbation):
     def apply(self, document : str, query : str = None) -> str:
         return document
+    
+from .index import IndexPerturbation

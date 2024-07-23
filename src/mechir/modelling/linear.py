@@ -21,7 +21,7 @@ TODO:
 
 class Linear(nn.Module):
     def __init__(self, cfg: Union[Dict, HookedTransformerConfig]):
-
+        self.cfg = cfg
         self.W_in = nn.Parameter(torch.empty(self.cfg.d_model, self.d_mlp, dtype=self.cfg.dtype))
         self.b_in = nn.Parameter(torch.zeros(self.d_mlp, dtype=self.cfg.dtype))
 
