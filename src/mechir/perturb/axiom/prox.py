@@ -6,8 +6,6 @@ from .. import AbstractPerturbation
 class ProximityPerturbation(AbstractPerturbation):
     def __init__(self, 
                  index_location: Any | Path | str, 
-                 frequency : str = 'tf',
-                 num_additions : int = 1,
                  dataset: Any | str | None = None, 
                  contents_accessor: str | Callable[[NamedTuple], str] | None = "text", 
                  tokeniser: Any | None = None, 
