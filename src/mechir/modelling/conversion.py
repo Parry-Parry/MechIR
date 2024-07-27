@@ -69,7 +69,7 @@ def convert_bert_weights(bert, cfg: HookedTransformerConfig, sequence_classifica
 
     return state_dict
 
-def convert_bert_weights(electra, cfg: HookedTransformerConfig, sequence_classification=False, raw=False):
+def convert_electra_weights(electra, cfg: HookedTransformerConfig, sequence_classification=False, raw=False):
     embeddings = electra.electra.embeddings if not raw else electra.embeddings
     state_dict = {
         "embed.embed.W_E": embeddings.word_embeddings.weight,

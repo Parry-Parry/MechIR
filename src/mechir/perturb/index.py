@@ -40,9 +40,18 @@ class IndexPerturbation(AbstractPerturbation):
     
     def get_tf(self, term : str, text : str):
         return self.context.term_frequency(TextDocument(text), term)
-    
+
+    def get_tf_text(self, text : str):
+        return {term : self.get_tf(term, text) for term in self.get_terms(text)}
+
     def get_idf(self, term : str, text : str):
         return self.context.inverse_document_frequency(term)
 
+    def get_idf_text(self, text : str):
+        return {term : self.get_idf(term, text) for term in self.get_terms(text)}
+
     def get_tfidf(self, term : str, text : str):
         return self.get_tf(term, text) * self.get_idf(term, text)
+    
+    def get_tfidf_text(self, text : str):
+        return {term : self.get_tfidf(term, text) for term in self.get_terms(text)}
