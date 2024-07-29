@@ -28,17 +28,14 @@ class FreqPerturbation(IndexPerturbation):
             'idf' : self.get_idf_text,
             'tfidf' : self.get_tfidf_text
         }[frequency]
+
+        self._insert_terms = {
+            'end' : lambda text, terms: f"{text} {' '.join(terms)}",
+            'start' : lambda text, terms: f"{' '.join(terms)} {text}"
+        }[loc]
         self.target = target
         self.num_additions = num_additions
         self.loc = loc
-    
-    def _insert_terms(self, text : str, terms : list[str]) -> str:
-        if self.loc == 'end':
-            return f"{text} {' '.join(terms)}"
-        elif self.loc == 'start':
-            return f"{' '.join(terms)} {text}"
-        else:
-            raise ValueError(f"Invalid loc value {self.loc}")
     
     def _get_top_k_freq_terms(self, text : str) -> dict:  
         freq = self.get_freq_text(text)
