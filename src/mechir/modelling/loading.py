@@ -23,6 +23,8 @@ from transformers import (
     T5ForConditionalGeneration,
 )
 
+from .hooked.conversion import convert_bert_weights, convert_electra_weights, convert
+
 import transformer_lens.utils as utils
 from transformer_lens.HookedTransformerConfig import HookedTransformerConfig
 from transformer_lens.pretrained.weight_conversions import (

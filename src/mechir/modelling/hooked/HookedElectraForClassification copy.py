@@ -1,6 +1,6 @@
 """Hooked Encoder.
 
-Contains a BERT style model. This is separate from :class:`transformer_lens.HookedTransformer`
+Contains a Electra style model. This is separate from :class:`transformer_lens.HookedTransformer`
 because it has a significantly different architecture to e.g. GPT style transformers.
 """
 
@@ -19,7 +19,7 @@ from typing_extensions import Literal
 
 import transformer_lens.loading_from_pretrained as loading
 from transformer_lens.ActivationCache import ActivationCache
-from transformer_lens.components import BertBlock, BertEmbed, BertMLMHead, Unembed
+from transformer_lens.components import ElectraBlock, ElectraEmbed, ElectraMLMHead, Unembed
 from transformer_lens.FactoredMatrix import FactoredMatrix
 from transformer_lens.hook_points import HookedRootModule, HookPoint
 from transformer_lens.HookedTransformerConfig import HookedTransformerConfig
@@ -27,9 +27,9 @@ from transformer_lens.utilities import devices
 from .linear import Linear
 
 
-class HookedEncoderForSequenceClassification(HookedRootModule):
+class HookedElectraForSequenceClassification(HookedRootModule):
     """
-    This class implements a BERT-style encoder using the components in ./components.py, with HookPoints on every interesting activation. It inherits from HookedRootModule.
+    This class implements a Electra-style encoder using the components in ./components.py, with HookPoints on every interesting activation. It inherits from HookedRootModule.
 
     Limitations:
     - The current MVP implementation supports only the masked language modelling (MLM) task. Next sentence prediction (NSP), causal language modelling, and other tasks are not yet supported.
@@ -69,9 +69,9 @@ class HookedEncoderForSequenceClassification(HookedRootModule):
         if self.cfg.d_vocab_out == -1:
             self.cfg.d_vocab_out = self.cfg.d_vocab
 
-        self.embed = BertEmbed(self.cfg)
-        self.blocks = nn.ModuleList([BertBlock(self.cfg) for _ in range(self.cfg.n_layers)])
-        self.mlm_head = BertMLMHead(cfg)
+        self.embed = ElectraEmbed(self.cfg)
+        self.blocks = nn.ModuleList([ElectraBlock(self.cfg) for _ in range(self.cfg.n_layers)])
+        self.mlm_head = ElectraMLMHead(cfg)
         self.unembed = Unembed(self.cfg)
         self.classifier = Linear(self.cfg)
 
@@ -113,7 +113,7 @@ class HookedEncoderForSequenceClassification(HookedRootModule):
 
         return_type Optional[str]: The type of output to return. Can be one of: None (return nothing, don't calculate logits), or 'logits' (return logits).
 
-        token_type_ids Optional[torch.Tensor]: Binary ids indicating whether a token belongs to sequence A or B. For example, for two sentences: "[CLS] Sentence A [SEP] Sentence B [SEP]", token_type_ids would be [0, 0, ..., 0, 1, ..., 1, 1]. `0` represents tokens from Sentence A, `1` from Sentence B. If not provided, BERT assumes a single sequence input. Typically, shape is (batch_size, sequence_length).
+        token_type_ids Optional[torch.Tensor]: Binary ids indicating whether a token belongs to sequence A or B. For example, for two sentences: "[CLS] Sentence A [SEP] Sentence B [SEP]", token_type_ids would be [0, 0, ..., 0, 1, ..., 1, 1]. `0` represents tokens from Sentence A, `1` from Sentence B. If not provided, Electra assumes a single sequence input. Typically, shape is (batch_size, sequence_length).
 
         one_zero_attention_mask: Optional[torch.Tensor]: A binary mask which indicates which tokens should be attended to (1) and which should be ignored (0). Primarily used for padding variable-length sentences in a batch. For instance, in a batch with sentences of differing lengths, shorter sentences are padded with 0s on the right. If not provided, the model assumes all tokens should be attended to.
         """
@@ -211,15 +211,15 @@ class HookedEncoderForSequenceClassification(HookedRootModule):
         move_to_device=True,
         dtype=torch.float32,
         **from_pretrained_kwargs,
-    ) -> HookedEncoderForSequenceClassification:
-        """Loads in the pretrained weights from huggingface. Currently supports loading weight from HuggingFace BertForMaskedLM. Unlike HookedTransformer, this does not yet do any preprocessing on the model."""
+    ) -> HookedElectraForSequenceClassification:
+        """Loads in the pretrained weights from huggingface. Currently supports loading weight from HuggingFace ElectraForMaskedLM. Unlike HookedTransformer, this does not yet do any preprocessing on the model."""
         logging.warning(
-            "Support for BERT in TransformerLens is currently experimental, until such a time when it has feature "
+            "Support for Electra in TransformerLens is currently experimental, until such a time when it has feature "
             "parity with HookedTransformer and has been tested on real research tasks. Until then, backward "
             "compatibility is not guaranteed. Please see the docs for information on the limitations of the current "
             "implementation."
             "\n"
-            "If using BERT for interpretability research, keep in mind that BERT has some significant architectural "
+            "If using Electra for interpretability research, keep in mind that Electra has some significant architectural "
             "differences to GPT. For example, LayerNorms are applied *after* the attention and MLP components, meaning "
             "that the last LayerNorm in a block cannot be folded."
         )
@@ -298,62 +298,62 @@ class HookedEncoderForSequenceClassification(HookedRootModule):
     @property
     def W_K(self) -> Float[torch.Tensor, "n_layers n_heads d_model d_head"]:
         """Stacks the key weights across all layers"""
-        return torch.stack([cast(BertBlock, block).attn.W_K for block in self.blocks], dim=0)
+        return torch.stack([cast(ElectraBlock, block).attn.W_K for block in self.blocks], dim=0)
 
     @property
     def W_Q(self) -> Float[torch.Tensor, "n_layers n_heads d_model d_head"]:
         """Stacks the query weights across all layers"""
-        return torch.stack([cast(BertBlock, block).attn.W_Q for block in self.blocks], dim=0)
+        return torch.stack([cast(ElectraBlock, block).attn.W_Q for block in self.blocks], dim=0)
 
     @property
     def W_V(self) -> Float[torch.Tensor, "n_layers n_heads d_model d_head"]:
         """Stacks the value weights across all layers"""
-        return torch.stack([cast(BertBlock, block).attn.W_V for block in self.blocks], dim=0)
+        return torch.stack([cast(ElectraBlock, block).attn.W_V for block in self.blocks], dim=0)
 
     @property
     def W_O(self) -> Float[torch.Tensor, "n_layers n_heads d_head d_model"]:
         """Stacks the attn output weights across all layers"""
-        return torch.stack([cast(BertBlock, block).attn.W_O for block in self.blocks], dim=0)
+        return torch.stack([cast(ElectraBlock, block).attn.W_O for block in self.blocks], dim=0)
 
     @property
     def W_in(self) -> Float[torch.Tensor, "n_layers d_model d_mlp"]:
         """Stacks the MLP input weights across all layers"""
-        return torch.stack([cast(BertBlock, block).mlp.W_in for block in self.blocks], dim=0)
+        return torch.stack([cast(ElectraBlock, block).mlp.W_in for block in self.blocks], dim=0)
 
     @property
     def W_out(self) -> Float[torch.Tensor, "n_layers d_mlp d_model"]:
         """Stacks the MLP output weights across all layers"""
-        return torch.stack([cast(BertBlock, block).mlp.W_out for block in self.blocks], dim=0)
+        return torch.stack([cast(ElectraBlock, block).mlp.W_out for block in self.blocks], dim=0)
 
     @property
     def b_K(self) -> Float[torch.Tensor, "n_layers n_heads d_head"]:
         """Stacks the key biases across all layers"""
-        return torch.stack([cast(BertBlock, block).attn.b_K for block in self.blocks], dim=0)
+        return torch.stack([cast(ElectraBlock, block).attn.b_K for block in self.blocks], dim=0)
 
     @property
     def b_Q(self) -> Float[torch.Tensor, "n_layers n_heads d_head"]:
         """Stacks the query biases across all layers"""
-        return torch.stack([cast(BertBlock, block).attn.b_Q for block in self.blocks], dim=0)
+        return torch.stack([cast(ElectraBlock, block).attn.b_Q for block in self.blocks], dim=0)
 
     @property
     def b_V(self) -> Float[torch.Tensor, "n_layers n_heads d_head"]:
         """Stacks the value biases across all layers"""
-        return torch.stack([cast(BertBlock, block).attn.b_V for block in self.blocks], dim=0)
+        return torch.stack([cast(ElectraBlock, block).attn.b_V for block in self.blocks], dim=0)
 
     @property
     def b_O(self) -> Float[torch.Tensor, "n_layers d_model"]:
         """Stacks the attn output biases across all layers"""
-        return torch.stack([cast(BertBlock, block).attn.b_O for block in self.blocks], dim=0)
+        return torch.stack([cast(ElectraBlock, block).attn.b_O for block in self.blocks], dim=0)
 
     @property
     def b_in(self) -> Float[torch.Tensor, "n_layers d_mlp"]:
         """Stacks the MLP input biases across all layers"""
-        return torch.stack([cast(BertBlock, block).mlp.b_in for block in self.blocks], dim=0)
+        return torch.stack([cast(ElectraBlock, block).mlp.b_in for block in self.blocks], dim=0)
 
     @property
     def b_out(self) -> Float[torch.Tensor, "n_layers d_model"]:
         """Stacks the MLP output biases across all layers"""
-        return torch.stack([cast(BertBlock, block).mlp.b_out for block in self.blocks], dim=0)
+        return torch.stack([cast(ElectraBlock, block).mlp.b_out for block in self.blocks], dim=0)
 
     @property
     def QK(self) -> FactoredMatrix:  # [n_layers, n_heads, d_model, d_model]
