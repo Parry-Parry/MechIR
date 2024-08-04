@@ -3,7 +3,7 @@ from functools import partial
 from typing import Any, Callable, NamedTuple
 from ..index import IndexPerturbation
 
-class FreqPerturbation(IndexPerturbation):
+class FrequencyPerturbation(IndexPerturbation):
     def __init__(self, 
                  index_location: Any | Path | str, 
                  mode : str = 'max',
@@ -56,6 +56,6 @@ class FreqPerturbation(IndexPerturbation):
         terms = self.get_freq_terms(query if self.target=='query'else document)
         return self._insert_terms(document, terms)
     
-TFPerturbation = partial(FreqPerturbation, frequency='tf')
-IDFPerturbation = partial(FreqPerturbation, frequency='idf')
-TFIDFPerturbation = partial(FreqPerturbation, frequency='tfidf')
+TFPerturbation = partial(FrequencyPerturbation, frequency='tf')
+IDFPerturbation = partial(FrequencyPerturbation, frequency='idf')
+TFIDFPerturbation = partial(FrequencyPerturbation, frequency='tfidf')
