@@ -9,15 +9,8 @@ import torch
 import torch.nn as nn
 from jaxtyping import Float
 
-from transformer_lens.hook_points import HookPoint
 from transformer_lens.HookedTransformerConfig import HookedTransformerConfig
 from fancy_einsum import einsum
-
-'''
-TODO:
-- Ensure naming convention matches cfg
-- Check if additional naming is required in overall cfg
-'''
 
 class Linear(nn.Module):
     def __init__(self, cfg: Union[Dict, HookedTransformerConfig]):
