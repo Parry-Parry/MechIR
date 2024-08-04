@@ -21,9 +21,11 @@ def cat_linear_ranking_function(model_output, score, score_p):
 class Cat(PatchedModel):
     def __init__(self, 
                  model_name_or_path : str,
+                 num_labels : int
                  ) -> None:
-        super().__init__(model_name_or_path, partial(AutoModelForSequenceClassification.from_pretrained, num_labels=True), HookedEncoder)
+        super().__init__(model_name_or_path, partial(AutoModelForSequenceClassification.from_pretrained, num_labels=num_labels), HookedEncoder)
 
+        self.num_labels = num_labels
         self._model_forward = partial(self._model, return_type="logits")
         self._model_run_with_cache = partial(self._model.run_with_cache, return_type="logits")
         self._model_run_with_hooks = partial(self._model.run_with_hooks, return_type="logits")

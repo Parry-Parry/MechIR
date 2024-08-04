@@ -27,7 +27,7 @@ from transformer_lens.utilities import devices
 from .linear import Linear
 
 
-class HookedBertForSequenceClassification(HookedRootModule):
+class HookedDistilBertForSequenceClassification(HookedRootModule):
     """
     This class implements a BERT-style encoder using the components in ./components.py, with HookPoints on every interesting activation. It inherits from HookedRootModule.
 
@@ -211,7 +211,7 @@ class HookedBertForSequenceClassification(HookedRootModule):
         move_to_device=True,
         dtype=torch.float32,
         **from_pretrained_kwargs,
-    ) -> HookedBertForSequenceClassification:
+    ) -> HookedDistilBertForSequenceClassification:
         """Loads in the pretrained weights from huggingface. Currently supports loading weight from HuggingFace BertForMaskedLM. Unlike HookedTransformer, this does not yet do any preprocessing on the model."""
         logging.warning(
             "Support for BERT in TransformerLens is currently experimental, until such a time when it has feature "

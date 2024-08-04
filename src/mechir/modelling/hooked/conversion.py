@@ -1,7 +1,69 @@
 import einops
-
+from functools import partial
+from .loading import register_conversion
 from .HookedTransformerConfig import HookedTransformerConfig
 
+def convert_distilbert_weights(distilbert, cfg: HookedTransformerConfig, sequence_classification=False, raw=False):
+    embeddings = distilbert.embeddings
+    state_dict = {
+        "embed.embed.W_E": embeddings.word_embeddings.weight,
+        "embed.pos_embed.W_pos": embeddings.position_embeddings.weight,
+        # currently does not support sinusoidal embeddings
+        "embed.ln.w": embeddings.LayerNorm.weight,
+        "embed.ln.b": embeddings.LayerNorm.bias,
+    }
+
+    for l in range(cfg.n_layers):
+        block = distilbert.transformer.layer[l]
+        state_dict[f"blocks.{l}.attn.W_Q"] = einops.rearrange(
+            block.attention.q_lin.weight, "(i h) m -> i m h", i=cfg.n_heads
+        )
+        state_dict[f"blocks.{l}.attn.b_Q"] = einops.rearrange(
+            block.attention.q_lin.bias, "(i h) -> i h", i=cfg.n_heads
+        )
+        state_dict[f"blocks.{l}.attn.W_K"] = einops.rearrange(
+            block.attention.k_lin.weight, "(i h) m -> i m h", i=cfg.n_heads
+        )
+        state_dict[f"blocks.{l}.attn.b_K"] = einops.rearrange(
+            block.attention.k_lin.bias, "(i h) -> i h", i=cfg.n_heads
+        )
+        state_dict[f"blocks.{l}.attn.W_V"] = einops.rearrange(
+            block.attention.v_lin.weight, "(i h) m -> i m h", i=cfg.n_heads
+        )
+        state_dict[f"blocks.{l}.attn.b_V"] = einops.rearrange(
+            block.attention.v_lin.bias, "(i h) -> i h", i=cfg.n_heads
+        )
+        state_dict[f"blocks.{l}.attn.W_O"] = einops.rearrange(
+            block.attention.out_lin.weight,
+            "m (i h) -> i h m",
+            i=cfg.n_heads,
+        )
+        state_dict[f"blocks.{l}.attn.b_O"] = block.attention.out_lin.bias
+        state_dict[f"blocks.{l}.ln1.w"] = block.sa_layer_norm.weight
+        state_dict[f"blocks.{l}.ln1.b"] = block.sa_layer_norm.bias
+        state_dict[f"blocks.{l}.mlp.W_in"] = einops.rearrange(
+            block.ffn.lin1.weight, "mlp model -> model mlp"
+        )
+        state_dict[f"blocks.{l}.mlp.b_in"] = block.ffn.lin1.bias
+        state_dict[f"blocks.{l}.mlp.W_out"] = einops.rearrange(
+            block.ffn.lin2.weight, "model mlp -> mlp model"
+        )
+        state_dict[f"blocks.{l}.mlp.b_out"] = block.ffn.lin2.bias
+        state_dict[f"blocks.{l}.ln2.w"] = block.output_layer_norm.weight
+        state_dict[f"blocks.{l}.ln2.b"] = block.output_layer_norm.bias
+
+        # no MLM and unembed layers
+
+        if not raw:
+            if sequence_classification:
+                classification_head = distilbert.pre_classifier
+                state_dict["classifier.W"] = classification_head.weight
+                state_dict["classifier.b"] = classification_head.bias
+
+    return state_dict
+
+register_conversion("DistilBert", convert_distilbert_weights)
+register_conversion("DistilBertForSequenceClassification", partial(convert_distilbert_weights, sequence_classification=True))
 
 def convert_bert_weights(bert, cfg: HookedTransformerConfig, sequence_classification=False, raw=False):
     embeddings = bert.bert.embeddings if not raw else bert.embeddings
@@ -69,6 +131,9 @@ def convert_bert_weights(bert, cfg: HookedTransformerConfig, sequence_classifica
 
     return state_dict
 
+register_conversion("BertModel", convert_bert_weights)
+register_conversion("BertForSequenceClassification", partial(convert_bert_weights, sequence_classification=True))
+
 def convert_electra_weights(electra, cfg: HookedTransformerConfig, sequence_classification=False, raw=False):
     embeddings = electra.electra.embeddings if not raw else electra.embeddings
     state_dict = {
@@ -130,3 +195,6 @@ def convert_electra_weights(electra, cfg: HookedTransformerConfig, sequence_clas
     state_dict["unembed.W_U"] = embeddings.word_embeddings.weight.T
 
     return state_dict
+
+register_conversion("ElectraModel", convert_electra_weights)
+register_conversion("ElectraForSequenceClassification", partial(convert_electra_weights, sequence_classification=True))
