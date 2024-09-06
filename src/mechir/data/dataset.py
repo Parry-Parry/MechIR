@@ -17,8 +17,6 @@ class PairDataset(Dataset):
         self.docs = pd.DataFrame(self.ir_dataset.docs_iter()).set_index("doc_id")["text"].to_dict()
         self.queries = pd.DataFrame(self.ir_dataset.queries_iter()).set_index("query_id")["text"].to_dict()
 
-        
-
     def __len__(self):
         return len(self.pairs)
 
