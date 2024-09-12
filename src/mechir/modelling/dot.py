@@ -51,7 +51,6 @@ class Dot(PatchedModel):
         reps, cached = self._model_run_with_cache(input_ids, one_zero_attention_mask=attention_mask)
         return self._pooling(reps), cached
 
-
     def _get_act_patch_block_every(
         self,
         corrupted_tokens: Float[torch.Tensor, "batch pos"], 

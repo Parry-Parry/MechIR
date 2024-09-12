@@ -9,6 +9,7 @@ from transformer_lens import HookedEncoder, ActivationCache
 import transformer_lens.utils as utils
 from . import PatchedModel
 from ..util import linear_rank_function, PatchingOutput
+from ..modelling.hooked.HookedBertForClassification import HookedBertForClassification
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +24,7 @@ class Cat(PatchedModel):
                  model_name_or_path : str,
                  num_labels : int
                  ) -> None:
-        super().__init__(model_name_or_path, partial(AutoModelForSequenceClassification.from_pretrained, num_labels=num_labels), HookedEncoder)
+        super().__init__(model_name_or_path, partial(AutoModelForSequenceClassification.from_pretrained, num_labels=num_labels), HookedBertForClassification)
 
         self.num_labels = num_labels
         self._model_forward = partial(self._model, return_type="logits")
