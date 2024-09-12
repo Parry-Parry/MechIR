@@ -21,7 +21,7 @@ def perturbation(f):
 
     class CustomPerturbation(AbstractPerturbation):
         def apply(self, document: str, query: str = None) -> str:
-            return f(document, query) if argcount == 2 else f(document)
+            return f(document, query) if argcount > 1 else f(document)
 
     instance = CustomPerturbation()
     return instance
