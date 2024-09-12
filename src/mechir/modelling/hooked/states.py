@@ -167,39 +167,8 @@ def BertForSequenceClassification_state_dict(hf_config):
     }
 
 register_architecture("BertForSequenceClassification", BertForSequenceClassification_state_dict)
-
-def ElectraForPreTraining_state_dict(hf_config):
-    return {
-        "d_model": hf_config.hidden_size,
-        "d_head": hf_config.hidden_size // hf_config.num_attention_heads,
-        "n_heads": hf_config.num_attention_heads,
-        "d_mlp": hf_config.intermediate_size,
-        "n_layers": hf_config.num_hidden_layers,
-        "n_ctx": hf_config.max_position_embeddings,
-        "eps": hf_config.layer_norm_eps,
-        "d_vocab": hf_config.vocab_size,
-        "act_fn": "gelu",
-        "attention_dir": "bidirectional",
-    }
-
-register_architecture("ElectraForPreTraining", ElectraForPreTraining_state_dict)
-
-def ElectraForSequenceClassification_state_dict(hf_config):
-    return {
-        "d_model": hf_config.hidden_size,
-        "d_head": hf_config.hidden_size // hf_config.num_attention_heads,
-        "n_heads": hf_config.num_attention_heads,
-        "d_mlp": hf_config.intermediate_size,
-        "n_layers": hf_config.num_hidden_layers,
-        "n_ctx": hf_config.max_position_embeddings,
-        "eps": hf_config.layer_norm_eps,
-        "d_vocab": hf_config.vocab_size,
-        "act_fn": "gelu",
-        "attention_dir": "bidirectional",
-        "num_labels": hf_config.num_labels,
-    }
-
-register_architecture("ElectraForSequenceClassification", ElectraForSequenceClassification_state_dict)
+register_architecture("ElectraForPreTraining", BertModel_state_dict)
+register_architecture("ElectraForSequenceClassification", BertForSequenceClassification_state_dict)
 
 def DistilBert_state_dict(hf_config):
     return {
