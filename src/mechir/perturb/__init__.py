@@ -16,9 +16,14 @@ class IdentityPerturbation(AbstractPerturbation):
         return document
     
 def perturbation(f):
+    # check how many arguments the function has
+    argcount = f.__code__.co_argcount
+
     class CustomPerturbation(AbstractPerturbation):
         def apply(self, document: str, query: str = None) -> str:
-            return f(document, query)
-    return CustomPerturbation()
+            return f(document, query) if argcount == 2 else f(document)
+
+    instance = CustomPerturbation()
+    return instance
     
 from .index import IndexPerturbation

@@ -1,13 +1,15 @@
-from mechir import Cat, PairDataset, CatDataCollator, AbstractPerturbation
+from mechir import Cat, PairDataset, CatDataCollator, perturbation
 from torch.data import DataLoader
 import json
 
-class NaivePerturbation(AbstractPerturbation):
-    def apply(self, text : str, query : str = None) -> str:
-        return text + "Apple"
-
+@perturbation
+def perturb(self, text : str, query : str = None) -> str:
+    return text + "Apple"
 
 def patch_cat(model_name_or_path : str, out_path : str, dataset : str, num_labels : int = 2, batch_size : int = 1, patch_type : str = 'block_all', block_list : str = None):
+    
+
+    
     patch_args = {
         'patch_type' : patch_type,
     }
@@ -19,7 +21,7 @@ def patch_cat(model_name_or_path : str, out_path : str, dataset : str, num_label
 
     model = Cat(model_name_or_path, num_labels)
     dataset = PairDataset(dataset)
-    data_collator = CatDataCollator(model.tokenizer, NaivePerturbation())
+    data_collator = CatDataCollator(model.tokenizer, perturb)
 
     dataloader = DataLoader(dataset, batch_size=batch_size, collate_fn=data_collator)
 
