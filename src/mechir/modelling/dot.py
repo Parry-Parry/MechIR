@@ -4,7 +4,7 @@ import logging
 import torch 
 from tqdm import tqdm
 from jaxtyping import Float
-from transformers import AutoModel
+from transformers import AutoModel, AutoTokenizer
 from transformer_lens import HookedEncoder, ActivationCache
 import transformer_lens.utils as utils
 from . import PatchedModel
@@ -26,9 +26,11 @@ class Dot(PatchedModel):
     def __init__(self, 
                  model_name_or_path : str,
                  pooling_type : str = 'cls',
+                 tokenizer = None,
                  ) -> None:
         super().__init__(model_name_or_path, AutoModel.from_pretrained, HookedEncoder)
 
+        self.tokenizer = AutoTokenizer.from_pretrained(model_name_or_path) if tokenizer is None else tokenizer
         self._model_forward = partial(self._model, return_type="embedding")
         self._model_run_with_cache = partial(self._model.run_with_cache, return_type="embedding")
         self._model_run_with_hooks = partial(self._model.run_with_hooks, return_type="embedding")
