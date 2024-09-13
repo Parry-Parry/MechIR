@@ -2,6 +2,7 @@ from mechir import Cat, PairDataset, CatDataCollator, perturbation
 from torch.data import DataLoader
 import pandas as pd
 import json
+from fire import Fire
 
 @perturbation
 def perturb(text : str, query : str = None) -> str:
@@ -42,4 +43,5 @@ def patch_cat(model_name_or_path : str, out_path : str, dataset : str, num_label
         json.dump(result, f)
 
 
-    
+if __name__ == "__main__":
+    Fire(patch_cat)
