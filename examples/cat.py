@@ -4,7 +4,7 @@ import pandas as pd
 import json
 
 @perturbation
-def perturb(self, text : str, query : str = None) -> str:
+def perturb(text : str, query : str = None) -> str:
     return text + "Apple"
 
 def patch_cat(model_name_or_path : str, out_path : str, dataset : str, num_labels : int = 2, batch_size : int = 1, patch_type : str = 'block_all', block_list : str = None, pair_path : str = None):
