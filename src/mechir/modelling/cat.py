@@ -5,7 +5,7 @@ import torch
 from tqdm import tqdm
 from jaxtyping import Float
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
-from transformer_lens import HookedEncoder, ActivationCache
+from transformer_lens import ActivationCache
 import transformer_lens.utils as utils
 from . import PatchedModel
 from ..util import linear_rank_function, PatchingOutput
