@@ -1,6 +1,11 @@
 # Description: This file contains the state dictionary for the models in the hooked library.
 import torch
-from .loading import register_architecture
+
+REGISTERED_ARCHITECTURES = {}
+
+def register_architecture(architecture: str, cfg_fn: callable):
+    """Register a weight conversion function for a given architecture."""
+    REGISTERED_ARCHITECTURES[architecture] = cfg_fn
 
 def GPTNeoForCausalLM_state_dict(hf_config):
     return {
@@ -178,13 +183,13 @@ def DistilBert_state_dict(hf_config):
         "d_mlp": hf_config.dim * 4,
         "n_layers": hf_config.n_layers,
         "n_ctx": hf_config.max_position_embeddings,
-        "eps": hf_config.layer_norm_eps,
+        "eps": 1e-12,
         "d_vocab": hf_config.vocab_size,
         "act_fn": "gelu",
         "attention_dir": "bidirectional",
     }
 
-register_architecture("DistilBert", DistilBert_state_dict)
+register_architecture("DistilBertModel", DistilBert_state_dict)
 
 def DistilBertForSequenceClassification_state_dict(hf_config):
     return {

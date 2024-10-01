@@ -23,7 +23,8 @@ from transformers import (
     T5ForConditionalGeneration,
 )
 
-from .hooked.conversion import convert_bert_weights, convert_bert_like_weights, convert
+from .conversion import REGISTERED_CONVERSIONS
+from .states import REGISTERED_ARCHITECTURES
 
 import transformer_lens.utils as utils
 from transformer_lens.HookedTransformerConfig import HookedTransformerConfig
@@ -47,18 +48,6 @@ from transformer_lens.pretrained.weight_conversions import (
     convert_qwen_weights,
     convert_t5_weights,
 )
-
-REGISTERED_ARCHITECTURES = {}
-
-def register_architecture(architecture: str, cfg_fn: callable):
-    """Register a weight conversion function for a given architecture."""
-    REGISTERED_ARCHITECTURES[architecture] = cfg_fn
-
-REGISTERED_CONVERSIONS = {}
-
-def register_conversion(architecture: str, conversion_fn: callable):
-    """Register a weight conversion function for a given architecture."""
-    REGISTERED_CONVERSIONS[architecture] = conversion_fn
 
 OFFICIAL_MODEL_NAMES = [
     "gpt2",
@@ -236,6 +225,8 @@ OFFICIAL_MODEL_NAMES = [
     "google-t5/t5-base",
     "google-t5/t5-large",
     "ai-forever/mGPT",
+    ###### IR MODELS ######
+    "sebastian-hofstaetter/distilbert-dot-tas_b-b256-msmarco",
 ]
 """Official model names for models on HuggingFace."""
 
@@ -658,6 +649,8 @@ MODEL_ALIASES = {
     "google-t5/t5-base": ["t5-base"],
     "google-t5/t5-large": ["t5-large"],
     "ai-forever/mGPT": ["mGPT"],
+    ###### IR MODELS ######
+    "sebastian-hofstaetter/distilbert-dot-tas_b-b256-msmarco": ["tas-b"],
 }
 """Model aliases for models on HuggingFace."""
 
@@ -1319,6 +1312,10 @@ def get_pretrained_state_dict(
             huggingface_token = os.environ.get("HF_TOKEN", None)
             if official_model_name in NON_HF_HOSTED_MODEL_NAMES:
                 raise NotImplementedError("Model not hosted on HuggingFace, must pass in hf_model")
+            elif "tas_b" in official_model_name:
+                hf_model = AuotModel.from_pretrained(
+                    official_model_name, torch_dtype=dtype, **kwargs
+                )
             elif "bert" in official_model_name:
                 hf_model = BertForPreTraining.from_pretrained(
                     official_model_name,

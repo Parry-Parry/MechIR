@@ -1,7 +1,12 @@
 import einops
 from functools import partial
-from .loading import register_conversion
 from .HookedTransformerConfig import HookedTransformerConfig
+
+REGISTERED_CONVERSIONS = {}
+
+def register_conversion(architecture: str, conversion_fn: callable):
+    """Register a weight conversion function for a given architecture."""
+    REGISTERED_CONVERSIONS[architecture] = conversion_fn
 
 def convert_distilbert_weights(distilbert, cfg: HookedTransformerConfig, sequence_classification=False, raw=False):
     embeddings = distilbert.embeddings
@@ -62,7 +67,7 @@ def convert_distilbert_weights(distilbert, cfg: HookedTransformerConfig, sequenc
 
     return state_dict
 
-register_conversion("DistilBert", convert_distilbert_weights)
+register_conversion("DistilBertModel", convert_distilbert_weights)
 register_conversion("DistilBertForSequenceClassification", partial(convert_distilbert_weights, sequence_classification=True))
 
 def convert_bert_based_weights(bert, cfg: HookedTransformerConfig, sequence_classification=False, raw=False, model_name : str = 'bert'):

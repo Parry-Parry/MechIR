@@ -9,6 +9,7 @@ from transformer_lens import HookedEncoder, ActivationCache
 import transformer_lens.utils as utils
 from . import PatchedModel
 from ..util import batched_dot_product, linear_rank_function, PatchingOutput
+from ..modelling.hooked.HookedDistilBert import HookedDistilBert
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +29,7 @@ class Dot(PatchedModel):
                  pooling_type : str = 'cls',
                  tokenizer = None,
                  ) -> None:
-        super().__init__(model_name_or_path, AutoModel.from_pretrained, HookedEncoder)
+        super().__init__(model_name_or_path, AutoModel.from_pretrained, HookedDistilBert)
 
         self.tokenizer = AutoTokenizer.from_pretrained(model_name_or_path) if tokenizer is None else tokenizer
         self._model_forward = partial(self._model, return_type="embedding")
