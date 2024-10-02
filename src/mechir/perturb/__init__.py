@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
-from typing import Any
+from pyterrier.datasets import IRDSDataset as _IRDSDataset
+IRDSDataset = _IRDSDataset
 
 class AbstractPerturbation(object, ABC):
     @abstractmethod
@@ -12,3 +13,14 @@ class AbstractPerturbation(object, ABC):
 class IdentityPerturbation(AbstractPerturbation):
     def apply(self, document : str, query : str = None) -> str:
         return document
+    
+def perturbation(f):
+    argcount = f.__code__.co_argcount
+    class CustomPerturbation(AbstractPerturbation):
+        def apply(self, document: str, query: str = None) -> str:
+            return f(document, query) if argcount > 1 else f(document)
+
+    instance = CustomPerturbation()
+    return instance
+    
+from .index import IndexPerturbation

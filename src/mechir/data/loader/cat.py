@@ -21,7 +21,7 @@ class CatDataCollator:
                 continue
             batch_scores.extend(args[0])
         
-        batch_docs = [self.transformation_func(dx, query=q) for q, dx in zip(batch_queries, batch_docs)]
+        batch_perturbed_docs = [self.transformation_func(dx, query=q) for q, dx in zip(batch_queries, batch_docs)]
 
         tokenized_sequences = self.tokenizer(
             batch_queries,
@@ -31,8 +31,19 @@ class CatDataCollator:
             max_length=self.q_max_length + self.d_max_length,
             return_tensors="pt",
         )
+
+        tokenized_perturbed_sequences = self.tokenizer(
+            batch_queries,
+            batch_perturbed_docs,
+            padding=True,
+            truncation='only_second',
+            max_length=self.q_max_length + self.d_max_length,
+            return_tensors="pt",
+        )
+
         return {
             "sequences": dict(tokenized_sequences),
+            "perturbed_sequences": dict(tokenized_perturbed_sequences),
         }
     
 def _make_pos_pairs(texts) -> list:

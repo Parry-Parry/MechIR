@@ -6,7 +6,7 @@ from transformer_lens import ActivationCache
 import transformer_lens.utils as utils
 from abc import ABC, abstractmethod
 
-class PatchedModel(object, ABC):
+class PatchedModel(ABC):
     def __init__(self,
                  model_name_or_path : str,
                  model_func : Any,

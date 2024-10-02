@@ -26,10 +26,11 @@ class MonoT5(PatchedModel):
                  model_name_or_path : str,
                  pos_token : str = "true",
                  neg_token : str = "false",
+                 tokenizer = None,
                  ) -> None:
         super().__init__(model_name_or_path, AutoModelForSeq2SeqLM.from_pretrained, HookedEncoderDecoder)
 
-        tokenizer = AutoTokenizer.from_pretrained(model_name_or_path)
+        tokenizer = AutoTokenizer.from_pretrained(model_name_or_path) if tokenizer is None else tokenizer
 
         self.pos_token = tokenizer.encode(pos_token, return_tensors="pt")[0]
         self.neg_token = tokenizer.encode(neg_token, return_tensors="pt")[0]
