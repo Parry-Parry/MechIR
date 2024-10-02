@@ -1,6 +1,6 @@
 import einops
 from functools import partial
-from .loading import register_conversion
+from .loading_from_pretrained import register_conversion
 from .HookedTransformerConfig import HookedTransformerConfig
 
 def convert_distilbert_weights(distilbert, cfg: HookedTransformerConfig, sequence_classification=False, raw=False):

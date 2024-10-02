@@ -1,5 +1,4 @@
 import torch 
-from functools import partial
 from typing import Any, Dict, Tuple, Callable
 from jaxtyping import Float
 from transformer_lens import ActivationCache
