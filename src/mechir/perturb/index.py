@@ -2,7 +2,6 @@ from . import AbstractPerturbation, IRDSDataset
 from typing import Union, Optional, NamedTuple, Callable, Sequence, Dict
 from pathlib import Path
 from collections import Counter
-import numpy as np
 from ir_axioms.backends.pyterrier.util import (
     Index,
     IndexRef,

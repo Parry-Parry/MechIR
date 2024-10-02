@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from functools import wraps
 from pyterrier.datasets import IRDSDataset as _IRDSDataset
 IRDSDataset = _IRDSDataset
 
