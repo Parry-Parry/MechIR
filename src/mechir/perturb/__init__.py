@@ -1,8 +1,9 @@
 from abc import ABC, abstractmethod
-from pyterrier.datasets import IRDSDataset as _IRDSDataset
-IRDSDataset = _IRDSDataset
+from typing import Any, TYPE_CHECKING
+from ..util import is_ir_axioms_availible
+from transformers.utils import _LazyModule, OptionalDependencyNotAvailable
 
-class AbstractPerturbation(object, ABC):
+class AbstractPerturbation(ABC):
     @abstractmethod
     def apply(self, document : str, query : str) -> str:
         raise NotImplementedError("This method should be implemented in the subclass")
@@ -22,5 +23,35 @@ def perturbation(f):
 
     instance = CustomPerturbation()
     return instance
+
+_import_structure = {
+    'AbstractPerturbation' : ['AbstractPerturbation'],
+    'IdentityPerturbation' : ['IdentityPerturbation'],
+    'perturbation' : ['perturbation'],
+    'IRDSDataset' : ['IRDSDataset'],
+}
+
+try:
+    if not is_ir_axioms_availible():
+        raise OptionalDependencyNotAvailable()
+except OptionalDependencyNotAvailable:
+    pass
+else:
+    from .index import __all__ as _index_all
+    from .axiom import __all__ as _axiom_all
+    _import_structure["index"] = _index_all
+    _import_structure["axiom"] = _axiom_all
     
-from .index import IndexPerturbation
+
+if TYPE_CHECKING:
+    try:
+        if not is_ir_axioms_availible():
+            raise OptionalDependencyNotAvailable()
+    except OptionalDependencyNotAvailable:
+        pass
+    else:
+        from .index import *
+        from .axiom import *
+else:
+    import sys 
+    sys.modules[__name__] = _LazyModule(__name__, globals()["__file__"], _import_structure, module_spec=__spec__)

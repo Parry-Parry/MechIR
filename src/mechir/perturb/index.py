@@ -1,5 +1,5 @@
-from . import AbstractPerturbation, IRDSDataset
-from typing import Union, Optional, NamedTuple, Callable, Sequence, Dict
+from . import AbstractPerturbation
+from typing import Union, Optional, NamedTuple, Callable, Sequence, Dict, Any
 from pathlib import Path
 from collections import Counter
 from ir_axioms.backends.pyterrier.util import (
@@ -17,7 +17,7 @@ ContentsAccessor = Union[str, Callable[[NamedTuple], str]]
 class IndexPerturbation(AbstractPerturbation):
     def __init__(self,
                  index_location: Union[Index, IndexRef, Path, str],
-                 dataset: Optional[Union[Dataset, str, IRDSDataset]] = None,
+                 dataset: Optional[Union[Dataset, str, Any]] = None,
                  contents_accessor: Optional[ContentsAccessor] = "text",
                  tokeniser: Optional[Tokeniser] = None,
                  cache_dir: Optional[Path] = None

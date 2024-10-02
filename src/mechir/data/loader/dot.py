@@ -1,3 +1,5 @@
+from . import pad
+
 class DotDataCollator:
     def __init__(self, 
                  tokenizer, 
@@ -22,11 +24,12 @@ class DotDataCollator:
             batch_docs.extend(dx)
 
         batch_perturbed_docs = [self.transformation_func(dx, query=q) for q, dx in zip(batch_queries_cat, batch_docs)]
+        batch_docs, batch_perturbed_docs = zip(*[pad(a, b, self.special_token) for a, b in zip(batch_docs, batch_perturbed_docs)])
 
         tokenized_queries = self.tokenizer(
             batch_queries,
             padding=True,
-            truncation=True,
+            truncation=False,
             max_length=self.q_max_length,
             return_tensors="pt",
             return_special_tokens_mask=self.special_mask,
@@ -34,7 +37,7 @@ class DotDataCollator:
         tokenized_docs = self.tokenizer(
             batch_docs,
             padding=True,
-            truncation=True,
+            truncation=False,
             max_length=self.d_max_length,
             return_tensors="pt",
             return_special_tokens_mask=self.special_mask
@@ -43,7 +46,7 @@ class DotDataCollator:
         tokenized_perturbed_docs = self.tokenizer(
             batch_perturbed_docs,
             padding=True,
-            truncation=True,
+            truncation=False,
             max_length=self.d_max_length,
             return_tensors="pt",
             return_special_tokens_mask=self.special_mask
@@ -54,3 +57,5 @@ class DotDataCollator:
             "documents": dict(tokenized_docs),
             "perturbed_documents": dict(tokenized_perturbed_docs),
         }
+
+__all__ = ["DotDataCollator"]

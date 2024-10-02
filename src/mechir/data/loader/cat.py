@@ -1,14 +1,19 @@
+from . import pad
+
 class CatDataCollator:
     def __init__(self, 
                  tokenizer,
                  transformation_func : callable,
                  q_max_length=30,
                  d_max_length=200,
+                 special_token="X",
                  ) -> None:
         self.tokenizer = tokenizer
         self.transformation_func = transformation_func
         self.q_max_length = q_max_length
         self.d_max_length = d_max_length
+        self.special_token = special_token
+        self.special_token_id = self.tokenizer.convert_tokens_to_ids(self.special_token)
 
     def __call__(self, batch) -> dict:
         batch_queries = []
@@ -22,12 +27,13 @@ class CatDataCollator:
             batch_scores.extend(args[0])
         
         batch_perturbed_docs = [self.transformation_func(dx, query=q) for q, dx in zip(batch_queries, batch_docs)]
+        batch_docs, batch_perturbed_docs = zip(*[pad(a, b, self.special_token) for a, b in zip(batch_docs, batch_perturbed_docs)])
 
         tokenized_sequences = self.tokenizer(
             batch_queries,
             batch_docs,
             padding=True,
-            truncation='only_second',
+            truncation=False,
             max_length=self.q_max_length + self.d_max_length,
             return_tensors="pt",
         )
@@ -36,7 +42,7 @@ class CatDataCollator:
             batch_queries,
             batch_perturbed_docs,
             padding=True,
-            truncation='only_second',
+            truncation=False,
             max_length=self.q_max_length + self.d_max_length,
             return_tensors="pt",
         )
@@ -54,9 +60,10 @@ def _make_pos_pairs(texts) -> list:
     return output
     
 class PairDataCollator:
-    def __init__(self, tokenizer, max_length=512) -> None:
+    def __init__(self, tokenizer, transformation_func : callable, max_length=512, ) -> None:
         self.tokenizer = tokenizer
         self.max_length = max_length
+        self.transformation_func = transformation_func
     
     def __call__(self, batch) -> dict:
         batch_queries = []
@@ -88,3 +95,5 @@ class PairDataCollator:
         return {
             "sequences": dict(tokenized_sequences),
         }
+    
+__all__ = ["CatDataCollator", "PairDataCollator"]

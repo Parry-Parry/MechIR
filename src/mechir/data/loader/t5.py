@@ -1,3 +1,5 @@
+from . import pad
+
 class MonoT5DataCollator:
     def __init__(self, 
                  tokenizer,
@@ -25,6 +27,7 @@ class MonoT5DataCollator:
             batch_scores.extend(args[0])
         
         batch_perturbed_docs = [self.transformation_func(dx, query=q) for q, dx in zip(batch_queries, batch_docs)]
+        batch_docs, batch_perturbed_docs = zip(*[pad(a, b, self.special_token) for a, b in zip(batch_docs, batch_perturbed_docs)])
 
         tokenized_sequences = self.tokenizer(
             [self.prompt(q, dx) for q, dx in zip(batch_queries, batch_docs)],
@@ -43,3 +46,5 @@ class MonoT5DataCollator:
             "sequences": dict(tokenized_sequences),
             "perturbed_sequences": dict(tokenized_perturbed_sequences),
         }
+
+__all__ = ["MonoT5DataCollator"]
