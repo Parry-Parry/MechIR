@@ -131,7 +131,7 @@ class HookedEncoderForSequenceClassification(HookedEncoder):
         move_to_device=True,
         dtype=torch.float32,
         **from_pretrained_kwargs,
-    ) -> HookedBertForSequenceClassification:
+    ) -> HookedEncoderForSequenceClassification:
         """Loads in the pretrained weights from huggingface. Currently supports loading weight from HuggingFace BertForMaskedLM. Unlike HookedTransformer, this does not yet do any preprocessing on the model."""
         logging.warning(
             "Support for BERT in TransformerLens is currently experimental, until such a time when it has feature "
