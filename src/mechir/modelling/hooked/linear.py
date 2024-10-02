@@ -10,7 +10,7 @@ import torch.nn as nn
 from jaxtyping import Float
 
 from transformer_lens.HookedTransformerConfig import HookedTransformerConfig
-from fancy_einsum import einsum
+from transformer_lens.utilities.addmm import batch_addmm
 
 class Linear(nn.Module):
     def __init__(self, cfg: Union[Dict, HookedTransformerConfig]):
@@ -22,11 +22,4 @@ class Linear(nn.Module):
         self, x: Float[torch.Tensor, "batch pos d_model"]
     ) -> Float[torch.Tensor, "batch pos num_labels"]:
         
-        return (
-            einsum(
-                "batch pos d_model_in, num_labels d_model_in -> batch pos num_labels",
-                x,
-                self.W,
-            )
-            + self.b
-        )
+        return self.hook_pre(batch_addmm(self.b_in, self.W_in, x))  # [batch, pos, d_mlp]
