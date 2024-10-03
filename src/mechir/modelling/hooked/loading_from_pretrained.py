@@ -17,9 +17,6 @@ from transformers import (
     AutoConfig,
     AutoModelForCausalLM,
     BertForPreTraining,
-    BertForSequenceClassification,
-    ElectraForSequenceClassification,
-    ElectraModel,
     T5ForConditionalGeneration,
 )
 
@@ -72,6 +69,7 @@ def register_conversion(architecture: str, conversion_fn: callable):
     REGISTERED_CONVERSIONS[architecture] = conversion_fn
 
 OFFICIAL_MODEL_NAMES = [
+    "sebastian-hofstaetter/distilbert-dot-tas_b-b256-msmarco",
    * _OFFICIAL_MODEL_NAMES,
 ]
 
@@ -83,6 +81,7 @@ def register_official_model_name(model_name: str):
 
 # Model Aliases:
 MODEL_ALIASES = {
+    "sebastian-hofstaetter/distilbert-dot-tas_b-b256-msmarco": ["tas-b"],
     **_MODEL_ALIASES,
 }
 """Model aliases for models on HuggingFace."""

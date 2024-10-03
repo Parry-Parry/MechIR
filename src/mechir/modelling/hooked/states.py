@@ -171,7 +171,7 @@ register_architecture("ElectraForPreTraining", BertModel_state_dict)
 register_architecture("ElectraForSequenceClassification", BertForSequenceClassification_state_dict)
 
 def DistilBert_state_dict(hf_config):
-    return {
+        return {
         "d_model": hf_config.dim,
         "d_head": hf_config.dim // hf_config.n_heads,
         "n_heads": hf_config.n_heads,
@@ -179,25 +179,18 @@ def DistilBert_state_dict(hf_config):
         "n_layers": hf_config.n_layers,
         "n_ctx": hf_config.max_position_embeddings,
         "eps": hf_config.layer_norm_eps,
+        "eps": 1e-12,
         "d_vocab": hf_config.vocab_size,
         "act_fn": "gelu",
         "attention_dir": "bidirectional",
     }
 
 register_architecture("DistilBert", DistilBert_state_dict)
+register_architecture("DistilBertModel", DistilBert_state_dict)
 
 def DistilBertForSequenceClassification_state_dict(hf_config):
     return {
-        "d_model": hf_config.dim,
-        "d_head": hf_config.dim // hf_config.n_heads,
-        "n_heads": hf_config.n_heads,
-        "d_mlp": hf_config.dim * 4,
-        "n_layers": hf_config.n_layers,
-        "n_ctx": hf_config.max_position_embeddings,
-        "eps": hf_config.layer_norm_eps,
-        "d_vocab": hf_config.vocab_size,
-        "act_fn": "gelu",
-        "attention_dir": "bidirectional",
+        **DistilBert_state_dict(hf_config),
         "num_labels": hf_config.num_labels,
     }
 

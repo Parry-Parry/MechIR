@@ -1,13 +1,16 @@
 from functools import partial
 from typing import Callable, Dict, Tuple
 import logging
+import os
 import torch 
 from tqdm import tqdm
 from jaxtyping import Float
-from transformers import AutoModel, AutoTokenizer
+from transformers import AutoModel, AutoTokenizer, AutoConfig
 from transformer_lens import HookedEncoder, ActivationCache
 import transformer_lens.utils as utils
 from . import PatchedModel
+from .hooked.HookedDistilBert import HookedDistilBert
+from .hooked.loading_from_pretrained import get_official_model_name
 from ..util import batched_dot_product, linear_rank_function, PatchingOutput
 
 logger = logging.getLogger(__name__)
@@ -22,13 +25,23 @@ def dot_linear_ranking_function(model_output, reps_q, score, score_p, pooling_ty
     patched_score = batched_dot_product(reps_q, model_output)
     return linear_rank_function(patched_score, score, score_p)
 
+def get_hooked(architecture):
+    huggingface_token = os.environ.get("HF_TOKEN", None)
+    hf_config = AutoConfig.from_pretrained(
+        get_official_model_name(architecture),
+        token=huggingface_token
+    )
+    architecture = hf_config.architectures[0]
+    if "distilbert" in architecture.lower(): return HookedDistilBert
+    return HookedEncoder
+
 class Dot(PatchedModel):
     def __init__(self, 
                  model_name_or_path : str,
                  pooling_type : str = 'cls',
                  tokenizer = None,
                  ) -> None:
-        super().__init__(model_name_or_path, AutoModel.from_pretrained, HookedEncoder)
+        super().__init__(model_name_or_path, AutoModel.from_pretrained, get_hooked(model_name_or_path))
 
         self.tokenizer = AutoTokenizer.from_pretrained(model_name_or_path) if tokenizer is None else tokenizer
         self._model_forward = partial(self._model, return_type="embedding")

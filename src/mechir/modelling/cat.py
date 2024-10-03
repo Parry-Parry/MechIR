@@ -1,23 +1,34 @@
 from functools import partial
 from typing import Callable, Dict, Tuple
 import logging
+import os
 import torch 
 from tqdm import tqdm
 from jaxtyping import Float
-from transformers import AutoModelForSequenceClassification, AutoTokenizer
+from transformers import AutoModelForSequenceClassification, AutoTokenizer, AutoConfig
 from transformer_lens import ActivationCache
 import transformer_lens.utils as utils
 from . import PatchedModel
+from .hooked.loading_from_pretrained import get_official_model_name
+from .hooked.HookedDistilBert import HookedDistilBertForSequenceClassification
 from ..util import linear_rank_function, PatchingOutput
 from ..modelling.hooked.HookedEncoderForSequenceClassification import HookedEncoderForSequenceClassification
 
 logger = logging.getLogger(__name__)
 
-
 def cat_linear_ranking_function(model_output, score, score_p):
     patched_score = model_output.softmax(dim=-1)[:, :, -1]
     return linear_rank_function(patched_score, score, score_p)
 
+def get_hooked(architecture):
+    huggingface_token = os.environ.get("HF_TOKEN", None)
+    hf_config = AutoConfig.from_pretrained(
+        get_official_model_name(architecture),
+        token=huggingface_token
+    )
+    architecture = hf_config.architectures[0]
+    if "distilbert" in architecture.lower(): return HookedDistilBertForSequenceClassification
+    return HookedEncoderForSequenceClassification
 
 class Cat(PatchedModel):
     def __init__(self, 
