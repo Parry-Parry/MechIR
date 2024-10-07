@@ -1,6 +1,7 @@
 from pathlib import Path
 from functools import partial
 from typing import Any, Callable, NamedTuple
+import random
 from ..index import IndexPerturbation
 
 class FrequencyPerturbation(IndexPerturbation):
@@ -36,6 +37,9 @@ class FrequencyPerturbation(IndexPerturbation):
         self.target = target
         self.num_additions = num_additions
         self.loc = loc
+    
+    def _get_random_terms(self, text : str) -> list:
+        return random.choices(list(self.get_freq_text(text).keys()), k=self.num_additions)
     
     def _get_top_k_freq_terms(self, text : str) -> dict:  
         freq = self.get_freq_text(text)
