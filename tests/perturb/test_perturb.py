@@ -1,7 +1,5 @@
 import unittest
-from unittest.mock import patch, MagicMock
-from transformers.utils import OptionalDependencyNotAvailable
-from my_module import AbstractPerturbation, IdentityPerturbation, perturbation, _import_structure
+from mechir.perturb import AbstractPerturbation, IdentityPerturbation, perturbation
 
 class TestAbstractPerturbation(unittest.TestCase):
     

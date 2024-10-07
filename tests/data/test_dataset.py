@@ -1,6 +1,6 @@
 import unittest
 import pandas as pd
-from . import MechDataset
+from mechir.data import MechDataset
 
 class TestMechDataset(unittest.TestCase):
 

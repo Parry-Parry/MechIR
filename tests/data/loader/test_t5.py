@@ -1,6 +1,6 @@
 import unittest
 from unittest.mock import Mock
-from . import MonoT5DataCollator, pad
+from mechir.data import MonoT5DataCollator, pad
 
 class TestMonoT5DataCollator(unittest.TestCase):
 

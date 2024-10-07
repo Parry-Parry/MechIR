@@ -1,6 +1,7 @@
 import unittest
 from unittest.mock import Mock
-from . import CatDataCollator, PairDataCollator, _make_pos_pairs
+from mechir.data import CatDataCollator, PairDataCollator
+from mechir.data.loader.cat import _make_pos_pairs
 
 class TestDataCollators(unittest.TestCase):
 

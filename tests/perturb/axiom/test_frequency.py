@@ -1,7 +1,6 @@
 import unittest
 from unittest.mock import MagicMock, patch
-from pathlib import Path
-from my_module import FrequencyPerturbation  # Adjust the import to your actual module
+from mechir.perturb.axiom.frequency import FrequencyPerturbation  
 
 class TestFrequencyPerturbation(unittest.TestCase):
 

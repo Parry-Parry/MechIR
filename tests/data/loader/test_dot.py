@@ -1,6 +1,6 @@
 import unittest
 from unittest.mock import Mock
-from . import DotDataCollator, pad
+from mechir.data import DotDataCollator, pad
 
 class TestDotDataCollator(unittest.TestCase):
 

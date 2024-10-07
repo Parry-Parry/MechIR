@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import Mock, patch
 import pandas as pd
-from . import MechIRDataset
+from mechir.data import MechIRDataset
 
 class TestMechIRDataset(unittest.TestCase):
 

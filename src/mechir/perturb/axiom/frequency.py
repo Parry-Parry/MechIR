@@ -63,3 +63,5 @@ class FrequencyPerturbation(IndexPerturbation):
 TFPerturbation = partial(FrequencyPerturbation, frequency='tf')
 IDFPerturbation = partial(FrequencyPerturbation, frequency='idf')
 TFIDFPerturbation = partial(FrequencyPerturbation, frequency='tfidf')
+
+__all__ = ['FrequencyPerturbation', 'TFPerturbation', 'IDFPerturbation', 'TFIDFPerturbation']

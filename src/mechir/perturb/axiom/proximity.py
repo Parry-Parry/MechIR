@@ -8,3 +8,5 @@ class ProximityPerturbation(AbstractPerturbation):
     def apply(self, document : str, query : str) -> str:
         terms = self.get_freq_terms(query if self.target=='query' else document)
         return self._insert_terms(document, terms)
+
+__all__ = ['ProximityPerturbation']
