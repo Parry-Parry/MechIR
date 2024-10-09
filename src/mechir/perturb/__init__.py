@@ -24,9 +24,10 @@ def perturbation(f):
             return f(document, query) if argcount > 1 else f(document)
     return CustomPerturbation()
 
-# Define these classes and function in the current namespace
+# Explicitly define what should be importable from this module
 __all__ = ["AbstractPerturbation", "IdentityPerturbation", "perturbation"]
 
+# The rest of your lazy loading setup
 _import_structure = {
     "IRDSDataset": ["IRDSDataset"],
 }
@@ -53,7 +54,17 @@ if TYPE_CHECKING:
         from .axiom import *
 else:
     import sys
-    sys.modules[__name__] = _LazyModule(__name__, globals()["__file__"], _import_structure, module_spec=__spec__)
+    
+    # Create a new module object
+    module = _LazyModule(__name__, globals()["__file__"], _import_structure, module_spec=__spec__)
+    
+    # Explicitly add AbstractPerturbation, IdentityPerturbation, and perturbation to the module
+    module.AbstractPerturbation = AbstractPerturbation
+    module.IdentityPerturbation = IdentityPerturbation
+    module.perturbation = perturbation
+    
+    # Replace the current module with the lazy module
+    sys.modules[__name__] = module
 
 # Update __all__ to include both directly defined and lazily loaded items
 __all__ += list(_import_structure.keys())
