@@ -1,7 +1,7 @@
 import unittest
 import torch
 from torch import Tensor
-from my_module import PatchingOutput, batched_dot_product, linear_rank_function, seed_everything, is_pyterrier_availible, is_ir_axioms_availible, is_ir_datasets_availible
+from mechir.util import PatchingOutput, batched_dot_product, linear_rank_function, seed_everything, is_pyterrier_availible, is_ir_axioms_availible, is_ir_datasets_availible
 
 class TestPatchingOutput(unittest.TestCase):
     def test_patching_output_initialization(self):
