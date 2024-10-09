@@ -1,7 +1,7 @@
 import pytest
 import torch
 from transformers import AutoTokenizer
-from your_module import Dot  # Adjust the import based on your module structure
+from mechir.modelling.dot import Dot  # Adjust the import based on your module structure
 
 # Constants
 MODEL_NAME = "distilbert-base-uncased"
