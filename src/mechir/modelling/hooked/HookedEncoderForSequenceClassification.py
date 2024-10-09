@@ -16,7 +16,7 @@ from typing_extensions import Literal
 
 import transformer_lens.loading_from_pretrained as loading
 from transformer_lens.ActivationCache import ActivationCache
-from transformer_lens.hook_points import HookedEncoder
+from transformer_lens import HookedEncoder
 from .linear import Linear
 
 
