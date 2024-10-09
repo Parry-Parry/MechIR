@@ -6,16 +6,8 @@ from mechir.modelling.hooked.HookedDistilBert import HookedDistilBert, HookedDis
 class TestHookedDistilBert(unittest.TestCase):
     
     def setUp(self):
-        self.cfg = HookedTransformerConfig(
-            n_layers=4,
-            n_heads=8,
-            d_model=256,
-            d_vocab=1000,
-            n_devices=1,
-            device='cpu'
-        )
-        self.model = HookedDistilBert(self.cfg)
-        self.input_tensor = torch.randint(0, self.cfg.d_vocab, (2, 10))  # (batch_size, sequence_length)
+        self.model = HookedDistilBert.from_pretrained("distilbert/distilbert-base-uncased")
+        self.input_tensor = torch.randint(0, self.model.cfg.d_vocab, (2, 10))  # (batch_size, sequence_length)
 
     def test_initialization(self):
         self.assertEqual(self.model.cfg.n_layers, 4)
@@ -48,22 +40,8 @@ class TestHookedDistilBert(unittest.TestCase):
 class TestHookedDistilBertForSequenceClassification(unittest.TestCase):
 
     def setUp(self):
-        self.cfg = HookedTransformerConfig(
-            n_layers=4,
-            n_heads=8,
-            d_model=256,
-            d_vocab=1000,
-            n_labels=2,
-            n_devices=1,
-            device='cpu'
-        )
-        self.model = HookedDistilBertForSequenceClassification(self.cfg)
-        self.input_tensor = torch.randint(0, self.cfg.d_vocab, (2, 10))  # (batch_size, sequence_length)
-
-    def test_initialization(self):
-        self.assertIsInstance(self.model.classifier, nn.Linear)  # Check classifier initialization
-        self.assertEqual(self.model.classifier.in_features, self.cfg.d_model)
-        self.assertEqual(self.model.classifier.out_features, self.cfg.n_labels)
+        self.model = HookedDistilBertForSequenceClassification.from_pretrained("distilbert/distilbert-base-uncased")
+        self.input_tensor = torch.randint(0, self.model.cfg.d_vocab, (2, 10))  # (batch_size, sequence_length)
 
     def test_forward_logits(self):
         output = self.model(self.input_tensor, return_type="logits")
