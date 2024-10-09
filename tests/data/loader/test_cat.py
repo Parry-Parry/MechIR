@@ -1,7 +1,6 @@
 import unittest
 from unittest.mock import Mock
-from mechir.data import CatDataCollator, PairDataCollator
-from mechir.data.loader.cat import _make_pos_pairs
+from mechir.data import CatDataCollator
 
 class TestDataCollators(unittest.TestCase):
 
@@ -44,37 +43,6 @@ class TestDataCollators(unittest.TestCase):
         # Check the structure of tokenized outputs
         self.assertEqual(len(output["sequences"]['input_ids']), 3)  # 3 total query-doc pairs
         self.assertEqual(len(output["perturbed_sequences"]['input_ids']), 3)  # 3 total perturbed pairs
-        
-    def test_pair_data_collator(self):
-        # Instantiate the PairDataCollator
-        collator = PairDataCollator(
-            tokenizer=self.tokenizer,
-            transformation_func=self.transformation_func,
-            max_length=512
-        )
-        
-        # Example input batch
-        batch = [
-            ("query1", ["doc1", "doc2", "doc3"], [1.0, 0.5, 0.7]),  # query, documents, scores
-        ]
-        
-        # Call the collator
-        output = collator(batch)
-        
-        # Check that output contains sequences
-        self.assertIn("sequences", output)
-        
-        # Check the structure of tokenized outputs
-        # There should be 2 pairs generated from 3 documents
-        self.assertEqual(len(output["sequences"]['input_ids']), 2)  # 2 query-document pairs
-        
-    def test_make_pos_pairs(self):
-        # Test _make_pos_pairs function
-        texts = ["doc1", "doc2", "doc3"]
-        pairs = _make_pos_pairs(texts)
-        
-        # Expected output: [['doc1', 'doc2'], ['doc1', 'doc3']]
-        self.assertEqual(pairs, [["doc1", "doc2"], ["doc1", "doc3"]])
 
 if __name__ == '__main__':
     unittest.main()

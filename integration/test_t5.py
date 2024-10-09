@@ -1,7 +1,7 @@
 import pytest
 import torch
 from transformers import AutoTokenizer
-from your_module import MonoT5  # Adjust the import based on your module structure
+from mechir.modelling.t5 import MonoT5  # Adjust the import based on your module structure
 
 # Constants
 MODEL_NAME = "t5-base"  # Use the appropriate model name
