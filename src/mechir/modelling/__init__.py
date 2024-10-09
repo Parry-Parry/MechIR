@@ -132,3 +132,7 @@ class PatchedModel(ABC):
             layer_head_list : list = [],
     ):  
         raise NotImplementedError("Instantiate a subclass of PatchedModel and implement the __call__ method")
+
+from .cat import Cat
+from .dot import Dot
+from .t5 import MonoT5

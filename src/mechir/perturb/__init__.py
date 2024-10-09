@@ -1,7 +1,7 @@
 # __init__.py
 
 from abc import ABC, abstractmethod
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING
 from ..util import is_ir_axioms_availible
 from transformers.utils import _LazyModule, OptionalDependencyNotAvailable
 

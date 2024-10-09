@@ -48,10 +48,7 @@ from transformer_lens.loading_from_pretrained import (
     MODEL_ALIASES as _MODEL_ALIASES,
     OFFICIAL_MODEL_NAMES as _OFFICIAL_MODEL_NAMES,
     STANFORD_CRFM_CHECKPOINTS,
-    fill_missing_key,
     get_checkpoint_labels,
-    get_checkpoint_value,
-    get_num_params_of_pretrained,
     PYTHIA_V0_CHECKPOINTS,
     PYTHIA_CHECKPOINTS
 )
