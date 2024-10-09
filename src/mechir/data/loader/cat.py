@@ -27,7 +27,7 @@ class CatDataCollator:
             batch_scores.extend(args[0])
         
         batch_perturbed_docs = [self.transformation_func(dx, query=q) for q, dx in zip(batch_queries, batch_docs)]
-        batch_docs, batch_perturbed_docs = zip(*[pad(a, b, self.special_token) for a, b in zip(batch_docs, batch_perturbed_docs)])
+        batch_docs = [pad(a, b, self.special_token) for a, b in zip(batch_docs, batch_perturbed_docs)]
 
         tokenized_sequences = self.tokenizer(
             batch_queries,
@@ -52,48 +52,4 @@ class CatDataCollator:
             "perturbed_sequences": dict(tokenized_perturbed_sequences),
         }
     
-def _make_pos_pairs(texts) -> list:
-    output = []
-    pos = texts[0]
-    for i in range(1, len(texts)):
-        output.append([pos, texts[i]])
-    return output
-    
-class PairDataCollator:
-    def __init__(self, tokenizer, transformation_func : callable, max_length=512, ) -> None:
-        self.tokenizer = tokenizer
-        self.max_length = max_length
-        self.transformation_func = transformation_func
-    
-    def __call__(self, batch) -> dict:
-        batch_queries = []
-        batch_docs = []
-        batch_scores = []
-        for (q, dx, *args) in batch:
-            batch_queries.append(q)
-            batch_document_pairs = _make_pos_pairs(dx)
-            batch_docs.append(batch_document_pairs)
-            if len(args) == 0:
-                continue
-            batch_score_pairs = _make_pos_pairs(args[0])
-            batch_scores.extend(batch_score_pairs)
-            
-        # tokenize each pair with each query
-        texts = []
-        for query, pairs in zip(batch_queries, batch_docs):
-            for pair in pairs:
-                texts.append(f"[CLS] {query} [SEP] {pair[0]} [SEP] {pair[1]}")
-        tokenized_sequences = self.tokenizer(
-            texts,
-            padding=True,
-            truncation=True,
-            max_length=self.max_length,
-            return_tensors="pt",
-            add_special_tokens=True,
-        )
-                
-        return {
-            "sequences": dict(tokenized_sequences),
-        }
-    
-__all__ = ["CatDataCollator", "PairDataCollator"]
+__all__ = ["CatDataCollator"]

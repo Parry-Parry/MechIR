@@ -1,10 +1,23 @@
 def pad(a : str, b : str, tok : str):
-    delta = len(b) - len(a)
-    if delta > 0:
-        a += f'{ tok}'*delta
-    elif delta < 0:
-        b += f'{ tok}'*abs(delta)
-    return a, b
+    a = list(a)
+    b = list(b)
+
+    padded = []
+    i, j = 0, 0
+    while i < len(a) and j < len(b):
+        if a[i] == b[j]:
+            padded.append(a[i])
+            i += 1
+            j += 1
+        else:
+            padded.append(tok)
+            j += 1
+    
+    while j < len(b):
+        padded.append(tok)
+        j += 1
+    
+    return ''.join(padded)
 
 from .cat import __all__ as cat_all
 from .cat import * 
