@@ -197,7 +197,3 @@ class MonoT5(PatchedModel):
         }
 
         return PatchingOutput(self._patch_funcs[patch_type](**patching_kwargs), scores, scores_p)
-
-'''
-RankT5
-'''

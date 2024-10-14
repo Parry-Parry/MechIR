@@ -20,6 +20,7 @@ class FrequencyPerturbation(IndexPerturbation):
         super().__init__(index_location, dataset, contents_accessor, tokeniser, cache_dir)
 
         self.get_freq_terms = {
+            'random' : self._get_random_terms,
             'top_k' : self._get_top_k_freq_terms,
             'max' : self._get_max_freq_terms,
             'min' : self._get_min_freq_terms
@@ -64,4 +65,7 @@ TFPerturbation = partial(FrequencyPerturbation, frequency='tf')
 IDFPerturbation = partial(FrequencyPerturbation, frequency='idf')
 TFIDFPerturbation = partial(FrequencyPerturbation, frequency='tfidf')
 
-__all__ = ['FrequencyPerturbation', 'TFPerturbation', 'IDFPerturbation', 'TFIDFPerturbation']
+TFC1 = partial(TFPerturbation, num_additions=1, loc='end', mode='random')
+TDC = partial(IDFPerturbation, num_additions=1, loc='end', mode='max')
+
+__all__ = ['FrequencyPerturbation', 'TFPerturbation', 'IDFPerturbation', 'TFIDFPerturbation', 'TFC1', 'TDC']
