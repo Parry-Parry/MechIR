@@ -52,6 +52,7 @@ from transformer_lens.loading_from_pretrained import (
     PYTHIA_V0_CHECKPOINTS,
     PYTHIA_CHECKPOINTS
 )
+from . import conversion as conversion
 
 REGISTERED_ARCHITECTURES = {}
 
