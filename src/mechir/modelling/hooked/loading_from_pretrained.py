@@ -63,6 +63,7 @@ REGISTERED_CONVERSIONS = {}
 
 def register_conversion(architecture: str, conversion_fn: callable):
     """Register a weight conversion function for a given architecture."""
+    register_architecture(architecture, conversion_fn)
     REGISTERED_CONVERSIONS[architecture] = conversion_fn
 
 OFFICIAL_MODEL_NAMES = [
