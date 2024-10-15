@@ -52,7 +52,6 @@ from transformer_lens.loading_from_pretrained import (
     PYTHIA_V0_CHECKPOINTS,
     PYTHIA_CHECKPOINTS
 )
-from . import conversion as conversion
 
 REGISTERED_ARCHITECTURES = {}
 
@@ -109,6 +108,7 @@ DEFAULT_MODEL_ALIASES = [
 NEED_REMOTE_CODE_MODELS = (
     * _NEED_REMOTE_CODE_MODELS,
 )
+from . import conversion as conversion
 
 def register_need_remote_code_model_name(model_name: str):
     """Register an official model name."""
