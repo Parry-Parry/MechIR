@@ -39,7 +39,7 @@ class Cat(PatchedModel):
         super().__init__(model_name_or_path, partial(AutoModelForSequenceClassification.from_pretrained, num_labels=num_labels), HookedEncoderForSequenceClassification)
 
         self.num_labels = num_labels
-        self.tokenizer = AutoTokenizer.from_pretrained(model_name_or_path) if tokenizer is None else tokenizer
+        self.tokenizer = AutoTokenizer.from_pretrained(self.model_name_or_path) if tokenizer is None else tokenizer
         self._model_forward = partial(self._model, return_type="logits")
         self._model_run_with_cache = partial(self._model.run_with_cache, return_type="logits")
         self._model_run_with_hooks = partial(self._model.run_with_hooks, return_type="logits")

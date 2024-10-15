@@ -43,7 +43,7 @@ class Dot(PatchedModel):
                  ) -> None:
         super().__init__(model_name_or_path, AutoModel.from_pretrained, get_hooked(model_name_or_path))
 
-        self.tokenizer = AutoTokenizer.from_pretrained(model_name_or_path) if tokenizer is None else tokenizer
+        self.tokenizer = AutoTokenizer.from_pretrained(self.model_name_or_path) if tokenizer is None else tokenizer
         self._model_forward = partial(self._model, return_type="embedding")
         self._model_run_with_cache = partial(self._model.run_with_cache, return_type="embedding")
         self._model_run_with_hooks = partial(self._model.run_with_hooks, return_type="embedding")

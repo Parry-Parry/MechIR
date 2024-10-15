@@ -3,6 +3,7 @@ from typing import Any, Dict, Tuple, Callable
 from jaxtyping import Float
 from transformer_lens import ActivationCache
 import transformer_lens.utils as utils
+from .hooked.loading_from_pretrained import get_official_model_name
 from abc import ABC, abstractmethod
 
 class PatchedModel(ABC):
@@ -13,9 +14,9 @@ class PatchedModel(ABC):
                  ) -> None:
         torch.set_grad_enabled(False)
         self._device = utils.get_device()
-
-        self.__hf_model = model_func(model_name_or_path).eval().to(self._device)
-        self._model = hook_obj.from_pretrained(model_name_or_path, device=self._device, hf_model=self.__hf_model)
+        self.model_name_or_path = get_official_model_name(model_name_or_path)
+        self.__hf_model = model_func(self.model_name_or_path).eval().to(self._device)
+        self._model = hook_obj.from_pretrained(self.model_name_or_path, device=self._device, hf_model=self.__hf_model)
 
         self._model_forward = None
         self._model_run_with_cache = None
