@@ -18,7 +18,7 @@ from transformer_lens.ActivationCache import ActivationCache
 from transformer_lens import HookedEncoder
 from transformer_lens.components import LayerNorm
 from fancy_einsum import einsum
-from .linear import Linear
+from .linear import ClassificationHead, HiddenLinear
 from . import loading_from_pretrained as loading
 
 class ElectraClassificationHead(nn.Module):
@@ -29,22 +29,14 @@ class ElectraClassificationHead(nn.Module):
     def __init__(self, cfg: Union[Dict, HookedTransformerConfig]):
         super().__init__()
         self.cfg = HookedTransformerConfig.unwrap(cfg)
-        self.W = nn.Parameter(torch.empty(self.cfg.d_model, self.cfg.d_model, dtype=self.cfg.dtype))
-        self.b = nn.Parameter(torch.zeros(self.cfg.d_model, dtype=self.cfg.dtype))
-        self.act_fn = nn.GELU()
-        self.ln = LayerNorm(self.cfg)
+        self.dense = HiddenLinear(cfg)
+        self.out_proj = ClassificationHead(cfg)
+        self.activation = nn.GELU()
 
     def forward(self, resid: Float[torch.Tensor, "batch pos d_model"]) -> torch.Tensor:
-        resid = (
-            einsum(
-                "batch pos d_model_in, d_model_out d_model_in -> batch pos d_model_out",
-                resid,
-                self.W,
-            )
-            + self.b
-        )
-        resid = self.act_fn(resid)
-        resid = self.ln(resid)
+        resid = self.dense(resid)
+        resid = self.activation(resid)
+        resid = self.out_proj(resid)
         return resid
 
 class HookedElectraForSequenceClassification(HookedEncoder):

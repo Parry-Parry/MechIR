@@ -16,7 +16,7 @@ from typing_extensions import Literal
 
 from transformer_lens.ActivationCache import ActivationCache
 from transformer_lens import HookedEncoder
-from .linear import Linear
+from .linear import ClassificationHead
 from . import loading_from_pretrained as loading
 
 
@@ -35,7 +35,7 @@ class HookedEncoderForSequenceClassification(HookedEncoder):
     """
 
     def __init__(self, cfg, tokenizer=None, move_to_device=True, **kwargs):
-        self.classifier = Linear(cfg)
+        self.classifier = ClassificationHead(cfg)
         super().__init__(cfg, tokenizer, move_to_device, **kwargs)
         
     @overload
