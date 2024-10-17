@@ -138,9 +138,8 @@ def get_official_model_name(model_name: str):
     model_alias_map = make_model_alias_map()
     official_model_name = model_alias_map.get(model_name.lower(), None)
     if official_model_name is None:
-        raise ValueError(
-            f"{model_name} not found. Valid official model names (excl aliases): {OFFICIAL_MODEL_NAMES}"
-        )
+        logging.warning(f'Could not find official model name for "{model_name}, behaviour may be unpredictable."')
+        return model_name
     return official_model_name
 
 
