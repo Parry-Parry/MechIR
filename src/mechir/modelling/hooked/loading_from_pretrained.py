@@ -63,7 +63,6 @@ REGISTERED_CONVERSIONS = {}
 
 def register_conversion(architecture: str, conversion_fn: callable):
     """Register a weight conversion function for a given architecture."""
-    register_architecture(architecture, conversion_fn)
     REGISTERED_CONVERSIONS[architecture] = conversion_fn
 
 OFFICIAL_MODEL_NAMES = [
@@ -109,6 +108,7 @@ NEED_REMOTE_CODE_MODELS = (
     * _NEED_REMOTE_CODE_MODELS,
 )
 from . import conversion as conversion
+from . import states as states
 
 def register_need_remote_code_model_name(model_name: str):
     """Register an official model name."""
