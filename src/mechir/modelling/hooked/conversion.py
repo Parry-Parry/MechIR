@@ -63,6 +63,7 @@ def convert_distilbert_weights(distilbert, cfg: HookedTransformerConfig, sequenc
     return state_dict
 
 register_conversion("DistilBert", convert_distilbert_weights)
+register_conversion("DistilBertModel", convert_distilbert_weights)
 register_conversion("DistilBertForSequenceClassification", partial(convert_distilbert_weights, sequence_classification=True))
 
 def convert_bert_based_weights(bert, cfg: HookedTransformerConfig, sequence_classification=False, raw=False, model_name : str = 'bert'):
