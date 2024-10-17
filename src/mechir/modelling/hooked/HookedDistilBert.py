@@ -394,8 +394,8 @@ class HookedDistilBertForSequenceClassification(HookedDistilBert):
     """
 
     def __init__(self, cfg, tokenizer=None, move_to_device=True, **kwargs):
-        self.classifier = nn.Linear(cfg.d_model, cfg.n_labels)
         super().__init__(cfg, tokenizer, move_to_device=move_to_device, **kwargs)
+        self.classifier = nn.Linear(cfg.d_model, cfg.n_labels)
 
     @overload
     def forward(

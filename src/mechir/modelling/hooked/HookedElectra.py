@@ -53,8 +53,8 @@ class HookedElectraForSequenceClassification(HookedEncoder):
     """
 
     def __init__(self, cfg, tokenizer=None, move_to_device=True, **kwargs):
-        self.classifier = ElectraClassificationHead(cfg)
         super().__init__(cfg, tokenizer, move_to_device, **kwargs)
+        self.classifier = ElectraClassificationHead(cfg)
         
     @overload
     def forward(
