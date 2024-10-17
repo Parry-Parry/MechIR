@@ -33,7 +33,7 @@ def get_hooked(architecture):
 class Cat(PatchedModel):
     def __init__(self, 
                  model_name_or_path : str,
-                 num_labels : int,
+                 num_labels : int = 2,
                  tokenizer = None,
                  ) -> None:
         super().__init__(model_name_or_path, partial(AutoModelForSequenceClassification.from_pretrained, num_labels=num_labels), HookedEncoderForSequenceClassification)
