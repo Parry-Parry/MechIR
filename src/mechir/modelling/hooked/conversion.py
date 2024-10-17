@@ -117,8 +117,14 @@ def convert_bert_based_weights(bert, cfg: HookedTransformerConfig, sequence_clas
     if not raw:
         if sequence_classification:
             classification_head = bert.classifier
-            state_dict["classifier.W"] = classification_head.weight
-            state_dict["classifier.b"] = classification_head.bias
+            if 'electra' in model_name:
+                state_dict["classifier.W"] = classification_head.dense.weight
+                state_dict["classifier.b"] = classification_head.dense.bias
+                state_dict["classifier.ln.w"] = classification_head.LayerNorm.weight
+                state_dict["classifier.ln.b"] = classification_head.LayerNorm.bias
+            else:
+                state_dict["classifier.W"] = classification_head.weight
+                state_dict["classifier.b"] = classification_head.bias
         else:
             mlm_head = bert.cls.predictions
             state_dict["mlm_head.W"] = mlm_head.transform.dense.weight

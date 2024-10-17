@@ -13,6 +13,7 @@ from .hooked.loading_from_pretrained import get_official_model_name
 from .hooked.HookedDistilBert import HookedDistilBertForSequenceClassification
 from ..util import linear_rank_function, PatchingOutput
 from ..modelling.hooked.HookedEncoderForSequenceClassification import HookedEncoderForSequenceClassification
+from ..modelling.hooked.HookedElectra import HookedElectraForSequenceClassification
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +29,7 @@ def get_hooked(architecture):
     )
     architecture = hf_config.architectures[0]
     if "distilbert" in architecture.lower(): return HookedDistilBertForSequenceClassification
+    if "electra" in architecture.lower(): return HookedElectraForSequenceClassification
     return HookedEncoderForSequenceClassification
 
 class Cat(PatchedModel):
