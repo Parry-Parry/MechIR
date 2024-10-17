@@ -171,19 +171,19 @@ register_architecture("ElectraForPreTraining", BertModel_state_dict)
 register_architecture("ElectraForSequenceClassification", BertForSequenceClassification_state_dict)
 
 def DistilBert_state_dict(hf_config):
-        return {
-        "d_model": hf_config.dim,
-        "d_head": hf_config.dim // hf_config.n_heads,
-        "n_heads": hf_config.n_heads,
-        "d_mlp": hf_config.dim * 4,
-        "n_layers": hf_config.n_layers,
-        "n_ctx": hf_config.max_position_embeddings,
-        "eps": hf_config.layer_norm_eps,
-        "eps": 1e-12,
-        "d_vocab": hf_config.vocab_size,
-        "act_fn": "gelu",
-        "attention_dir": "bidirectional",
-    }
+        cfg_dict = {
+            "d_model": hf_config.dim,
+            "d_head": hf_config.dim // hf_config.n_heads,
+            "n_heads": hf_config.n_heads,
+            "d_mlp": hf_config.hidden_dim,
+            "n_layers": hf_config.n_layers,
+            "n_ctx": hf_config.max_position_embeddings,
+            "eps": 1e-12,
+            "d_vocab": hf_config.vocab_size,
+            "act_fn": hf_config.activation,
+            "attention_dir": "birectional",
+            # dropout, initializer_range, pad_token_id, qa_dropout, seq_classif_dropout, sinusoidal_pos_embds, tie_weights
+        }
 
 register_architecture("DistilBert", DistilBert_state_dict)
 register_architecture("DistilBertModel", DistilBert_state_dict)
