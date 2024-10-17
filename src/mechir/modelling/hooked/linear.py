@@ -14,6 +14,7 @@ from transformer_lens.utilities.addmm import batch_addmm
 
 class ClassificationHead(nn.Module):
     def __init__(self, cfg: Union[Dict, HookedTransformerConfig]):
+        super().__init__()
         self.cfg = HookedTransformerConfig.unwrap(cfg)
         self.W_in = nn.Parameter(torch.empty(self.cfg.d_model, self.cfg.num_labels, dtype=self.cfg.dtype))
         self.b_in = nn.Parameter(torch.zeros(self.cfg.num_labels, dtype=self.cfg.dtype))
@@ -26,6 +27,7 @@ class ClassificationHead(nn.Module):
     
 class HiddenLinear(nn.Module):
     def __init__(self, cfg: Union[Dict, HookedTransformerConfig]):
+        super().__init__()
         self.cfg = HookedTransformerConfig.unwrap(cfg)
         self.W = nn.Parameter(torch.empty(self.cfg.d_model, self.cfg.d_model, dtype=self.cfg.dtype))
         self.b = nn.Parameter(torch.zeros(self.cfg.d_model, dtype=self.cfg.dtype))
