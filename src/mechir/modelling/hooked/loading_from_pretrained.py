@@ -432,6 +432,7 @@ def convert_hf_model_config(model_name: str, **kwargs):
         # If the architecture is registered, we can use the registered config
         cfg_dict = REGISTERED_ARCHITECTURES[architecture](hf_config)
     else:
+        print(REGISTERED_ARCHITECTURES)
         raise NotImplementedError(f"{architecture} is not currently supported.")
     # All of these models use LayerNorm
     cfg_dict["original_architecture"] = architecture
