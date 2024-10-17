@@ -21,7 +21,7 @@ from transformers import (
 )
 
 import transformer_lens.utils as utils
-from transformer_lens.HookedTransformerConfig import HookedTransformerConfig
+from .HookedTransformerConfig import HookedTransformerConfig
 from transformer_lens.pretrained.weight_conversions import (
     convert_bloom_weights,
     convert_coder_weights,
