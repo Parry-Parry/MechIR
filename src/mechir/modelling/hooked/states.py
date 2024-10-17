@@ -171,7 +171,7 @@ register_architecture("ElectraForPreTraining", BertModel_state_dict)
 register_architecture("ElectraForSequenceClassification", BertForSequenceClassification_state_dict)
 
 def DistilBert_state_dict(hf_config):
-        cfg_dict = {
+        return {
             "d_model": hf_config.dim,
             "d_head": hf_config.dim // hf_config.n_heads,
             "n_heads": hf_config.n_heads,
