@@ -37,7 +37,8 @@ class HookedEncoderForSequenceClassification(HookedEncoder):
     def __init__(self, cfg, tokenizer=None, move_to_device=True, **kwargs):
         super().__init__(cfg, tokenizer, move_to_device, **kwargs)
         self.classifier = ClassificationHead(cfg)
-        
+        self.setup()
+
     @overload
     def forward(
         self,
@@ -89,13 +90,13 @@ class HookedEncoderForSequenceClassification(HookedEncoder):
     @overload
     def run_with_cache(
         self, *model_args, return_cache_object: Literal[True] = True, **kwargs
-    ) -> Tuple[Float[torch.Tensor, "batch pos d_vocab"], ActivationCache]:
+    ) -> Tuple[Float[torch.Tensor, "batch n_labels"], ActivationCache]:
         ...
 
     @overload
     def run_with_cache(
         self, *model_args, return_cache_object: Literal[False], **kwargs
-    ) -> Tuple[Float[torch.Tensor, "batch pos d_vocab"], Dict[str, torch.Tensor]]:
+    ) -> Tuple[Float[torch.Tensor, "batch n_labels"], Dict[str, torch.Tensor]]:
         ...
 
     def run_with_cache(
@@ -105,7 +106,7 @@ class HookedEncoderForSequenceClassification(HookedEncoder):
         remove_batch_dim: bool = False,
         **kwargs,
     ) -> Tuple[
-        Float[torch.Tensor, "batch pos d_vocab"],
+        Float[torch.Tensor, "batch n_labels"],
         Union[ActivationCache, Dict[str, torch.Tensor]],
     ]:
         """

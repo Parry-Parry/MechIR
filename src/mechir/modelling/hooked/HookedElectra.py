@@ -16,8 +16,7 @@ from typing_extensions import Literal
 from .HookedTransformerConfig import HookedTransformerConfig
 from transformer_lens.ActivationCache import ActivationCache
 from transformer_lens import HookedEncoder
-from transformer_lens.components import LayerNorm
-from fancy_einsum import einsum
+from transformer_lens.hook_points import HookPoint
 from .linear import ClassificationHead, HiddenLinear
 from . import loading_from_pretrained as loading
 
@@ -33,11 +32,13 @@ class ElectraClassificationHead(nn.Module):
         self.out_proj = ClassificationHead(cfg)
         self.activation = nn.GELU()
 
-    def forward(self, resid: Float[torch.Tensor, "batch pos d_model"]) -> torch.Tensor:
-        resid = self.dense(resid)
-        resid = self.activation(resid)
-        resid = self.out_proj(resid)
-        return resid
+        self.hook_pre = HookPoint()  # [batch, pos, d_mlp]
+        self.hook_post = HookPoint()  # [batch, pos, d_mlp]
+
+    def forward(self, resid: Float[torch.Tensor, "batch d_model"]) -> torch.Tensor:
+        pre_act = self.hook_pre(self.dense(resid))
+        post_act = self.hook_post(self.activation(pre_act))
+        return self.out_proj(post_act)
 
 class HookedElectraForSequenceClassification(HookedEncoder):
     """
@@ -55,6 +56,7 @@ class HookedElectraForSequenceClassification(HookedEncoder):
     def __init__(self, cfg, tokenizer=None, move_to_device=True, **kwargs):
         super().__init__(cfg, tokenizer, move_to_device, **kwargs)
         self.classifier = ElectraClassificationHead(cfg)
+        self.setup()
         
     @overload
     def forward(
@@ -63,7 +65,7 @@ class HookedElectraForSequenceClassification(HookedEncoder):
         return_type: Literal["logits"],
         token_type_ids: Optional[Int[torch.Tensor, "batch pos"]] = None,
         one_zero_attention_mask: Optional[Int[torch.Tensor, "batch pos"]] = None,
-    ) -> Float[torch.Tensor, "batch pos d_vocab"]:
+    ) -> Float[torch.Tensor, "batch n_labels"]:
         ...
 
     @overload
@@ -73,7 +75,7 @@ class HookedElectraForSequenceClassification(HookedEncoder):
         return_type: Literal[None],
         token_type_ids: Optional[Int[torch.Tensor, "batch pos"]] = None,
         one_zero_attention_mask: Optional[Int[torch.Tensor, "batch pos"]] = None,
-    ) -> Optional[Float[torch.Tensor, "batch pos d_vocab"]]:
+    ) -> Optional[Float[torch.Tensor, "batch n_labels"]]:
         ...
 
     def forward(
@@ -82,7 +84,7 @@ class HookedElectraForSequenceClassification(HookedEncoder):
         return_type: Optional[str] = "logits",
         token_type_ids: Optional[Int[torch.Tensor, "batch pos"]] = None,
         one_zero_attention_mask: Optional[Int[torch.Tensor, "batch pos"]] = None,
-    ) -> Optional[Float[torch.Tensor, "batch pos d_vocab"]]:
+    ) -> Optional[Float[torch.Tensor, "batch n_labels"]]:
         """Input must be a batch of tokens. Strings and lists of strings are not yet supported.
 
         return_type Optional[str]: The type of output to return. Can be one of: None (return nothing, don't calculate logits), or 'logits' (return logits).
