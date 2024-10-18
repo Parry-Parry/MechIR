@@ -26,7 +26,7 @@ if TYPE_CHECKING:
         if not is_ir_datasets_availible():
             raise OptionalDependencyNotAvailable()
     except OptionalDependencyNotAvailable:
-        pass
+        raise OptionalDependencyNotAvailable()
     else:
         from .ir_dataset import MechIRDataset
 else:
