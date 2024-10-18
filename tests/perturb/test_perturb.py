@@ -1,4 +1,6 @@
 import unittest
+import pyterrier as pt 
+if not pt.started(): pt.init()
 from mechir.perturb import AbstractPerturbation, IdentityPerturbation, perturbation
 
 class TestAbstractPerturbation(unittest.TestCase):

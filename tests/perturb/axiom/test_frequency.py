@@ -1,6 +1,9 @@
 import unittest
 from unittest.mock import MagicMock, patch
+import pyterrier as pt 
+if not pt.started(): pt.init()
 from mechir.perturb.axiom.frequency import FrequencyPerturbation  
+
 
 class TestFrequencyPerturbation(unittest.TestCase):
 

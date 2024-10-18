@@ -1,6 +1,8 @@
 import unittest
 from unittest.mock import MagicMock, patch
 from collections import Counter
+import pyterrier as pt 
+if not pt.started(): pt.init()
 from mechir.perturb import IndexPerturbation  
 
 class TestIndexPerturbation(unittest.TestCase):
