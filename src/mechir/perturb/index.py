@@ -2,14 +2,14 @@ from . import AbstractPerturbation
 from typing import Union, Optional, NamedTuple, Callable, Sequence, Dict, Any
 from pathlib import Path
 from collections import Counter
-from ir_axioms.backends.pyterrier.util import (
+from ir_axioms.backend.pyterrier.util import (
     Index,
     IndexRef,
     Dataset,
     Tokeniser,
     )
 from ir_axioms.model import TextDocument
-from ir_axioms.backends.pyterrier import TerrierIndexContext
+from ir_axioms.backend.pyterrier import TerrierIndexContext
 
 
 ContentsAccessor = Union[str, Callable[[NamedTuple], str]]
