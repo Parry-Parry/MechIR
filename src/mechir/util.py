@@ -1,6 +1,7 @@
 import torch
 from torch import Tensor
 from types import SimpleNamespace
+import json
 
 class PatchingOutput(SimpleNamespace):
     result: Tensor
@@ -60,3 +61,23 @@ def is_ir_datasets_availible():
         return True
     except ImportError:
         return False
+    
+def activation_cache_to_disk(activation_cache, path):
+    cache_dict = activation_cache.cache_dict
+    has_batch_dim = activation_cache.has_batch_dim
+
+    cache_dict = {k: v.cpu().numpy().tolist() for k,v in cache_dict.items()}
+    out = {
+        "cache_dict": cache_dict,
+        "has_batch_dim": has_batch_dim,
+    }
+    with open(path, "w") as f:
+        json.dump(out, f)
+
+def disk_to_activation_cache(path, model):
+    from transformer_lens import ActivationCache
+    with open(path, "r") as f:
+        data = json.load(f)
+    cache_dict = {k: torch.tensor(v) for k,v in data["cache_dict"].items()}
+    has_batch_dim = data["has_batch_dim"]
+    return ActivationCache(cache_dict, model, has_batch_dim)
