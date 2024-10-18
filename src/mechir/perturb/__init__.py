@@ -48,7 +48,7 @@ if TYPE_CHECKING:
         if not is_ir_axioms_availible():
             raise OptionalDependencyNotAvailable()
     except OptionalDependencyNotAvailable:
-        pass
+        raise OptionalDependencyNotAvailable()
     else:
         from .index import *
         from .axiom import *
