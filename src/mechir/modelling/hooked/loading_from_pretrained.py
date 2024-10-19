@@ -809,6 +809,7 @@ class Config:
     d_mlp: int = 3072
     n_heads: int = 12
     n_layers: int = 12
+    n_labels : int = 2
 
 
 # Returns the configuration parameters of the model as a basic Config dataclass
@@ -829,6 +830,7 @@ def get_basic_config(model_name: str, **kwargs) -> Config:
                 "d_mlp",
                 "n_heads",
                 "n_layers",
+                "n_labels",
             ]
         }
     )
