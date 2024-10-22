@@ -1,9 +1,10 @@
 from pathlib import Path
 from functools import partial
 from typing import Any, Callable, NamedTuple
+import random
 from ..index import IndexPerturbation
 
-class FreqPerturbation(IndexPerturbation):
+class FrequencyPerturbation(IndexPerturbation):
     def __init__(self, 
                  index_location: Any | Path | str, 
                  mode : str = 'max',
@@ -19,6 +20,7 @@ class FreqPerturbation(IndexPerturbation):
         super().__init__(index_location, dataset, contents_accessor, tokeniser, cache_dir)
 
         self.get_freq_terms = {
+            'random' : self._get_random_terms,
             'top_k' : self._get_top_k_freq_terms,
             'max' : self._get_max_freq_terms,
             'min' : self._get_min_freq_terms
@@ -36,6 +38,9 @@ class FreqPerturbation(IndexPerturbation):
         self.target = target
         self.num_additions = num_additions
         self.loc = loc
+    
+    def _get_random_terms(self, text : str) -> list:
+        return random.choices(list(self.get_freq_text(text).keys()), k=self.num_additions)
     
     def _get_top_k_freq_terms(self, text : str) -> dict:  
         freq = self.get_freq_text(text)
@@ -56,6 +61,11 @@ class FreqPerturbation(IndexPerturbation):
         terms = self.get_freq_terms(query if self.target=='query'else document)
         return self._insert_terms(document, terms)
     
-TFPerturbation = partial(FreqPerturbation, frequency='tf')
-IDFPerturbation = partial(FreqPerturbation, frequency='idf')
-TFIDFPerturbation = partial(FreqPerturbation, frequency='tfidf')
+TFPerturbation = partial(FrequencyPerturbation, frequency='tf')
+IDFPerturbation = partial(FrequencyPerturbation, frequency='idf')
+TFIDFPerturbation = partial(FrequencyPerturbation, frequency='tfidf')
+
+TFC1 = partial(TFPerturbation, num_additions=1, loc='end', mode='random')
+TDC = partial(IDFPerturbation, num_additions=1, loc='end', mode='max')
+
+__all__ = ['FrequencyPerturbation', 'TFPerturbation', 'IDFPerturbation', 'TFIDFPerturbation', 'TFC1', 'TDC']

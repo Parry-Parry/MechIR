@@ -1,16 +1,5 @@
-import re
-import shutil 
-import os
-from time import time
-from functools import wraps
 import torch
 from torch import Tensor
-import itertools
-from yaml import load
-try:
-    from yaml import CLoader as Loader
-except ImportError:
-    from yaml import Loader
 from types import SimpleNamespace
 
 class PatchingOutput(SimpleNamespace):
@@ -51,55 +40,103 @@ def seed_everything(seed=42):
     torch.cuda.manual_seed_all(seed)
     torch.backends.cudnn.deterministic = True
 
-def sample(dataset : str, out_file : str, subset : int = 100000):
-    import pandas as pd
-    import ir_datasets as irds
-    dataset = irds.load(dataset)
-    assert dataset.has_docpairs(), "Dataset must have docpairs! Make sure you're not using a test collection"
-    df = pd.DataFrame(dataset.docpairs_iter())
-    assert len(df) > subset, "Subset must be smaller than the dataset!"
-    df = df.sample(n=subset) 
-    df.to_csv(out_file, sep='\t', index=False)
-    return f"Successfully took subset of {dataset} of size {subset} and saved to {out_file}"
+def is_pyterrier_availible():
+    try:
+        import pyterrier as pt
+        return True
+    except ImportError:
+        return False
 
-def index_from_pt(index : str, **kwargs):
-    import pyterrier as pt 
-    if not pt.started(): pt.init()
-    return pt.IterDictIndexer(index, **kwargs)
+def is_ir_axioms_availible():
+    try:
+        import ir_axioms
+        return True
+    except ImportError:
+        return False
 
-def index_from_pisa(index : str, **kwargs):
-    import pyterrier as pt 
-    if not pt.started(): pt.init()
-    from pyterrier_pisa import PisaIndex
-    return PisaIndex(index, text_field='text', **kwargs)
+def is_ir_datasets_availible():
+    try:
+        import ir_datasets
+        return True
+    except ImportError:
+        return False
+    
 
-clean = lambda x : re.sub(r"[^a-zA-Z0-9¿]+", " ", x)
+def load_json(file: str):
+    import json
+    import gzip
+    """
+    Load a JSON or JSONL (optionally compressed with gzip) file.
 
-def batch(iterable, n=1):
-    l = len(iterable)
-    for ndx in range(0, l, n):
-        yield iterable[ndx:min(ndx + n, l)]
+    Parameters:
+    file (str): The path to the file to load.
 
-def concatenate(*lists) -> list:
-    return itertools.chain.from_iterable(lists)
+    Returns:
+    dict or list: The loaded JSON content. Returns a list for JSONL files, 
+                  and a dict for JSON files.
 
-def copy_path(path : str, root : str = '/tmp') -> str:
-    base = os.path.basename(path)
-    new_dir = os.path.join(root, base)
-    if not os.path.isdir(new_dir):
-        new_dir = shutil.copytree(path, os.path.join(root, base))
-    return new_dir
+    Raises:
+    ValueError: If the file extension is not recognized.
+    """
+    if file.endswith(".json"):
+        with open(file, 'r') as f:
+            return json.load(f)
+    elif file.endswith(".jsonl"):
+        with open(file, 'r') as f:
+            return [json.loads(line) for line in f]
+    elif file.endswith(".json.gz"):
+        with gzip.open(file, 'rt') as f:
+            return json.load(f)
+    elif file.endswith(".jsonl.gz"):
+        with gzip.open(file, 'rt') as f:
+            return [json.loads(line) for line in f]
+    else:
+        raise ValueError(f"Unknown file type for {file}")
 
-def load_yaml(path : str) -> dict:
-    return load(open(path), Loader=Loader)
+def save_json(data, file: str):
+    import json
+    import gzip
+    """
+    Save data to a JSON or JSONL file (optionally compressed with gzip).
 
-def timer(f):
-    @wraps(f)
-    def wrap(*args, **kw):
-        ts = time()
-        result = f(*args, **kw)
-        te = time()
-        print('func:%r args:[%r, %r] took: %2.4f sec' % \
-          (f.__name__, args, kw, te-ts))
-        return result
-    return wrap
+    Parameters:
+    data (dict or list): The data to save. Must be a list for JSONL files.
+    file (str): The path to the file to save.
+
+    Raises:
+    ValueError: If the file extension is not recognized.
+    """
+    if file.endswith(".json"):
+        with open(file, 'w') as f:
+            json.dump(data, f)
+    elif file.endswith(".jsonl"):
+        with open(file, 'w') as f:
+            for item in data:
+                f.write(json.dumps(item) + '\n')
+    elif file.endswith(".json.gz"):
+        with gzip.open(file, 'wt') as f:
+            json.dump(data, f)
+    elif file.endswith(".jsonl.gz"):
+        with gzip.open(file, 'wt') as f:
+            for item in data:
+                f.write(json.dumps(item) + '\n')
+    else:
+        raise ValueError(f"Unknown file type for {file}")
+    
+def activation_cache_to_disk(activation_cache, path):
+    cache_dict = activation_cache.cache_dict
+    has_batch_dim = activation_cache.has_batch_dim
+
+    cache_dict = {k: v.cpu().numpy().tolist() for k,v in cache_dict.items()}
+    out = {
+        "cache_dict": cache_dict,
+        "has_batch_dim": has_batch_dim,
+    }
+    save_json(out, path)
+
+def disk_to_activation_cache(path, model):
+    from transformer_lens import ActivationCache
+    data = load_json(path)
+    cache_dict = {k: torch.tensor(v) for k,v in data["cache_dict"].items()}
+    has_batch_dim = data["has_batch_dim"]
+    return ActivationCache(cache_dict, model, has_batch_dim)
