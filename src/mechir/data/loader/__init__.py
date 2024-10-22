@@ -47,4 +47,4 @@ from .dot import *
 from .t5 import __all__ as t5_all
 from .t5 import *
 
-__all__ = cat_all + dot_all + t5_all + ["pad"]
+__all__ = cat_all + dot_all + t5_all + ["pad", "BaseCollator"]
