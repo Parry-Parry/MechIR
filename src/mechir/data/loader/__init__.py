@@ -1,6 +1,5 @@
-def pad(a : str, b : str, tok : str):
-    a = list(a)
-    b = list(b)
+def pad(a : list, b : list, tok : str):
+    assert type(a) == type(b) == list, "Both a and b must be lists"
 
     padded = []
     i, j = 0, 0
@@ -17,7 +16,7 @@ def pad(a : str, b : str, tok : str):
         padded.append(tok)
         j += 1
     
-    return ''.join(padded)
+    return padded
 
 from .cat import __all__ as cat_all
 from .cat import * 
