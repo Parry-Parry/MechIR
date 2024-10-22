@@ -40,13 +40,20 @@ class Dot(PatchedModel):
                  model_name_or_path : str,
                  pooling_type : str = 'cls',
                  tokenizer = None,
+                 special_token: str = "X",
                  ) -> None:
-        super().__init__(model_name_or_path, AutoModel.from_pretrained, get_hooked(model_name_or_path))
+        self.tokenizer = AutoTokenizer.from_pretrained(model_name_or_path) if tokenizer is None else tokenizer
 
-        self.tokenizer = AutoTokenizer.from_pretrained(self.model_name_or_path) if tokenizer is None else tokenizer
-        self._model_forward = partial(self._model, return_type="embedding")
-        self._model_run_with_cache = partial(self._model.run_with_cache, return_type="embedding")
-        self._model_run_with_hooks = partial(self._model.run_with_hooks, return_type="embedding")
+        # Add special pad token before parent init in order to resize token embeddings
+        self.special_token = special_token
+        self.tokenizer.add_special_tokens({"additional_special_tokens": [self.special_token]})
+        self.special_token_id = self.tokenizer.convert_tokens_to_ids(self.special_token)
+
+        super().__init__(model_name_or_path, AutoModel.from_pretrained, get_hooked(model_name_or_path), tokenizer_len=len(self.tokenizer))
+
+        self._model_forward = partial(self._model, return_type="embeddings")
+        self._model_run_with_cache = partial(self._model.run_with_cache, return_type="embeddings")
+        self._model_run_with_hooks = partial(self._model.run_with_hooks, return_type="embeddings")
 
         self._pooling_type = pooling_type
         self._pooling = POOLING[pooling_type]

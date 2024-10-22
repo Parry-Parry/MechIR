@@ -179,7 +179,7 @@ def DistilBert_state_dict(hf_config):
             "n_layers": hf_config.n_layers,
             "n_ctx": hf_config.max_position_embeddings,
             "eps": 1e-12,
-            "d_vocab": hf_config.vocab_size,
+            "d_vocab": hf_config.vocab_size + 1, # hacky fix for special pad token
             "act_fn": hf_config.activation,
             "attention_dir": "birectional",
             # dropout, initializer_range, pad_token_id, qa_dropout, seq_classif_dropout, sinusoidal_pos_embds, tie_weights

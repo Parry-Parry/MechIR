@@ -11,11 +11,17 @@ class PatchedModel(ABC):
                  model_name_or_path : str,
                  model_func : Any,
                  hook_obj : Any,
+                 tokenizer_len : int = 0,
                  ) -> None:
         torch.set_grad_enabled(False)
         self._device = utils.get_device()
         self.model_name_or_path = get_official_model_name(model_name_or_path)
         self.__hf_model = model_func(self.model_name_or_path).eval().to(self._device)
+
+        # Adjust token embeddings if needed
+        if tokenizer_len:
+            self.__hf_model.resize_token_embeddings(tokenizer_len)
+
         self._model = hook_obj.from_pretrained(self.model_name_or_path, device=self._device, hf_model=self.__hf_model)
 
         self._model_forward = None
