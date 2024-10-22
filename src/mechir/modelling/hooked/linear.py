@@ -4,11 +4,9 @@ This module contains all the component :class:`Linear`.
 """
 
 from typing import Dict, Union
-
 import torch
 import torch.nn as nn
 from jaxtyping import Float
-from fancy_einsum import einsum
 from transformer_lens.utilities.addmm import batch_addmm
 from .HookedTransformerConfig import HookedTransformerConfig
 
