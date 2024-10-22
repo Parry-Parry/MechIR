@@ -1,6 +1,6 @@
-from . import pad
+from . import BaseCollator
 
-class DotDataCollator:
+class DotDataCollator(BaseCollator):
     def __init__(self, 
                  tokenizer, 
                  transformation_func : callable,
@@ -9,13 +9,8 @@ class DotDataCollator:
                  d_max_length=200,
                  special_token="X",
                  ) -> None:
-        self.tokenizer = tokenizer
-        self.transformation_func = transformation_func
-        self.q_max_length = q_max_length
-        self.d_max_length = d_max_length
+        super().__init__(tokenizer, transformation_func, q_max_length, d_max_length, special_token)
         self.special_mask = special_mask
-        self.special_token = special_token
-        self.special_token_id = self.tokenizer.convert_tokens_to_ids(self.special_token)
 
     def __call__(self, batch) -> dict:
         batch_queries = []
@@ -27,7 +22,7 @@ class DotDataCollator:
             batch_docs.extend(dx)
 
         batch_perturbed_docs = [self.transformation_func(dx, query=q) for q, dx in zip(batch_queries_cat, batch_docs)]
-        batch_docs = [pad(a, b, self.special_token) for a, b in zip(batch_docs, batch_perturbed_docs)]
+        batch_docs = [self.pad(a, b, self.special_token) for a, b in zip(batch_docs, batch_perturbed_docs)]
 
         tokenized_queries = self.tokenizer(
             batch_queries,
