@@ -144,7 +144,8 @@ class Dot(PatchedModel):
                         one_zero_attention_mask=corrupted_tokens["attention_mask"],
                         fwd_hooks = [(utils.get_act_name("z", layer), hook_fn)],
                     )
-                results[layer, head] = patching_metric(patched_outputs, reps_q, scores, scores_p)
+                batch_output = patching_metric(patched_outputs, reps_q, scores, scores_p) # Size: batch_size
+                results[layer, head] = torch.mean(batch_output) # Take average of batch
                 
         return results
 
@@ -224,4 +225,5 @@ class Dot(PatchedModel):
             'scores_p' : scores_p,
         }
 
-        return PatchingOutput(self._patch_funcs[patch_type](**patching_kwargs), scores, scores_p)
+        patched_output = self._patch_funcs[patch_type](**patching_kwargs)
+        return patched_output #PatchingOutput(output, scores, scores_p)

@@ -19,12 +19,12 @@ def batched_dot_product(a: Tensor, b: Tensor):
         size: batch_size x group_size x vector_dim
     Returns
     -------
-    torch.Tensor: size of (batch_size x group_size)
+    torch.Tensor: size of (batch_size x group_size) # TODO: shouldn't this be just batch_size? (idk what group size is here)
         dot product for each group of vectors
     """
-    if len(b.shape) == 2:
-        return torch.matmul(a, b.transpose(0, 1))
-    return torch.bmm(a,torch.permute(b,[0,2,1])).squeeze(1)
+    # if len(b.shape) == 2:
+    #     return torch.matmul(a, b.transpose(0, 1))
+    return (a * b).sum(dim=1) #torch.bmm(a,torch.permute(b,[0,2,1])).squeeze(1)
 
 def linear_rank_function(patch_score : Tensor, score : Tensor, score_p : Tensor):
     return (patch_score - score) / (score_p - score)
