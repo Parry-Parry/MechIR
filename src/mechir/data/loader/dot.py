@@ -1,4 +1,4 @@
-from . import BaseCollator, pad_tokenized
+from . import BaseCollator, pad
 
 class DotDataCollator(BaseCollator):
     def __init__(self, 
@@ -28,18 +28,54 @@ class DotDataCollator(BaseCollator):
             assert len(doc_a) < len(doc_b), "Perturbed document should be longer than original for prepend perturbation."
             doc_a = [self.special_token] * (len(doc_b) - len(doc_a)) + doc_a
         elif self.perturb_type == "replace":
-            pass
+            if len(doc_a) == len(doc_b):
+                pass # no padding needed
+            else:
+                padded_a, padded_b = [], []
+                idx_a, idx_b = 0, 0
+                while idx_a < len(doc_a) and idx_b < len(doc_b):
+                    if doc_a[idx_a] == doc_b[idx_b]:
+                        padded_a.append(doc_a[idx_a])
+                        padded_b.append(doc_b[idx_b])
+                        idx_a += 1
+                        idx_b += 1
+                    else:
+                        padded_a.append(doc_a[idx_a])
+                        padded_b.append(doc_b[idx_b])
+                        idx_a += 1
+                        idx_b += 1
+
+                        if len(doc_a) < len(doc_b):
+                        # Replaced term is shorter in length than the term it was replaced with
+                            while idx_b < len(doc_b) and (idx_a >= len(doc_a) or doc_b[idx_b] != doc_a[idx_a]):
+                                padded_a.append(self.special_token)
+                                padded_b.append(doc_b[idx_b])
+                                idx_b += 1
+                        if len(doc_a) > len(doc_b):
+                        # Replaced term is longer than the term it was replaced with
+                            while idx_a < len(doc_a) and (idx_b >= len(doc_b) or doc_b[idx_b] != doc_a[idx_a]):
+                                padded_a.append(doc_a[idx_a])
+                                padded_b.append(self.special_token)
+                                idx_a += 1
+
+                doc_a, doc_b = padded_a, padded_b
+
         elif self.perturb_type == "inject":
             pass
 
         assert len(doc_a) == len(doc_b), "Failed to pad input pairs, mismatch in document lengths post-padding."
-        return self.tokenizer.convert_tokens_to_string(doc_a)
+        return self.tokenizer.convert_tokens_to_string(doc_a), self.tokenizer.convert_tokens_to_string(doc_b)
 
 
     def __call__(self, batch) -> dict:
         batch_perturbed_docs = [self.transformation_func(doc, query=query) for query, doc in batch]
         batch_og_docs = [doc for _, doc in batch]
-        batch_docs = [self.pad_by_perturb_type(doc_a, doc_b) for doc_a, doc_b in zip(batch_og_docs, batch_perturbed_docs)]
+        # batch_docs = [self.pad_by_perturb_type(doc_a, doc_b) for doc_a, doc_b in zip(batch_og_docs, batch_perturbed_docs)]
+        batch_padded_docs, batch_padded_perturbed_docs = [], []
+        for doc_a, doc_b in zip(batch_og_docs, batch_perturbed_docs):
+            padded_a, padded_b = self.pad_by_perturb_type(doc_a, doc_b)
+            batch_padded_docs.append(padded_a)
+            batch_padded_perturbed_docs.append(padded_b)
 
         tokenized_queries = self.tokenizer(
             [query for query, _ in batch],
@@ -50,7 +86,7 @@ class DotDataCollator(BaseCollator):
             return_special_tokens_mask=self.special_mask,
         )
         tokenized_docs = self.tokenizer(
-            batch_docs,
+            batch_padded_docs,
             padding=True,
             truncation=False,
             max_length=self.d_max_length,
@@ -59,7 +95,7 @@ class DotDataCollator(BaseCollator):
         )
 
         tokenized_perturbed_docs = self.tokenizer(
-            batch_perturbed_docs,
+            batch_padded_perturbed_docs,
             padding=True,
             truncation=False,
             max_length=self.d_max_length,
