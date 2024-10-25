@@ -60,8 +60,10 @@ def pad_tokenized(
 
         if len(a_tokens) == len(b_tokens):
             # No padding needed
-            a_padded_tokens, b_padded_tokens = a_tokens, b_tokens
-            a_padded_attn_mask, b_padded_attn_mask = a_mask, b_mask
+            a_padded_tokens.append(a_tokens)
+            b_padded_tokens.append(b_tokens)
+            a_padded_attn_mask.append(a_mask)
+            b_padded_attn_mask.append(b_mask)
         else:
             # Determine where to pad
             idx_a, idx_b = 0, 0
