@@ -5,6 +5,7 @@ from transformer_lens import ActivationCache
 import transformer_lens.utils as utils
 from .hooked.loading_from_pretrained import get_official_model_name
 from abc import ABC, abstractmethod
+from transformer_lens.hook_points import HookPoint
 
 class PatchedModel(ABC):
     def __init__(self,
@@ -54,10 +55,11 @@ class PatchedModel(ABC):
 
 
     def _patch_residual_component(
+        self,
         corrupted_component: Float[torch.Tensor, "batch pos d_model"],
-        hook,
-        pos,
-        clean_cache,
+        hook : HookPoint,
+        pos : int,
+        clean_cache : ActivationCache,
     ):
         '''
         Patches a given sequence position in the residual stream, using the value
@@ -67,6 +69,7 @@ class PatchedModel(ABC):
         return corrupted_component
 
     def _patch_head_vector(
+        self,
         corrupted_head_vector: Float[torch.Tensor, "batch pos head_index d_head"],
         hook, #: HookPoint, 
         head_index: int, 
@@ -83,6 +86,7 @@ class PatchedModel(ABC):
 
     
     def _patch_head_vector_by_pos_pattern(
+        self,
         corrupted_activation: Float[torch.Tensor, "batch pos head_index pos_q pos_k"],
         hook, #: HookPoint, 
         pos,
@@ -95,6 +99,7 @@ class PatchedModel(ABC):
     
 
     def _patch_head_vector_by_pos(
+        self,
         corrupted_activation: Float[torch.Tensor, "batch pos head_index d_head"],
         hook, #: HookPoint, 
         pos,
