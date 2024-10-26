@@ -96,3 +96,5 @@ def plot_components(
         plt.close()
 
     return plt.gcf()
+
+__all__ = ["plot_blocks", "plot_components"]
