@@ -2,10 +2,10 @@ from . import AbstractPerturbation
 from typing import Union, Optional, NamedTuple, Callable, Sequence, Dict, Any
 from pathlib import Path
 from collections import Counter
+from ir_datasets import Dataset
 from ir_axioms.backend.pyterrier.util import (
     Index,
     IndexRef,
-    Dataset,
     Tokeniser,
     )
 from ir_axioms.model import TextDocument
