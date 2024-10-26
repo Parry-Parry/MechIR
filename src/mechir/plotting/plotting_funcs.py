@@ -71,7 +71,6 @@ def plot_components(
         vmax=1,
         xticklabels=True,
         yticklabels=True,
-        annot=True,
         fmt=".2f",
         annot_kws={"size": 8},
         annot=False
