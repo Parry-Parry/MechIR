@@ -5,7 +5,7 @@ class CatDataCollator(BaseCollator):
                  tokenizer,
                  transformation_func : callable,
                  q_max_length=30,
-                 d_max_length=200,
+                 d_max_length=300,
                  special_token="X",
                  ) -> None:
         super().__init__(tokenizer, transformation_func, q_max_length, d_max_length, special_token)
@@ -27,8 +27,8 @@ class CatDataCollator(BaseCollator):
         tokenized_sequences = self.tokenizer(
             batch_queries,
             batch_docs,
-            padding=True,
-            truncation=False,
+            padding='max_length',
+            truncation=True,
             max_length=self.q_max_length + self.d_max_length,
             return_tensors="pt",
         )
@@ -36,8 +36,8 @@ class CatDataCollator(BaseCollator):
         tokenized_perturbed_sequences = self.tokenizer(
             batch_queries,
             batch_perturbed_docs,
-            padding=True,
-            truncation=False,
+            padding='max_length',
+            truncation=True,
             max_length=self.q_max_length + self.d_max_length,
             return_tensors="pt",
         )
