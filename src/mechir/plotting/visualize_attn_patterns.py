@@ -33,20 +33,21 @@ __all__ = ["plot_attn_for_doc", "load_doc"]
 
 ###################### Start page #########################
 
-st.markdown("# Visualize Attention Patterns")
+if __name__ == "__main__":
+    st.markdown("# Visualize Attention Patterns")
 
 
-# Minimal example on how to visualize attention patterns for a single document
+    # Minimal example on how to visualize attention patterns for a single document
 
-# (1) Load attention pattern
-attn_pattern_fname = "" # FILL IN WITH THE PATH TO THE ATTENTION PATTERN FILE
-data = np.load(attn_pattern_fname)
+    # (1) Load attention pattern
+    attn_pattern_fname = "" # FILL IN WITH THE PATH TO THE ATTENTION PATTERN FILE
+    data = np.load(attn_pattern_fname)
 
-# (2) Load document text
-doc_fname = "" # FILL IN WITH THE PATH TO YOUR FILE
-doc_tokens = load_doc(doc_fname)
+    # (2) Load document text
+    doc_fname = "" # FILL IN WITH THE PATH TO YOUR FILE
+    doc_tokens = load_doc(doc_fname)
 
-# (3) Plot
-fig = plot_attn_for_doc(data, doc_tokens)
-st.plotly_chart(fig)
+    # (3) Plot
+    fig = plot_attn_for_doc(data, doc_tokens)
+    st.plotly_chart(fig)
 
