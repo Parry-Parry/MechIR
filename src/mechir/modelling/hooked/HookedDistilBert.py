@@ -20,7 +20,7 @@ from transformer_lens.components import BertBlock, BertEmbed, BertMLMHead, Unemb
 from transformer_lens.hook_points import HookedRootModule, HookPoint
 from transformer_lens.utilities import devices
 from . import loading_from_pretrained as loading
-from hooked_components import DistilBertEmbed
+from .hooked_components import DistilBertEmbed
 
 class HookedDistilBert(HookedRootModule):
     def __init__(self, cfg, tokenizer=None, move_to_device=True, **kwargs):
