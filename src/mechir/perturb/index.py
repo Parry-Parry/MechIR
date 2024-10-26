@@ -34,23 +34,23 @@ class IndexPerturbation(AbstractPerturbation):
     def get_terms(self, text : str) -> Sequence[str]:
         return self.context.terms(TextDocument(text))
     
-    def get_counts(self, text : str) -> Dict[int]:
+    def get_counts(self, text : str) -> Dict[str, int]:
         return Counter(self.get_terms(text))
     
-    def get_tf(self, term : str, text : str):
+    def get_tf(self, term : str, text : str) -> int:
         return self.context.term_frequency(TextDocument(text), term)
 
-    def get_tf_text(self, text : str):
+    def get_tf_text(self, text : str) -> Dict[str, int]:
         return {term : self.get_tf(term, text) for term in self.get_terms(text)}
 
-    def get_idf(self, term : str, text : str):
+    def get_idf(self, term : str, text : str) -> float:
         return self.context.inverse_document_frequency(term)
 
-    def get_idf_text(self, text : str):
+    def get_idf_text(self, text : str) -> Dict[str, float]:
         return {term : self.get_idf(term, text) for term in self.get_terms(text)}
 
-    def get_tfidf(self, term : str, text : str):
+    def get_tfidf(self, term : str, text : str) -> float:
         return self.get_tf(term, text) * self.get_idf(term, text)
     
-    def get_tfidf_text(self, text : str):
+    def get_tfidf_text(self, text : str) -> Dict[str, float]:
         return {term : self.get_tfidf(term, text) for term in self.get_terms(text)}
