@@ -28,7 +28,7 @@ class CatDataCollator(BaseCollator):
             batch_queries,
             batch_docs,
             padding='max_length',
-            truncation=True,
+            truncation=False,
             max_length=self.q_max_length + self.d_max_length,
             return_tensors="pt",
         )
@@ -37,7 +37,7 @@ class CatDataCollator(BaseCollator):
             batch_queries,
             batch_perturbed_docs,
             padding='max_length',
-            truncation=True,
+            truncation=False,
             max_length=self.q_max_length + self.d_max_length,
             return_tensors="pt",
         )
