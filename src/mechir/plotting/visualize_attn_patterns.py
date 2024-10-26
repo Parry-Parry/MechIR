@@ -27,6 +27,8 @@ def plot_attn_for_doc(attn_pattern, doc_tokens):
 
     return fig
 
+__all__ = ["plot_attn_for_doc", "load_doc"]
+
 
 
 ###################### Start page #########################
