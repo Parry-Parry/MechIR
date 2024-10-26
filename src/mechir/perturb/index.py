@@ -54,3 +54,5 @@ class IndexPerturbation(AbstractPerturbation):
     
     def get_tfidf_text(self, text : str) -> Dict[str, float]:
         return {term : self.get_tfidf(term, text) for term in self.get_terms(text)}
+    
+__all__ = ["IndexPerturbation"]
