@@ -11,7 +11,7 @@ import transformer_lens.utils as utils
 from . import PatchedModel
 from .hooked.HookedDistilBert import HookedDistilBert
 from .hooked.loading_from_pretrained import get_official_model_name
-from ..util import batched_dot_product, linear_rank_function, PatchingOutput
+from ..util import batched_dot_product, linear_rank_function
 
 logger = logging.getLogger(__name__)
 

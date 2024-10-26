@@ -11,7 +11,7 @@ import transformer_lens.utils as utils
 from . import PatchedModel
 from .hooked.loading_from_pretrained import get_official_model_name
 from .hooked.HookedDistilBert import HookedDistilBertForSequenceClassification
-from ..util import linear_rank_function, PatchingOutput
+from ..util import linear_rank_function
 from ..modelling.hooked.HookedEncoderForSequenceClassification import HookedEncoderForSequenceClassification
 from ..modelling.hooked.HookedElectra import HookedElectraForSequenceClassification
 
@@ -37,11 +37,17 @@ class Cat(PatchedModel):
                  model_name_or_path : str,
                  num_labels : int = 2,
                  tokenizer = None,
+                 special_token: str = "X",
                  ) -> None:
-        super().__init__(model_name_or_path, partial(AutoModelForSequenceClassification.from_pretrained, num_labels=num_labels), HookedEncoderForSequenceClassification)
 
         self.num_labels = num_labels
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_name_or_path) if tokenizer is None else tokenizer
+        
+        self.special_token = special_token
+        self.tokenizer.add_special_tokens({"additional_special_tokens": [self.special_token]})
+        self.special_token_id = self.tokenizer.convert_tokens_to_ids(self.special_token)
+
+        super().__init__(model_name_or_path, partial(AutoModelForSequenceClassification.from_pretrained, num_labels=num_labels), get_hooked(model_name_or_path), tokenizer_len=len(self.tokenizer))
         self._model_forward = partial(self._model, return_type="logits")
         self._model_run_with_cache = partial(self._model.run_with_cache, return_type="logits")
         self._model_run_with_hooks = partial(self._model.run_with_hooks, return_type="logits")
@@ -201,5 +207,5 @@ class Cat(PatchedModel):
             'scores' : scores,
             'scores_p' : scores_p,
         }
-
-        return PatchingOutput(self._patch_funcs[patch_type](**patching_kwargs), scores, scores_p)
+        patched_output = self._patch_funcs[patch_type](**patching_kwargs)
+        return patched_output

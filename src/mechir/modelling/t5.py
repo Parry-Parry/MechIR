@@ -8,7 +8,7 @@ from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
 from transformer_lens import HookedEncoderDecoder, ActivationCache
 import transformer_lens.utils as utils
 from . import PatchedModel
-from ..util import linear_rank_function, PatchingOutput
+from ..util import linear_rank_function
 
 logger = logging.getLogger(__name__)
 
@@ -26,14 +26,21 @@ class MonoT5(PatchedModel):
                  model_name_or_path : str,
                  pos_token : str = "true",
                  neg_token : str = "false",
-                 tokenizer = None,
+                 special_token: str = "X",
                  ) -> None:
-        super().__init__(model_name_or_path, AutoModelForSeq2SeqLM.from_pretrained, HookedEncoderDecoder)
+        self.tokenizer = AutoTokenizer.from_pretrained(self.model_name_or_path) 
+        
+        self.special_token = special_token
+        self.tokenizer.add_special_tokens({"additional_special_tokens": [self.special_token]})
+        self.special_token_id = self.tokenizer.convert_tokens_to_ids(self.special_token)
 
-        tokenizer = AutoTokenizer.from_pretrained(self.model_name_or_path) if tokenizer is None else tokenizer
+        self.pos_token = self.tokenizer.encode(pos_token, return_tensors="pt")[0]
+        self.neg_token = self.tokenizer.encode(neg_token, return_tensors="pt")[0]
 
-        self.pos_token = tokenizer.encode(pos_token, return_tensors="pt")[0]
-        self.neg_token = tokenizer.encode(neg_token, return_tensors="pt")[0]
+        super().__init__(model_name_or_path, AutoModelForSeq2SeqLM.from_pretrained, HookedEncoderDecoder, tokenizer_len=len(self.tokenizer))
+        self._model_forward = partial(self._model, return_type="logits")
+        self._model_run_with_cache = partial(self._model.run_with_cache, return_type="logits")
+        self._model_run_with_hooks = partial(self._model.run_with_hooks, return_type="logits")
 
         self._model_forward = partial(self._model, return_type="logits")
         self._model_run_with_cache = partial(self._model.run_with_cache, return_type="logits")
@@ -195,5 +202,5 @@ class MonoT5(PatchedModel):
             'scores' : scores,
             'scores_p' : scores_p,
         }
-
-        return PatchingOutput(self._patch_funcs[patch_type](**patching_kwargs), scores, scores_p)
+        patched_output = self._patch_funcs[patch_type](**patching_kwargs)
+        return patched_output
