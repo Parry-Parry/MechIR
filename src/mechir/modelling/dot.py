@@ -6,10 +6,11 @@ import torch
 from tqdm import tqdm
 from jaxtyping import Float
 from transformers import AutoModel, AutoTokenizer, AutoConfig
-from transformer_lens import HookedEncoder, ActivationCache
+from transformer_lens import ActivationCache
 import transformer_lens.utils as utils
 from . import PatchedModel
 from .hooked.HookedDistilBert import HookedDistilBert
+from .hooked.HookedEncoder import HookedEncoder
 from .hooked.loading_from_pretrained import get_official_model_name
 from ..util import batched_dot_product, linear_rank_function
 
