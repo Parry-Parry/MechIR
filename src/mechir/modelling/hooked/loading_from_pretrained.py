@@ -22,7 +22,7 @@ from transformers import (
 
 import transformer_lens.utils as utils
 from .HookedTransformerConfig import HookedTransformerConfig
-from ... import CONFIG
+from ... import config
 from transformer_lens.pretrained.weight_conversions import (
     convert_bloom_weights,
     convert_coder_weights,
@@ -138,7 +138,7 @@ def get_official_model_name(model_name: str):
         return model_name
     model_alias_map = make_model_alias_map()
     official_model_name = model_alias_map.get(model_name.lower(), None)
-    if official_model_name is None and CONFIG['ignore-official']:
+    if official_model_name is None and config['ignore-official']:
         logging.warning(f'Could not find official model name for "{model_name}, behaviour may be unpredictable."')
         return model_name
     elif official_model_name is None:
