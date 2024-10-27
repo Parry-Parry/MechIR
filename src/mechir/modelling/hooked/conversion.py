@@ -210,5 +210,5 @@ register_conversion("BertModel", partial(convert_bert_weights, raw=True))
 register_conversion("BertForMaskedLM", partial(convert_bert_weights, raw=True))
 register_conversion("BertForSequenceClassification", partial(convert_bert_weights, sequence_classification=True))
 
-register_conversion("ElectraModel",  partial(convert_bert_based_weights, model_name='electra'))
+register_conversion("ElectraModel",  partial(convert_bert_based_weights, model_name='electra', raw=True))
 register_conversion("ElectraForSequenceClassification", partial(convert_bert_based_weights, sequence_classification=True, model_name='electra'))
