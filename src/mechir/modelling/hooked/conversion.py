@@ -206,8 +206,8 @@ def convert_bert_weights(bert, cfg: HookedTransformerConfig, sequence_classifica
 
     return state_dict
 
-register_conversion("BertModel", convert_bert_weights)
-register_conversion("BertForMaskedLM", convert_bert_weights)
+register_conversion("BertModel", partial(convert_bert_weights, raw=True))
+register_conversion("BertForMaskedLM", partial(convert_bert_weights, raw=True))
 register_conversion("BertForSequenceClassification", partial(convert_bert_weights, sequence_classification=True))
 
 register_conversion("ElectraModel",  partial(convert_bert_based_weights, model_name='electra'))

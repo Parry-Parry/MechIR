@@ -15,10 +15,9 @@ from torch import nn
 from typing_extensions import Literal
 
 from transformer_lens.ActivationCache import ActivationCache
-from transformer_lens import HookedEncoder
+from .HookedEncoder import HookedEncoder
 from .linear import ClassificationHead
 from . import loading_from_pretrained as loading
-
 
 
 class HookedEncoderForSequenceClassification(HookedEncoder):
