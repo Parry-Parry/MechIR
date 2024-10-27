@@ -6,6 +6,7 @@ from mechir.peturb.axiom import TFC1, TDC
 DL19 = r"msmarco-passage/trec-dl-2019/judged"
 DL20 = r"msmarco-passage/trec-dl-2020/judged"
 MSMARCO = r"msmarco-passage/train/triples-small"
+MSMARCO_TERRIER = r"msmarco_passage"
 
 def load_bi(model_name_or_path : str, batch_size : int = 256):
     from rankers import DotTransformer
@@ -15,7 +16,7 @@ def load_cross(model_name_or_path : str, batch_size : int = 256):
     from rankers import CatTransformer
     return CatTransformer.from_pretrained(model_name_or_path, batch_size=batch_size)
 
-def topk(model_name_or_path : str, model_type : str, out_path : str, index_path : str, k : int = 1000, batch_size : int = 256, perturbation_type : str = 'TFC1', max_rel : int = 3):
+def topk(model_name_or_path : str, model_type : str, out_path : str, index_location : str = None, k : int = 1000, batch_size : int = 256, perturbation_type : str = 'TFC1', max_rel : int = 3):
     if model_type == "bi":
         model = load_bi(model_name_or_path, batch_size)
     elif model_type == "cross":
@@ -25,10 +26,13 @@ def topk(model_name_or_path : str, model_type : str, out_path : str, index_path 
     
     MARCO = irds.load(MSMARCO)
 
+    if index_location is None:
+        index_location = pt.get_dataset(MSMARCO_TERRIER).get_index("terrier_stemmed_text")
+
     if perturbation_type == 'TFC1':
-        perturbation = TFC1(index_location=index_path, dataset=MARCO)
+        perturbation = TFC1(index_location=index_location, dataset=MARCO)
     elif perturbation_type == 'TDC':
-        perturbation = TDC(index_location=index_path, dataset=MARCO)
+        perturbation = TDC(index_location=index_location, dataset=MARCO)
     else:
         raise ValueError("perturbation must be either 'TFC1' or 'TDC'")
     
