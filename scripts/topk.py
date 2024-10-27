@@ -4,7 +4,7 @@ import pandas as pd
 import pyterrier as pt
 if not pt.started():
     pt.init()
-from mechir.perturb.axiom import TFC1, TDC
+from mechir.perturb import TFC1, TDC
 from tqdm import tqdm
 
 DL19 = r"msmarco-passage/trec-dl-2019/judged"
