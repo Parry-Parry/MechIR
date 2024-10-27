@@ -1,7 +1,7 @@
 from fire import Fire 
 import ir_datasets as irds
 import pandas as pd
-from mechir.peturb.axiom import TFC1, TDC
+from mechir.perturb.axiom import TFC1, TDC
 from tqdm import tqdm
 
 DL19 = r"msmarco-passage/trec-dl-2019/judged"
