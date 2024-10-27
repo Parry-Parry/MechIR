@@ -39,9 +39,8 @@ class Cat(PatchedModel):
                  tokenizer = None,
                  special_token: str = "X",
                  ) -> None:
-
         self.num_labels = num_labels
-        self.tokenizer = AutoTokenizer.from_pretrained(self.model_name_or_path) if tokenizer is None else tokenizer
+        self.tokenizer = AutoTokenizer.from_pretrained(model_name_or_path) if tokenizer is None else tokenizer
         
         self.special_token = special_token
         self.tokenizer.add_special_tokens({"additional_special_tokens": [self.special_token]})
