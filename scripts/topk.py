@@ -2,6 +2,7 @@ from fire import Fire
 import ir_datasets as irds
 import pandas as pd
 from mechir.peturb.axiom import TFC1, TDC
+from tqdm import tqdm
 
 DL19 = r"msmarco-passage/trec-dl-2019/judged"
 DL20 = r"msmarco-passage/trec-dl-2020/judged"
@@ -54,7 +55,7 @@ def topk(model_name_or_path : str, model_type : str, out_path : str, index_locat
             'perturbed': [],
         }
 
-        for row in df.itertuples():
+        for row in tqdm(df.itertuples(), desc="Converting to TREC format"):
             output['qid'].append(row.query_id)
             output['query'].append(queries[row.query_id])
             output['docno'].append(row.doc_id)
@@ -71,7 +72,7 @@ def topk(model_name_or_path : str, model_type : str, out_path : str, index_locat
             'perturbed': [],
         }
 
-        for row in df.itertuples():
+        for row in tqdm(df.itertuples(), desc="Perturbing TREC format"):
             output['qid'].append(row.query_id)
             output['query'].append(queries[row.query_id])
             output['docno'].append(row.doc_id)
