@@ -10,11 +10,11 @@ MSMARCO_TERRIER = r"msmarco_passage"
 
 def load_bi(model_name_or_path : str, batch_size : int = 256):
     from rankers import DotTransformer
-    return DotTransformer.from_pretrained(model_name_or_path, batch_size=batch_size)
+    return DotTransformer.from_pretrained(model_name_or_path, batch_size=batch_size, verbose=True)
 
 def load_cross(model_name_or_path : str, batch_size : int = 256):
     from rankers import CatTransformer
-    return CatTransformer.from_pretrained(model_name_or_path, batch_size=batch_size)
+    return CatTransformer.from_pretrained(model_name_or_path, batch_size=batch_size, verbose=True)
 
 def topk(model_name_or_path : str, model_type : str, out_path : str, index_location : str = None, k : int = 1000, batch_size : int = 256, perturbation_type : str = 'TFC1', max_rel : int = 3):
     if model_type == "bi":
