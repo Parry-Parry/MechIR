@@ -17,7 +17,7 @@ from torch import nn
 from transformers import AutoTokenizer
 from typing_extensions import Literal
 
-import .loading_from_pretrained as loading
+from . import loading_from_pretrained as loading
 from transformer_lens.ActivationCache import ActivationCache
 from transformer_lens.components import BertBlock, BertEmbed, BertMLMHead, Unembed
 from transformer_lens.FactoredMatrix import FactoredMatrix
