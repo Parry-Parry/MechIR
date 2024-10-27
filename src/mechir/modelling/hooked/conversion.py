@@ -140,6 +140,7 @@ def convert_bert_based_weights(bert, cfg: HookedTransformerConfig, sequence_clas
     return state_dict
 
 def convert_bert_weights(bert, cfg: HookedTransformerConfig, sequence_classification=False, raw=False):
+    print(dir(bert))
     embeddings = bert.bert.embeddings if not raw else bert.embeddings
     state_dict = {
         "embed.embed.W_E": embeddings.word_embeddings.weight,
