@@ -27,6 +27,7 @@ def load_cross(model_name_or_path : str):
 def process_frame(frame):
     frame_normal = frame[~frame.perturbed]
     frame_perturbed = frame[frame.perturbed]
+    print(len(frame_perturbed))
 
     lookup = {qid : defaultdict(dict) for qid in frame_normal.qid.unique()}
     for row in frame_normal.itertuples():
