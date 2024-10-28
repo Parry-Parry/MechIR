@@ -20,7 +20,7 @@ class CatDataCollator(BaseCollator):
         tokenized_sequences = self.tokenizer(
             batch_queries,
             batch_docs,
-            padding=True,
+            padding="max_length",
             truncation=False,
             max_length=self.q_max_length + self.d_max_length,
             return_tensors="pt",
@@ -29,7 +29,7 @@ class CatDataCollator(BaseCollator):
         tokenized_perturbed_sequences = self.tokenizer(
             batch_queries,
             batch_perturbed_docs,
-            padding=True,
+            padding="max_length",
             truncation=False,
             max_length=self.q_max_length + self.d_max_length,
             return_tensors="pt",
