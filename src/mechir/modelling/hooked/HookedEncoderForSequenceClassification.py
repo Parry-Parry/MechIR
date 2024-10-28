@@ -42,7 +42,7 @@ class HookedEncoderForSequenceClassification(HookedEncoder):
     def forward(
         self,
         input: Int[torch.Tensor, "batch pos"],
-        return_type: Literal["logits"],
+        return_type: Literal["embeddings"],
         token_type_ids: Optional[Int[torch.Tensor, "batch pos"]] = None,
         one_zero_attention_mask: Optional[Int[torch.Tensor, "batch pos"]] = None,
     ) -> Float[torch.Tensor, "batch pos d_vocab"]:
