@@ -9,6 +9,8 @@ class MechIRDataset(Dataset):
                  lazy_load_docs : bool = False,
                  text_field : str = "text",
                  query_field : str = "text",
+                 perturbed_field : str = "perturbed",
+                 pre_perturbed : bool = False,
                  ) -> None:
         super().__init__()
         self.ir_dataset = irds.load(ir_dataset)
@@ -19,6 +21,8 @@ class MechIRDataset(Dataset):
         self.lazy_load_docs = lazy_load_docs
         self._text_field = text_field
         self._query_field = query_field
+        self._perturbed_field = perturbed_field
+        self.pre_perturbed = pre_perturbed
         if self.lazy_load_docs: self.docs = self.ir_dataset.docs_store()
         else: self.docs = pd.DataFrame(self.ir_dataset.docs_iter()).set_index("doc_id")[self._text_field].to_dict()
         self.queries = pd.DataFrame(self.ir_dataset.queries_iter()).set_index("query_id")[self._query_field].to_dict()
@@ -35,6 +39,8 @@ class MechIRDataset(Dataset):
 
     def __getitem__(self, idx):
         item = self.pairs.iloc[idx]
+        if self.pre_perturbed:
+            return self._get_query(item['query_id']), self._get_doc(item['doc_id']), item[self._perturbed_field]
         return self._get_query(item['query_id']), self._get_doc(item['doc_id'])
 
 __all__ = ["MechIRDataset"]
