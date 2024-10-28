@@ -67,6 +67,7 @@ def patch(model_name_or_path : str, model_type : str, in_file : str, out_path : 
     queries.update(pd.DataFrame(DL20_dataset.queries_iter()).set_index("query_id").text.to_dict())
     
     all_data = pd.read_csv(in_file, sep='\t')
+    print(all_data.head())
     processed_frame = process_frame(all_data)
 
     dataset = MechDataset(processed_frame, pre_perturbed=True)
