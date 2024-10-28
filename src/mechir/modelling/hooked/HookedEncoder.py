@@ -137,6 +137,10 @@ class HookedEncoder(HookedRootModule):
 
         for block in self.blocks:
             resid = block(resid, additive_attention_mask)
+
+        if return_type == "embeddings":
+            return resid
+
         resid = self.mlm_head(resid)
 
         if return_type is None:
