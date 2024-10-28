@@ -17,7 +17,7 @@ class DotDataCollator(BaseCollator):
         queries, batch_padded_docs, batch_padded_perturbed_docs = self.get_data(batch)
 
         tokenized_queries = self.tokenizer(
-            [*set(queries)],
+            queries,
             padding=True,
             truncation=False,
             max_length=self.q_max_length,
