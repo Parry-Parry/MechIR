@@ -45,6 +45,7 @@ def process_frame(frame):
 
     for qid, docs in lookup.items():
         for docno, data in docs.items():
+            print(data)
             output['qid'].append(qid)
             output['docno'].append(docno)
             output['query'].append(data['query'])
