@@ -180,10 +180,10 @@ class Cat(PatchedModel):
     ):
         if cache: 
             logits, cache = self._forward_cache(sequences['input_ids'], sequences['attention_mask'])
-            return logits.softmax(dim=-1)[:, :, -1], logits, cache
+            return logits.softmax(dim=-1)[:, -1], logits, cache
        
         logits = self._forward(sequences['input_ids'], sequences['attention_mask'])
-        return logits.softmax(dim=-1)[:, :, -1], logits
+        return logits.softmax(dim=-1)[:, -1], logits
     
 
     def __call__(
