@@ -4,11 +4,14 @@ import numpy as np
 import torch
 import pandas as pd
 from collections import defaultdict
+import mechir
 from mechir import Cat, Dot
 from mechir.data import CatDataCollator, DotDataCollator, MechDataset
 import pyterrier as pt
 if not pt.started():
     pt.init()
+
+mechir.config('ignore-official', True)
 
 DL19 = r"msmarco-passage/trec-dl-2019/judged"
 DL20 = r"msmarco-passage/trec-dl-2020/judged"
