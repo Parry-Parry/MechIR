@@ -42,6 +42,8 @@ def generate(out_path : str, index_location : str = None, perturbation_type : st
         }
 
         for row in tqdm(df.itertuples(), desc="Converting to TREC format"):
+            if queries[row.query_id] is None or len(queries[row.query_id]) == 0:
+                print("ARGH")
             output['qid'].append(row.query_id)
             output['query'].append(queries[row.query_id])
             output['docno'].append(row.doc_id)
