@@ -120,7 +120,9 @@ def convert_bert_based_weights(bert, cfg: HookedTransformerConfig, sequence_clas
             if 'electra' in model_name:
                 state_dict["classifier.dense.W"] = classification_head.dense.weight
                 state_dict["classifier.dense.b"] = classification_head.dense.bias
-                state_dict["classifier.out_proj.W"] = classification_head.out_proj.weight
+                state_dict["classifier.out_proj.W"] = einops.rearrange(
+                   classification_head.out_proj.weight, "labels model -> model labels"
+                )
                 state_dict["classifier.out_proj.b"] = classification_head.out_proj.bias
             else:
                 state_dict["classifier.W"] = classification_head.weight
