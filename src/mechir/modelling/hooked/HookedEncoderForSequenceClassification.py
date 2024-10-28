@@ -79,6 +79,7 @@ class HookedEncoderForSequenceClassification(HookedEncoder):
             token_type_ids=token_type_ids,
             return_type=return_type,
             one_zero_attention_mask=one_zero_attention_mask,
+            return_type="embedddings",
         )
         logits = self.classifier(hidden[:, 0, :])
 
