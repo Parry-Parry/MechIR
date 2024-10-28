@@ -33,6 +33,9 @@ def topk(model_name_or_path : str, model_type : str, in_file : str, out_path : s
     queries.update(pd.DataFrame(DL20_dataset.queries_iter()).set_index("query_id").text.to_dict())
     
     all_data = pd.read_csv(in_file, sep='\t')
+
+    text_lookup = all_data.set_index(['qid', 'docno', 'perturbed']).text.to_dict()
+
     print(all_data)
     scored_data = model.transform(all_data)
     print
@@ -46,13 +49,12 @@ def topk(model_name_or_path : str, model_type : str, in_file : str, out_path : s
         score_deltas = (perturbed_scores - original_scores).reset_index()
         score_deltas.columns = ['qid', 'docno', 'score_delta']
         
-        # Add back the other information from original data
-        delta_info = score_deltas.merge(
-            rel_data[~rel_data.perturbed],
-            on=['qid', 'docno'],
-            how='left'
-        )
-        all_deltas.append(delta_info)
+        score_deltas['text'] = score_deltas.apply(lambda x : text_lookup[(x.qid, x.docno, False)], axis=1)
+        score_deltas['perturbed'] = score_deltas.apply(lambda x : text_lookup[(x.qid, x.docno, True)], axis=1)
+        score_deltas['query'] = score_deltas.apply(lambda x : queries[x.qid], axis=1)
+        score_deltas['relevance'] = rel_grade
+        
+        all_deltas.append(score_deltas)
     
     # Combine all deltas
     full_deltas = pd.concat(all_deltas, ignore_index=True)

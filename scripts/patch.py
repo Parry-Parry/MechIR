@@ -25,16 +25,6 @@ def load_cross(model_name_or_path : str):
     return Cat(model_name_or_path), CatDataCollator
 
 def process_frame(frame):
-    frame_normal = frame[~frame.perturbed]
-    frame_perturbed = frame[frame.perturbed]
-    print(len(frame_perturbed))
-
-    lookup = {qid : defaultdict(dict) for qid in frame_normal.qid.unique()}
-    for row in frame_normal.itertuples():
-        lookup[row.qid][row.docno]['query'] = row.query
-        lookup[row.qid][row.docno]['text'] = row.text
-    for row in frame_perturbed.itertuples():
-        lookup[row.qid][row.docno]['perturbed'] = row.text
 
     output = {
         'qid': [],
@@ -44,14 +34,12 @@ def process_frame(frame):
         'perturbed': [],
     }
 
-    for qid, docs in lookup.items():
-        for docno, data in docs.items():
-            print(data)
-            output['qid'].append(qid)
-            output['docno'].append(docno)
-            output['query'].append(data['query'])
-            output['text'].append(data['text'])
-            output['perturbed'].append(data['perturbed'])
+    for row in frame.itertuples():
+        output['qid'].append(row.qid)
+        output['query'].append(row.query)
+        output['docno'].append(row.docno)
+        output['text'].append(row.text)
+        output['perturbed'].append(row.perturbed)
     
     return pd.DataFrame(output)
 
