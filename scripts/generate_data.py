@@ -62,11 +62,11 @@ def generate(out_path : str, index_location : str = None, perturbation_type : st
         }
 
         for row in tqdm(df.itertuples(), desc="Perturbing TREC format"):
-            output['qid'].append(row.query_id)
-            output['query'].append(queries[row.query_id])
-            output['docno'].append(row.doc_id)
-            output['text'].append(perturbation(docs[row.doc_id]))
-            output['perturbed'].append(True)
+            perturbed_output['qid'].append(row.query_id)
+            perturbed_output['query'].append(queries[row.query_id])
+            perturbed_output['docno'].append(row.doc_id)
+            perturbed_output['text'].append(perturbation(docs[row.doc_id]))
+            perturbed_output['perturbed'].append(True)
         
         perturbed_output = pd.DataFrame(perturbed_output)
         output = pd.concat([output, perturbed_output])
