@@ -61,7 +61,7 @@ def topk(model_name_or_path : str, model_type : str, in_file : str, out_path : s
     topk_results = []
     for rel_grade in range(max_rel + 1):
         rel_deltas = full_deltas[full_deltas.relevance == rel_grade]
-        top_k = rel_deltas.nlargest(k // max_rel+1, 'score_delta')
+        top_k = rel_deltas.nlargest(k // (max_rel+1), 'score_delta')
         topk_results.append(top_k)
     
     formatted_model_mame = model_name_or_path.replace("/", "-")
