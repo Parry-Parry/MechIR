@@ -3,7 +3,7 @@ from . import BaseCollator
 class DotDataCollator(BaseCollator):
     def __init__(self, 
                  tokenizer, 
-                 transformation_func : callable,
+                 transformation_func : callable=None,
                  special_mask=False,
                  q_max_length=30,
                  d_max_length=200,
