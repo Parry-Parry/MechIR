@@ -13,16 +13,13 @@ MSMARCO = r"msmarco-passage/train/triples-small"
 MSMARCO_TERRIER = r"msmarco_passage"
 
 def generate(out_path : str, index_location : str = None, perturbation_type : str = 'TFC1'):
-    
-    MARCO = irds.load(MSMARCO)
-
     if index_location is None:
         index_location = pt.get_dataset(MSMARCO_TERRIER).get_index("terrier_stemmed_text")
 
     if perturbation_type == 'TFC1':
-        perturbation = TFC1(index_location=index_location, dataset=MARCO)
+        perturbation = TFC1(index_location=index_location)
     elif perturbation_type == 'TDC':
-        perturbation = TDC(index_location=index_location, dataset=MARCO)
+        perturbation = TDC(index_location=index_location)
     else:
         raise ValueError("perturbation must be either 'TFC1' or 'TDC'")
     

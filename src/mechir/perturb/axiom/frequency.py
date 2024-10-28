@@ -1,6 +1,6 @@
 from pathlib import Path
 from functools import partial
-from typing import Any, Callable, NamedTuple
+from typing import Any
 import random
 from ..index import IndexPerturbation
 
@@ -12,12 +12,9 @@ class FrequencyPerturbation(IndexPerturbation):
                  loc = 'end',
                  frequency : str = 'tf',
                  num_additions : int = 1,
-                 dataset: Any | str | None = None, 
-                 contents_accessor: str | Callable[[NamedTuple], str] | None = "text", 
                  tokeniser: Any | None = None, 
-                 cache_dir: Path | None = None
                  ) -> None:
-        super().__init__(index_location, dataset, contents_accessor, tokeniser, cache_dir)
+        super().__init__(index_location, tokeniser, True)
 
         self.get_freq_terms = {
             'random' : self._get_random_terms,
