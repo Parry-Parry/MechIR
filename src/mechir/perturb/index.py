@@ -109,12 +109,8 @@ class IndexPerturbation(AbstractPerturbation):
 
 
     @lru_cache(None)
-    def _terms(self, text: str) -> Sequence[str]:
-        terms = tuple(
-            self._stem(str(term))
-            for term in self._tokeniser(text)
-            if term is not None
-        )
+    def _terms(self, text: str) -> Dict[str, str]:
+        terms = {term : self._stem(str(term)) for term in self._tokeniser(text) if term is not None}
         return terms
 
     @property
@@ -136,24 +132,24 @@ class IndexPerturbation(AbstractPerturbation):
         return self._terms(text)
     
     def get_counts(self, text : str) -> Dict[str, int]:
-        return Counter(self.get_terms(text))
+        return Counter(self.get_terms(text).values())
     
     def get_tf(self, term : str, text : str) -> int:
         return self.get_counts(text)[term]
     
     def get_tf_text(self, text : str) -> Dict[str, int]:
-        return {term : self.get_tf(term, text) for term in self.get_terms(text)}
+        return {term : self.get_tf(stemmed, text) for term, stemmed in self.get_terms(text).items()}
     
     def get_idf(self, term : str, text : str) -> float:
         return self.inverse_document_frequency(term)
     
     def get_idf_text(self, text : str) -> Dict[str, float]:
-        return {term : self.get_idf(term, text) for term in self.get_terms(text)}
+        return {term : self.get_idf(stemmed, text) for term, stemmed in self.get_terms(text).items()}
     
     def get_tfidf(self, term : str, text : str):
         return self.get_tf(term, text) * self.get_idf(term, text)
     
     def get_tfidf_text(self, text : str) -> Dict[str, float]:
-        return {term : self.get_tfidf(term, text) for term in self.get_terms(text)}
+        return {term : self.get_tfidf(stemmed, text) for term, stemmed in self.get_terms(text).items()}
     
 __all__ = ["IndexPerturbation"]
