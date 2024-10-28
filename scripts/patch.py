@@ -3,7 +3,6 @@ import ir_datasets as irds
 import numpy as np
 import torch
 import pandas as pd
-from collections import defaultdict
 import mechir
 from mechir import Cat, Dot
 from mechir.data import CatDataCollator, DotDataCollator, MechDataset
