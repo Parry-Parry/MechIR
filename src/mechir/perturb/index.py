@@ -7,36 +7,13 @@ if not pt.started():
     pt.init()
 from functools import lru_cache
 from collections import defaultdict
+import math
 
 StringReader = pt.autoclass("java.io.StringReader")
-RequestContextMatching = pt.autoclass("org.terrier.python.RequestContextMatching")
 Index = pt.autoclass("org.terrier.structures.Index")
 IndexRef = pt.autoclass('org.terrier.querying.IndexRef')
 IndexFactory = pt.autoclass('org.terrier.structures.IndexFactory')
-PropertiesIndex = pt.autoclass("org.terrier.structures.PropertiesIndex")
-MetaIndex = pt.autoclass("org.terrier.structures.MetaIndex")
-Lexicon = pt.autoclass("org.terrier.structures.Lexicon")
-CollectionStatistics = pt.autoclass("org.terrier.structures.CollectionStatistics")
 Tokeniser = pt.autoclass("org.terrier.indexing.tokenisation.Tokeniser")
-EnglishTokeniser = pt.autoclass(
-    "org.terrier.indexing.tokenisation.EnglishTokeniser"
-)
-WeightingModel = pt.autoclass("org.terrier.matching.models.WeightingModel")
-TfModel = pt.autoclass("org.terrier.matching.models.Tf")
-TfIdfModel = pt.autoclass("org.terrier.matching.models.TF_IDF")
-BM25Model = pt.autoclass("org.terrier.matching.models.BM25")
-PL2Model = pt.autoclass("org.terrier.matching.models.PL2")
-DirichletLMModel = pt.autoclass("org.terrier.matching.models.DirichletLM")
-TermPipelineAccessor = pt.autoclass("org.terrier.terms.TermPipelineAccessor")
-BaseTermPipelineAccessor = pt.autoclass(
-    "org.terrier.terms.BaseTermPipelineAccessor"
-)
-SearchRequest = pt.autoclass('org.terrier.querying.SearchRequest')
-ScoredDoc = pt.autoclass('org.terrier.querying.ScoredDoc')
-ScoredDocList = pt.autoclass('org.terrier.querying.ScoredDocList')
-Manager = pt.autoclass('org.terrier.querying.Manager')
-ManagerFactory = pt.autoclass('org.terrier.querying.ManagerFactory')
-ApplicationSetup = pt.autoclass('org.terrier.utility.ApplicationSetup')
 
 '''
 from ir_axioms.backend.pyterrier.util import (
