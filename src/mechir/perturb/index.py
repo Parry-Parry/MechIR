@@ -32,13 +32,13 @@ class IndexPerturbation(AbstractPerturbation):
         )
     
     def get_terms(self, text : str) -> Sequence[str]:
-        return self.context.terms(TextDocument(text))
+        return self.context.terms(TextDocument(contents=text))
     
     def get_counts(self, text : str) -> Dict[str, int]:
         return Counter(self.get_terms(text))
     
     def get_tf(self, term : str, text : str) -> int:
-        return self.context.term_frequency(TextDocument(text), term)
+        return self.context.term_frequency(TextDocument(contents=text), term)
 
     def get_tf_text(self, text : str) -> Dict[str, int]:
         return {term : self.get_tf(term, text) for term in self.get_terms(text)}
