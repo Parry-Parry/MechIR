@@ -59,8 +59,6 @@ class BaseCollator(object):
             batch_padded_docs.append(padded_a)
             batch_padded_perturbed_docs.append(padded_b)   
 
-        print((queries[0], batch_padded_docs[0], batch_padded_perturbed_docs[0]))
-
         return queries, batch_padded_docs, batch_padded_perturbed_docs
 
     def pad(self, a : str, b : str):
@@ -73,7 +71,9 @@ class BaseCollator(object):
     def pad_by_perturb_type(self, doc_a : str, doc_b : str):
         accepted_perturb_types = ["append", "prepend", "replace", "inject"]
         assert self.perturb_type in accepted_perturb_types, f"Perturbation type must be one of the following: {accepted_perturb_types}"
-
+        print(doc_a)
+        print("-"*80)
+        print(doc_b)
         doc_a = self.tokenizer.tokenize(doc_a)
         doc_b = self.tokenizer.tokenize(doc_b) 
 
