@@ -110,7 +110,6 @@ class IndexPerturbation(AbstractPerturbation):
 
     @lru_cache(None)
     def _terms(self, text: str) -> Sequence[str]:
-        print(text)
         terms = tuple(
             self._stem(str(term))
             for term in self._tokeniser(text)
