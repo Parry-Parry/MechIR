@@ -91,9 +91,9 @@ class IndexPerturbation(AbstractPerturbation):
                  ) -> None:
         
         self.index_location = index_location
-        index = get_index(index_location)
+        self.index = get_index(index_location)
         collection = self.index.getCollectionStatistics()
-        lexicon = index.getLexicon()
+        lexicon = self.index.getLexicon()
         self.num_docs = collection.getNumberOfDocuments()
         self.avg_doc_len = collection.getAverageDocumentLength()
         self._tokeniser = tokeniser if tokeniser is not None else pt.autoclass("org.terrier.indexing.tokenisation.EnglishTokeniser")()
