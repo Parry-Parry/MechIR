@@ -53,7 +53,7 @@ def generate(out_path : str, index_location : str = None, perturbation_type : st
         output = pd.DataFrame(output)
         perturbed_output = output.copy()
         perturbed_output['perturbed'] = True
-        perturbed_output['text'] = perturbed_output['text'].apply(perturbation)
+        perturbed_output['text'] = perturbed_output.apply(lambda x : perturbation(x.text, x.query), axis=1)
         
         output = pd.concat([output, perturbed_output])
         output['score'] = 0.
@@ -65,7 +65,6 @@ def generate(out_path : str, index_location : str = None, perturbation_type : st
     output_file = f"{out_path}/{perturbation_type}-data.tsv.gz"
 
     all_data.to_csv(output_file, sep="\t", index=False)
-
 
     return 0
 
