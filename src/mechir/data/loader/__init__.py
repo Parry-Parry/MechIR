@@ -71,9 +71,6 @@ class BaseCollator(object):
     def pad_by_perturb_type(self, doc_a : str, doc_b : str):
         accepted_perturb_types = ["append", "prepend", "replace", "inject"]
         assert self.perturb_type in accepted_perturb_types, f"Perturbation type must be one of the following: {accepted_perturb_types}"
-        print(doc_a)
-        print("-"*80)
-        print(doc_b)
         doc_a = self.tokenizer.tokenize(doc_a)
         doc_b = self.tokenizer.tokenize(doc_b) 
 

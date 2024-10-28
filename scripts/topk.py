@@ -48,7 +48,7 @@ def topk(model_name_or_path : str, model_type : str, in_file : str, out_path : s
         score_deltas.columns = ['qid', 'docno', 'score_delta']
         
         score_deltas['text'] = score_deltas.apply(lambda x : text_lookup[(x.qid, x.docno, False)], axis=1)
-        score_deltas['perturbed'] = score_deltas.apply(lambda x : text_lookup[(x.qid, x.docno, True)], axis=1)
+        score_deltas['perturbed_text'] = score_deltas.apply(lambda x : text_lookup[(x.qid, x.docno, True)], axis=1)
         score_deltas['query'] = score_deltas.apply(lambda x : queries[str(x.qid)], axis=1)
         score_deltas['relevance'] = rel_grade
         
