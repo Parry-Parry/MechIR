@@ -8,6 +8,7 @@ if not pt.started():
 from functools import lru_cache
 from collections import defaultdict
 import math
+from nltk import word_tokenize
 
 StringReader = pt.autoclass("java.io.StringReader")
 Index = pt.autoclass("org.terrier.structures.Index")
@@ -86,7 +87,7 @@ def get_index(index_location) -> Index:
 class IndexPerturbation(AbstractPerturbation):
     def __init__(self,
                  index_location: Union[Index, IndexRef, Path, str],
-                 tokeniser : Optional[Tokeniser] = None,
+                 tokeniser : Optional[callable] = None,
                  stem : bool = False,
                  ) -> None:
         
@@ -96,7 +97,7 @@ class IndexPerturbation(AbstractPerturbation):
         lexicon = self.index.getLexicon()
         self.num_docs = collection.getNumberOfDocuments()
         self.avg_doc_len = collection.getAverageDocumentLength()
-        self._tokeniser = tokeniser if tokeniser is not None else pt.autoclass("org.terrier.indexing.tokenisation.EnglishTokeniser")()
+        self._tokeniser = tokeniser if tokeniser is not None else word_tokenize 
         self._stem = pt.autoclass("org.terrier.terms.PorterStemmer")().stem if stem else lambda x: x
 
         self.tf = defaultdict(float)
@@ -109,13 +110,11 @@ class IndexPerturbation(AbstractPerturbation):
 
     @lru_cache(None)
     def _terms(self, text: str) -> Sequence[str]:
-        reader = StringReader(text)
         terms = tuple(
             self.stem(str(term))
-            for term in self._tokeniser.tokenise(reader)
+            for term in self._tokeniser(text)
             if term is not None
         )
-        del reader
         return terms
 
     @property
