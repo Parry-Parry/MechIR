@@ -48,7 +48,7 @@ def process_frame(frame):
             output['docno'].append(docno)
             output['query'].append(data['query'])
             output['text'].append(data['text'])
-            output['perturbed'].append(data.get('perturbed', None))
+            output['perturbed'].append(data['perturbed'])
     
     return pd.DataFrame(output)
 
