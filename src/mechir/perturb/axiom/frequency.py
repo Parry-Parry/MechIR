@@ -56,6 +56,7 @@ class FrequencyPerturbation(IndexPerturbation):
 
     def apply(self, document : str, query : str) -> str:
         terms = self.get_freq_terms(query if self.target == 'query' else document)
+        print(terms)
         return self._insert_terms(document, terms)
     
 TFPerturbation = partial(FrequencyPerturbation, frequency='tf')
