@@ -42,7 +42,7 @@ class HookedEncoderForSequenceClassification(HookedEncoder):
     def forward(
         self,
         input: Int[torch.Tensor, "batch pos"],
-        return_type: Literal["embeddings"],
+        return_type: Literal["logits"],
         token_type_ids: Optional[Int[torch.Tensor, "batch pos"]] = None,
         one_zero_attention_mask: Optional[Int[torch.Tensor, "batch pos"]] = None,
     ) -> Float[torch.Tensor, "batch pos d_vocab"]:
@@ -61,7 +61,7 @@ class HookedEncoderForSequenceClassification(HookedEncoder):
     def forward(
         self,
         input: Int[torch.Tensor, "batch pos"],
-        return_type: Optional[str] = "embeddings",
+        return_type: Optional[str] = "logits",
         token_type_ids: Optional[Int[torch.Tensor, "batch pos"]] = None,
         one_zero_attention_mask: Optional[Int[torch.Tensor, "batch pos"]] = None,
     ) -> Optional[Float[torch.Tensor, "batch pos d_vocab"]]:
@@ -77,10 +77,10 @@ class HookedEncoderForSequenceClassification(HookedEncoder):
         hidden = super().forward(
             input,
             token_type_ids=token_type_ids,
-            return_type=return_type,
+            return_type="embeddings",
             one_zero_attention_mask=one_zero_attention_mask,
         )
-        print(hidden.shape)
+        
         logits = self.classifier(hidden[:, 0, :])
         
         if return_type is None:
