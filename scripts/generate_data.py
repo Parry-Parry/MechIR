@@ -45,7 +45,7 @@ def generate(out_path : str, index_location : str = None, perturbation_type : st
             output['qid'].append(row.query_id)
             output['query'].append(queries[row.query_id])
             output['docno'].append(row.doc_id)
-            if docs[row.doc_id] is None:
+            if len(docs[row.doc_id]) == 0:
                 print("AGH")
             output['text'].append(docs[row.doc_id])
             output['perturbed'].append(False)
