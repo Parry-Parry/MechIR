@@ -4,7 +4,8 @@ import numpy as np
 import torch
 import pandas as pd
 from collections import defaultdict
-from mechir import MechDataset, CatDataCollator, DotDataCollator, Cat, Dot
+from mechir import Cat, Dot
+from mechir.data import CatDataCollator, DotDataCollator, MechDataset
 import pyterrier as pt
 if not pt.started():
     pt.init()
