@@ -33,7 +33,9 @@ def topk(model_name_or_path : str, model_type : str, in_file : str, out_path : s
     queries.update(pd.DataFrame(DL20_dataset.queries_iter()).set_index("query_id").text.to_dict())
     
     all_data = pd.read_csv(in_file, sep='\t')
+    print(all_data)
     scored_data = model.transform(all_data)
+    print
 
     all_deltas = []
     for rel_grade in range(max_rel + 1):
