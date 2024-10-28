@@ -2,7 +2,7 @@
 
 # Constants
 OUT_DIR="data/patching"
-BATCH_SIZE=256
+BATCH_SIZE=1
 
 # Check if required arguments are provided
 if [ "$#" -ne 4 ]; then
