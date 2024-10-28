@@ -4,8 +4,6 @@ import pandas as pd
 import pyterrier as pt
 if not pt.started():
     pt.init()
-from mechir.perturb import TFC1, TDC
-from tqdm import tqdm
 
 DL19 = r"msmarco-passage/trec-dl-2019/judged"
 DL20 = r"msmarco-passage/trec-dl-2020/judged"
@@ -20,7 +18,7 @@ def load_cross(model_name_or_path : str, batch_size : int = 256):
     from pyterrier_dr import ElectraScorer
     return ElectraScorer(model_name_or_path, batch_size=batch_size, verbose=True)
 
-def topk(model_name_or_path : str, model_type : str, out_path : str, index_location : str = None, k : int = 1000, batch_size : int = 256, perturbation_type : str = 'TFC1', max_rel : int = 3):
+def topk(model_name_or_path : str, model_type : str, in_file : str, out_path : str, k : int = 1000, batch_size : int = 256, perturbation_type : str = 'TFC1', max_rel : int = 3):
     if model_type == "bi":
         model = load_bi(model_name_or_path, batch_size)
     elif model_type == "cross":
@@ -28,72 +26,17 @@ def topk(model_name_or_path : str, model_type : str, out_path : str, index_locat
     else:
         raise ValueError("model_type must be either 'bi' or 'cross'")
     
-    MARCO = irds.load(MSMARCO)
-
-    if index_location is None:
-        index_location = pt.get_dataset(MSMARCO_TERRIER).get_index("terrier_stemmed_text")
-
-    if perturbation_type == 'TFC1':
-        perturbation = TFC1(index_location=index_location, dataset=MARCO)
-    elif perturbation_type == 'TDC':
-        perturbation = TDC(index_location=index_location, dataset=MARCO)
-    else:
-        raise ValueError("perturbation must be either 'TFC1' or 'TDC'")
-    
     DL19_dataset = irds.load(DL19)
     DL20_dataset = irds.load(DL20)
 
-    qrels = pd.concat([pd.DataFrame(DL19_dataset.qrels_iter()), pd.DataFrame(DL20_dataset.qrels_iter())])
-
-    docs = pd.DataFrame(DL19_dataset.docs_iter()).set_index("doc_id").text.to_dict()
     queries = pd.DataFrame(DL19_dataset.queries_iter()).set_index("query_id").text.to_dict()
     queries.update(pd.DataFrame(DL20_dataset.queries_iter()).set_index("query_id").text.to_dict())
     
-    def convert_to_trec(df : pd.DataFrame):
-        output = {
-            'qid': [],
-            'query': [],
-            'docno': [],
-            'text': [],
-            'perturbed': [],
-        }
-
-        for row in tqdm(df.itertuples(), desc="Converting to TREC format"):
-            output['qid'].append(row.query_id)
-            output['query'].append(queries[row.query_id])
-            output['docno'].append(row.doc_id)
-            output['text'].append(docs[row.doc_id])
-            output['perturbed'].append(False)
-
-        output = pd.DataFrame(output)
-
-        perturbed_output = {
-            'qid': [],
-            'query': [],
-            'docno': [],
-            'text': [],
-            'perturbed': [],
-        }
-
-        for row in tqdm(df.itertuples(), desc="Perturbing TREC format"):
-            output['qid'].append(row.query_id)
-            output['query'].append(queries[row.query_id])
-            output['docno'].append(row.doc_id)
-            output['text'].append(perturbation(docs[row.doc_id]))
-            output['perturbed'].append(True)
-        
-        perturbed_output = pd.DataFrame(perturbed_output)
-        output = pd.concat([output, perturbed_output])
-        output['score'] = 0.
-
-        return output
-    
-    # Calculate all deltas
-    all_data = convert_to_trec(qrels)
+    all_data = pd.read_csv(in_file, sep='\t')
     scored_data = model.transform(all_data)
 
     all_deltas = []
-    for rel_grade in range(3):
+    for rel_grade in range(max_rel + 1):
         rel_data = scored_data[scored_data.relevance == rel_grade]
         original_scores = rel_data[~rel_data.perturbed].set_index(['qid', 'docno'])['score']
         perturbed_scores = rel_data[rel_data.perturbed].set_index(['qid', 'docno'])['score']
@@ -114,9 +57,9 @@ def topk(model_name_or_path : str, model_type : str, out_path : str, index_locat
     
     # Get top-k from each relevance grade
     topk_results = []
-    for rel_grade in range(3):
+    for rel_grade in range(max_rel + 1):
         rel_deltas = full_deltas[full_deltas.relevance == rel_grade]
-        top_k = rel_deltas.nlargest(k // 4, 'score_delta')
+        top_k = rel_deltas.nlargest(k // max_rel+1, 'score_delta')
         topk_results.append(top_k)
     
     formatted_model_mame = model_name_or_path.replace("/", "-")

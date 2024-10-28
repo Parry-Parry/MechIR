@@ -24,7 +24,8 @@ mkdir -p "$OUT_DIR"
 python scripts/topk.py \
     --model_name_or_path="$MODEL_NAME" \
     --model_type="$MODEL_TYPE" \
+    --in_file="data/${PERTURBATION}.tsv.gz" \
     --out_path="$OUT_DIR" \
     --k="$K" \
     --batch_size="$BATCH_SIZE" \
-    --perturbation="$PERTURBATION"
+    --perturbation_type="$PERTURBATION"
