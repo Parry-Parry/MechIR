@@ -59,6 +59,8 @@ class BaseCollator(object):
             batch_padded_docs.append(padded_a)
             batch_padded_perturbed_docs.append(padded_b)   
 
+        print((queries[0], batch_padded_docs[0], batch_padded_perturbed_docs[0]))
+
         return queries, batch_padded_docs, batch_padded_perturbed_docs
 
     def pad(self, a : str, b : str):
