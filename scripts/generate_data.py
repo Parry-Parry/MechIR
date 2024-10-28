@@ -45,29 +45,14 @@ def generate(out_path : str, index_location : str = None, perturbation_type : st
             output['qid'].append(row.query_id)
             output['query'].append(queries[row.query_id])
             output['docno'].append(row.doc_id)
-            if len(docs[row.doc_id]) == 0:
-                print("AGH")
             output['text'].append(docs[row.doc_id])
             output['perturbed'].append(False)
 
         output = pd.DataFrame(output)
-
-        perturbed_output = {
-            'qid': [],
-            'query': [],
-            'docno': [],
-            'text': [],
-            'perturbed': [],
-        }
-
-        for row in tqdm(df.itertuples(), desc="Perturbing TREC format"):
-            perturbed_output['qid'].append(row.query_id)
-            perturbed_output['query'].append(queries[row.query_id])
-            perturbed_output['docno'].append(row.doc_id)
-            perturbed_output['text'].append(perturbation(docs[row.doc_id]))
-            perturbed_output['perturbed'].append(True)
+        perturbed_output = output.copy()
+        perturbed_output['perturbed'] = True
+        perturbed_output['text'] = perturbed_output['text'].apply(perturbation)
         
-        perturbed_output = pd.DataFrame(perturbed_output)
         output = pd.concat([output, perturbed_output])
         output['score'] = 0.
 
