@@ -22,7 +22,6 @@ mkdir -p "$OUT_DIR"
 # convert model name by replacing / with -
 FORMATTED_MODEL_NAME=$(echo $MODEL_NAME | sed 's/\//-/g')
 
-
 # Run the Python script
 python scripts/patch.py \
     --model_name_or_path="$MODEL_NAME" \
