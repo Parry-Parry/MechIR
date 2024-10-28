@@ -38,6 +38,7 @@ def generate(out_path : str, index_location : str = None, perturbation_type : st
             'query': [],
             'docno': [],
             'text': [],
+            'relevance': [],
             'perturbed': [],
         }
 
@@ -48,6 +49,7 @@ def generate(out_path : str, index_location : str = None, perturbation_type : st
             output['query'].append(queries[row.query_id])
             output['docno'].append(row.doc_id)
             output['text'].append(docs[row.doc_id])
+            output['relevance'].append(row.relevance)
             output['perturbed'].append(False)
 
         output = pd.DataFrame(output)
