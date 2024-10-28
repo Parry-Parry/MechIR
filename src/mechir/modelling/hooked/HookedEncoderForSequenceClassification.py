@@ -80,9 +80,9 @@ class HookedEncoderForSequenceClassification(HookedEncoder):
             return_type=return_type,
             one_zero_attention_mask=one_zero_attention_mask,
         )
+        print(hidden.shape)
         logits = self.classifier(hidden[:, 0, :])
-        print(logits.shape)
-
+        
         if return_type is None:
             return None
         return logits
