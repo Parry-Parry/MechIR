@@ -3,26 +3,19 @@ from . import BaseCollator
 class CatDataCollator(BaseCollator):
     def __init__(self, 
                  tokenizer,
-                 transformation_func : callable,
+                 transformation_func : callable = None,
+                 special_mask=False,
                  q_max_length=30,
                  d_max_length=200,
                  special_token="X",
+                 perturb_type="append",
+                 pre_perturbed=False,
                  ) -> None:
-        super().__init__(tokenizer, transformation_func, q_max_length, d_max_length, special_token)
+        super().__init__(tokenizer, transformation_func, special_mask, q_max_length, d_max_length, special_token, perturb_type, pre_perturbed)
+
 
     def __call__(self, batch) -> dict:
-        batch_queries = []
-        batch_docs = []
-        batch_scores = []
-        for (q, dx, *args) in batch:
-            batch_queries.extend([q]*len(dx))
-            batch_docs.extend(dx)
-            if len(args) == 0:
-                continue
-            batch_scores.extend(args[0])
-        
-        batch_perturbed_docs = [self.transformation_func(dx, query=q) for q, dx in zip(batch_queries, batch_docs)]
-        batch_docs = [self.pad(a, b, self.special_token) for a, b in zip(batch_docs, batch_perturbed_docs)]
+        batch_queries, batch_docs, batch_perturbed_docs = self.get_data(batch)
 
         tokenized_sequences = self.tokenizer(
             batch_queries,

@@ -14,18 +14,7 @@ class MonoT5DataCollator(BaseCollator):
         return f"query: {query} document: {document} relevant:"
 
     def __call__(self, batch) -> dict:
-        batch_queries = []
-        batch_docs = []
-        batch_scores = []
-        for (q, dx, *args) in batch:
-            batch_queries.extend([q]*len(dx))
-            batch_docs.extend(dx)
-            if len(args) == 0:
-                continue
-            batch_scores.extend(args[0])
-        
-        batch_perturbed_docs = [self.transformation_func(dx, query=q) for q, dx in zip(batch_queries, batch_docs)]
-        batch_docs = [self.pad(a, b, self.special_token) for a, b in zip(batch_docs, batch_perturbed_docs)]
+        batch_queries, batch_docs, batch_perturbed_docs = self.get_data(batch)
 
         tokenized_sequences = self.tokenizer(
             [self.prompt(q, dx) for q, dx in zip(batch_queries, batch_docs)],
