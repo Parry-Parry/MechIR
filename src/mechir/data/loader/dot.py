@@ -9,8 +9,9 @@ class DotDataCollator(BaseCollator):
                  d_max_length=200,
                  special_token="X",
                  perturb_type="append",
+                 pre_perturbed=False,
                  ) -> None:
-        super().__init__(tokenizer, transformation_func, special_mask, q_max_length, d_max_length, special_token, perturb_type)
+        super().__init__(tokenizer, transformation_func, special_mask, q_max_length, d_max_length, special_token, perturb_type, pre_perturbed)
 
     def __call__(self, batch) -> dict:
         queries, batch_padded_docs, batch_padded_perturbed_docs = self.get_data(batch)
