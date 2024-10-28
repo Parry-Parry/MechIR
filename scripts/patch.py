@@ -40,6 +40,7 @@ def process_frame(frame):
         'query': [],
         'docno': [],
         'text': [],
+        'perturbed': [],
     }
 
     for qid, docs in lookup.items():
