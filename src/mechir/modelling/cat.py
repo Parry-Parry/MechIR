@@ -18,7 +18,7 @@ from ..modelling.hooked.HookedElectra import HookedElectraForSequenceClassificat
 logger = logging.getLogger(__name__)
 
 def cat_linear_ranking_function(model_output, score, score_p):
-    patched_score = model_output.softmax(dim=-1)[:, :, -1]
+    patched_score = model_output.softmax(dim=-1)[:, -1]
     return linear_rank_function(patched_score, score, score_p)
 
 def get_hooked(architecture):
