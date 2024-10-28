@@ -27,7 +27,7 @@ FORMATTED_MODEL_NAME=$(echo $MODEL_NAME | sed 's/\//-/g')
 python scripts/patch.py \
     --model_name_or_path="$MODEL_NAME" \
     --model_type="$MODEL_TYPE" \
-    --in_file="data/${FORMATTED_MODEL_NAME}_${MODEL_TYPE}_${PERTURBATION}_topk_${K}.tsv" \
+    --in_file="data/topk/${FORMATTED_MODEL_NAME}_${MODEL_TYPE}_${PERTURBATION}_topk_${K}.tsv" \
     --out_path="$OUT_DIR" \
     --k="$K" \
     --batch_size="$BATCH_SIZE" \
