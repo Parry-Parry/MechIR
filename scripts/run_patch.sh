@@ -19,9 +19,6 @@ PERTURBATION=$4
 # Create output directory if it doesn't exist
 mkdir -p "$OUT_DIR"
 
-# convert model name by replacing / with -
-FORMATTED_MODEL_NAME=$(echo $MODEL_NAME | sed 's/\//-/g')
-
 
 # Run the Python script
 python scripts/patch.py \

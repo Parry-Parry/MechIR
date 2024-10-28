@@ -85,7 +85,8 @@ def patch(model_name_or_path : str, model_type : str, in_file : str, out_path : 
     output = torch.mean(torch.stack(patching_head_outputs), axis=0)
     # convert to numpy and dump
     output = output.cpu().detach().numpy()
-    output_file = f"{out_path}/{model_name_or_path}_{model_type}_{perturbation_type}_patch_head.npy"
+    formatted_model_name = model_name_or_path.replace("/", "-")
+    output_file = f"{out_path}/{formatted_model_name}_{model_type}_{perturbation_type}_patch_head.npy"
     np.save(output_file, output)
     
     return 0
