@@ -112,7 +112,7 @@ class IndexPerturbation(AbstractPerturbation):
     def _terms(self, text: str) -> Sequence[str]:
         print(text)
         terms = tuple(
-            self.stem(str(term))
+            self._stem(str(term))
             for term in self._tokeniser(text)
             if term is not None
         )
