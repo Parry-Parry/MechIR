@@ -159,7 +159,7 @@ class IndexPerturbation(AbstractPerturbation):
     def get_terms(self, text : str) -> Sequence[str]:
         return self._terms(text)
     
-    def get_counts(self, text : str) -> Dict[int]:
+    def get_counts(self, text : str) -> Dict[str, int]:
         return Counter(self.get_terms(text))
     
     def get_tf(self, term : str, text : str) -> int:
