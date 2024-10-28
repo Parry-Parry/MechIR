@@ -3,6 +3,7 @@ from typing import Union, Optional, NamedTuple, Callable, Sequence, Dict, Any
 from pathlib import Path
 from collections import Counter
 from ir_datasets import Dataset
+import random
 from ir_axioms.backend.pyterrier.util import (
     Index,
     IndexRef,
@@ -32,13 +33,13 @@ class IndexPerturbation(AbstractPerturbation):
         )
     
     def get_terms(self, text : str) -> Sequence[str]:
-        return self.context.terms(TextDocument(contents=text))
+        return self.context.terms(TextDocument(id=random.randint(1, 10000000), contents=text))
     
     def get_counts(self, text : str) -> Dict[str, int]:
         return Counter(self.get_terms(text))
     
     def get_tf(self, term : str, text : str) -> int:
-        return self.context.term_frequency(TextDocument(contents=text), term)
+        return self.context.term_frequency(TextDocument(id=random.randint(1, 10000000), contents=text), term)
 
     def get_tf_text(self, text : str) -> Dict[str, int]:
         return {term : self.get_tf(term, text) for term in self.get_terms(text)}
