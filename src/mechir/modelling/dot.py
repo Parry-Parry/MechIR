@@ -194,7 +194,6 @@ class Dot(PatchedModel):
 
         return batched_dot_product(reps_q, reps_d), reps_q, reps_d
     
-
     def __call__(
             self, 
             queries : dict, 
