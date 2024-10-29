@@ -101,8 +101,7 @@ class Dot(PatchedModel):
         corrupted_tokens["attention_mask"] = corrupted_tokens["attention_mask"].to(self._device)
 
         for component_idx, component in enumerate(["resid_pre", "attn_out", "mlp_out"]):
-            logger.info("Patching:", component)
-            for layer in tqdm(range(self._model.cfg.n_layers)):
+            for layer in range(self._model.cfg.n_layers):
                 for position in range(seq_len):
                     hook_fn = partial(self._patch_residual_component, pos=position, clean_cache=clean_cache)
                     patched_outputs =  self._model_run_with_hooks(
@@ -136,8 +135,7 @@ class Dot(PatchedModel):
         self._model.reset_hooks()
         results = torch.zeros(self._model.cfg.n_layers, self._model.cfg.n_heads, device=self._device, dtype=torch.float32)
 
-        logger.info("Patching: attn_heads")
-        for layer in tqdm(range(self._model.cfg.n_layers)):
+        for layer in range(self._model.cfg.n_layers):
             for head in range(self._model.cfg.n_heads):
                 hook_fn = partial(self._patch_head_vector, head_index=head, clean_cache=clean_cache)
                 patched_outputs =  self._model_run_with_hooks(
