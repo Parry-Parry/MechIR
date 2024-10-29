@@ -35,7 +35,7 @@ python scripts/topk.py \
     --perturbation_type="$PERTURBATION"
 
 # Run the Python script
-python scripts/patch.py \
+python scripts/patch_by_rel.py \
     --model_name_or_path="$MODEL_NAME" \
     --model_type="$MODEL_TYPE" \
     --in_file="data/topk/${FORMATTED_MODEL_NAME}_${MODEL_TYPE}_${PERTURBATION}_topk_${K}.tsv" \
