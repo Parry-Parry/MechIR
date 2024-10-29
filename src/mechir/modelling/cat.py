@@ -101,7 +101,7 @@ class Cat(PatchedModel):
                         fwd_hooks = [(utils.get_act_name(component, layer), hook_fn)],
                     )
                     patched_outputs = patched_outputs.softmax(dim=-1)[:, -1] if self.softmax_output else patched_outputs[:, -1]
-                    results[component_idx, layer, position] = patching_metric(patched_outputs, scores, scores_p)
+                    results[component_idx, layer, position] = patching_metric(patched_outputs, scores, scores_p).mean()
 
         return results
 
@@ -135,7 +135,7 @@ class Cat(PatchedModel):
                         fwd_hooks = [(utils.get_act_name("z", layer), hook_fn)],
                     )
                 patched_outputs = patched_outputs.softmax(dim=-1)[:, -1] if self.softmax_output else patched_outputs[:, -1]
-                results[layer, head] = patching_metric(patched_outputs, scores, scores_p)
+                results[layer, head] = patching_metric(patched_outputs, scores, scores_p).mean()
                 
         return results
 
@@ -168,7 +168,7 @@ class Cat(PatchedModel):
                         fwd_hooks = [(utils.get_act_name(component, layer), hook_fn)],
                     )
                     patched_outputs = patched_outputs.softmax(dim=-1)[:, -1] if self.softmax_output else patched_outputs[:, -1]
-                    results[component_idx, i, position] = patching_metric(patched_outputs, scores, scores_p)
+                    results[component_idx, i, position] = patching_metric(patched_outputs, scores, scores_p).mean()
 
         return results
     
