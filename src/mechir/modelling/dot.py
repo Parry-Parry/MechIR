@@ -74,7 +74,6 @@ class Dot(PatchedModel):
         corrupted_tokens: Float[torch.Tensor, "batch pos"], 
         clean_cache: ActivationCache, 
         patching_metric: Callable[[Float[torch.Tensor, "batch pos d_vocab"]], float],
-        reps_q : Float[torch.Tensor, "batch pos d_vocab"],
         scores : Float[torch.Tensor, "batch pos"],
         scores_p : Float[torch.Tensor, "batch pos"],
         **kwargs
@@ -104,7 +103,7 @@ class Dot(PatchedModel):
                         one_zero_attention_mask=corrupted_tokens["attention_mask"],
                         fwd_hooks = [(utils.get_act_name(component, layer), hook_fn)],
                     )
-                    results[component_idx, layer, position] = patching_metric(patched_outputs, reps_q, scores, scores_p)
+                    results[component_idx, layer, position] = patching_metric(patched_outputs, scores, scores_p)
 
         return results
 
@@ -114,7 +113,6 @@ class Dot(PatchedModel):
         corrupted_tokens: Float[torch.Tensor, "batch pos"], 
         clean_cache: ActivationCache, 
         patching_metric: Callable,
-        reps_q : Float[torch.Tensor, "batch pos d_vocab"],
         scores : Float[torch.Tensor, "batch pos"],
         scores_p : Float[torch.Tensor, "batch pos"],
         **kwargs
@@ -138,7 +136,7 @@ class Dot(PatchedModel):
                         one_zero_attention_mask=corrupted_tokens["attention_mask"],
                         fwd_hooks = [(utils.get_act_name("z", layer), hook_fn)],
                     )
-                batch_output = patching_metric(patched_outputs, reps_q, scores, scores_p) # Size: batch_size
+                batch_output = patching_metric(patched_outputs, scores, scores_p) # Size: batch_size
                 results[layer, head] = torch.mean(batch_output) # Take average of batch
                 
         return results
@@ -150,7 +148,6 @@ class Dot(PatchedModel):
         clean_cache: ActivationCache, 
         layer_head_list,
         patching_metric: Callable,
-        reps_q : Float[torch.Tensor, "batch pos d_vocab"],
         scores : Float[torch.Tensor, "batch pos"],
         scores_p : Float[torch.Tensor, "batch pos"],
         **kwargs
@@ -173,7 +170,7 @@ class Dot(PatchedModel):
                         fwd_hooks = [(utils.get_act_name(component, layer), hook_fn)],
                     )
                     
-                    results[component_idx, i, position] = patching_metric(patched_outputs, reps_q, scores, scores_p)
+                    results[component_idx, i, position] = patching_metric(patched_outputs, scores, scores_p)
 
         return results
     
@@ -181,15 +178,16 @@ class Dot(PatchedModel):
     def score(self,
             queries : dict,
             documents : dict,
+            reps_q=None,
             cache=False
     ):
         if cache: 
-            reps_q = self._forward(queries['input_ids'], queries['attention_mask'])
+            if reps_q is None: reps_q = self._forward(queries['input_ids'], queries['attention_mask'])
             reps_d, cache_d = self._forward_cache(documents['input_ids'], documents['attention_mask'])
 
             return batched_dot_product(reps_q, reps_d), reps_q, reps_d, cache_d
 
-        reps_q = self._forward(queries['input_ids'], queries['attention_mask'])
+        if reps_q is None: reps_q = self._forward(queries['input_ids'], queries['attention_mask'])
         reps_d = self._forward(documents['input_ids'], documents['attention_mask'])
 
         return batched_dot_product(reps_q, reps_d), reps_q, reps_d
@@ -198,7 +196,6 @@ class Dot(PatchedModel):
             self, 
             queries : dict, 
             documents : dict,
-            queries_p : dict,
             documents_p : dict,
             patch_type : str = 'block_all',
             layer_head_list : list = [],
@@ -206,14 +203,13 @@ class Dot(PatchedModel):
     ):  
         assert patch_type in self._patch_funcs, f"Patch type {patch_type} not recognized. Choose from {self._patch_funcs.keys()}"
         scores, reps_q, _ = self.score(queries, documents)
-        scores_p, _, _, cache_d = self.score(queries_p, documents_p, cache=True)
+        scores_p, _, _, cache_d = self.score(queries, documents_p, cache=True, reps_q=reps_q)
 
         patching_kwargs = {
             'corrupted_tokens' : documents,
             'clean_cache' : cache_d,
             'patching_metric' : patching_metric,
             'layer_head_list' : layer_head_list,
-            'reps_q' : reps_q,
             'scores' : scores,
             'scores_p' : scores_p,
         }
