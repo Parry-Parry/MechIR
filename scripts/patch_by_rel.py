@@ -62,7 +62,7 @@ def patch(model_name_or_path : str, model_type : str, in_file : str, out_path : 
     all_data = pd.read_csv(in_file, sep='\t')
     processed_frame = process_frame(all_data)
     processed_frame["relevance"] = processed_frame.apply(lambda x : qrels[(str(x.qid), str(x.docno))], axis=1)
-
+    global_outputs = []
     for rel_grade in range(4):
         rel_data = processed_frame[processed_frame.relevance == rel_grade]
         print(f"Rel Grade: {rel_grade}, Count: {len(rel_data)}")
@@ -89,6 +89,7 @@ def patch(model_name_or_path : str, model_type : str, in_file : str, out_path : 
                 patch_head_out = model(sequences, perturbed_sequences, patch_type="head_all")
             
             patching_head_outputs.append(patch_head_out)
+            global_outputs.append(patch_head_out)
 
         output = torch.mean(torch.stack(patching_head_outputs), axis=0)
         # convert to numpy and dump
@@ -97,6 +98,12 @@ def patch(model_name_or_path : str, model_type : str, in_file : str, out_path : 
         output_file = f"{out_path}/{formatted_model_name}_{model_type}_{perturbation_type}_{k}_patch_head_rel_{rel_grade}.npy"
         np.save(output_file, output)
     
+    global_output = torch.mean(torch.stack(global_outputs), axis=0)
+    global_output = global_output.cpu().detach().numpy()
+    formatted_model_name = model_name_or_path.replace("/", "-")
+    output_file = f"{out_path}/{formatted_model_name}_{model_type}_{perturbation_type}_{k}_patch_head_all.npy"
+    np.save(output_file, global_output)
+
     return 0
 
 if __name__ == "__main__":
