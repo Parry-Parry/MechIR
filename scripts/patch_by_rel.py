@@ -60,7 +60,7 @@ def patch(model_name_or_path : str, model_type : str, in_file : str, out_path : 
     
     all_data = pd.read_csv(in_file, sep='\t')
     processed_frame = process_frame(all_data)
-    processed_frame["relevance"] = processed_frame.apply(lambda x : qrels[(x.qid, x.docno)], axis=1)
+    processed_frame["relevance"] = processed_frame.apply(lambda x : qrels[(str(x.qid), str(x.docno))], axis=1)
 
     for rel_grade in range(4):
         rel_data = processed_frame[processed_frame.relevance == rel_grade]
