@@ -43,7 +43,7 @@ def process_frame(frame):
     
     return pd.DataFrame(output)
 
-def patch(model_name_or_path : str, model_type : str, in_file : str, out_path : str, batch_size : int = 256, perturbation_type : str = 'TFC1'):
+def patch(model_name_or_path : str, model_type : str, in_file : str, out_path : str, batch_size : int = 256, perturbation_type : str = 'TFC1', k : int = 1000):
     if model_type == "bi":
         model, collator = load_bi(model_name_or_path)
     elif model_type == "cross":
@@ -87,7 +87,7 @@ def patch(model_name_or_path : str, model_type : str, in_file : str, out_path : 
     # convert to numpy and dump
     output = output.cpu().detach().numpy()
     formatted_model_name = model_name_or_path.replace("/", "-")
-    output_file = f"{out_path}/{formatted_model_name}_{model_type}_{perturbation_type}_patch_head.npy"
+    output_file = f"{out_path}/{formatted_model_name}_{model_type}_{perturbation_type}_{k}_patch_head.npy"
     np.save(output_file, output)
     
     return 0
