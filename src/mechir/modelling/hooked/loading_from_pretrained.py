@@ -9,7 +9,8 @@ import math
 import os
 import re
 from pathlib import Path
-from typing import Dict, Optional, Union
+from typing import Dict, List, Optional, Union, Callable
+import sys
 
 import torch
 from huggingface_hub import HfApi
@@ -53,6 +54,74 @@ from transformer_lens.loading_from_pretrained import (
     PYTHIA_V0_CHECKPOINTS,
     PYTHIA_CHECKPOINTS
 )
+
+logger = logging.getLogger(__name__)
+
+def register_with_transformer_lens(
+    fn: Callable,
+    architecture_names: Union[str, List[str]],
+    function_type: str = "architecture"
+) -> Callable:
+    """
+    Directly registers a function with transformer_lens registries.
+    Can be used as a function or decorator.
+    
+    Args:
+        fn: The function to register
+        architecture_names: Single architecture name or list of names to register for
+        function_type: Either "architecture" or "conversion"
+    """
+    # Convert single string to list for consistent handling
+    if isinstance(architecture_names, str):
+        architecture_names = [architecture_names]
+    
+    # Get the transformer_lens module
+    tl_module = sys.modules.get('transformer_lens')
+    if tl_module is None:
+        raise ImportError("transformer_lens must be imported before registering new functions")
+    
+    # Determine the registry
+    if function_type == "architecture":
+        registry = getattr(tl_module, 'REGISTERED_ARCHITECTURES', None)
+        registry_name = 'REGISTERED_ARCHITECTURES'
+    elif function_type == "conversion":
+        registry = getattr(tl_module, 'REGISTERED_CONVERSIONS', None)
+        registry_name = 'REGISTERED_CONVERSIONS'
+    else:
+        raise ValueError("function_type must be either 'architecture' or 'conversion'")
+        
+    if registry is None:
+        raise AttributeError(f"Could not find {registry_name} in transformer_lens")
+    
+    # Register for each architecture name
+    for arch_name in architecture_names:
+        registry[arch_name] = fn
+        logger.info(f"Registered {arch_name} in transformer_lens.{registry_name}")
+    
+    return fn
+
+# Decorator-style helper functions
+def extend_transformer_lens_registry(
+    architecture_name: Union[str, List[str]],
+    function_type: str = "architecture"
+) -> Callable:
+    """Decorator version of register_with_transformer_lens."""
+    def decorator(fn: Callable) -> Callable:
+        return register_with_transformer_lens(fn, architecture_name, function_type)
+    return decorator
+
+def add_official_model(model_name: str) -> None:
+    """Directly adds a model name to transformer_lens's OFFICIAL_MODEL_NAMES."""
+    tl_module = sys.modules.get('transformer_lens')
+    if tl_module is None:
+        raise ImportError("transformer_lens must be imported before adding official models")
+        
+    if not hasattr(tl_module, 'OFFICIAL_MODEL_NAMES'):
+        raise AttributeError("Could not find OFFICIAL_MODEL_NAMES in transformer_lens")
+        
+    if model_name not in tl_module.OFFICIAL_MODEL_NAMES:
+        tl_module.OFFICIAL_MODEL_NAMES.append(model_name)
+        logger.info(f"Added {model_name} to transformer_lens.OFFICIAL_MODEL_NAMES")
 
 REGISTERED_ARCHITECTURES = {}
 
