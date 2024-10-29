@@ -20,6 +20,7 @@ def load_cross(model_name_or_path : str, batch_size : int = 256):
     return ElectraScorer(model_name_or_path, batch_size=batch_size, verbose=True)
 
 def topk(model_name_or_path : str, model_type : str, in_file : str, out_path : str, k : int = 1000, batch_size : int = 256, perturbation_type : str = 'TFC1', max_rel : int = 3):
+    formatted_model_mame = model_name_or_path.replace("/", "-")
     output_all_file = f"{out_path}/{formatted_model_mame}_{model_type}_{perturbation_type}_all.tsv"
     if os.path.exists(output_all_file):
         full_deltas = pd.read_csv(output_all_file, sep='\t')
@@ -69,7 +70,6 @@ def topk(model_name_or_path : str, model_type : str, in_file : str, out_path : s
         top_k = rel_deltas.nlargest(k // (max_rel+1), 'score_delta')
         topk_results.append(top_k)
     
-    formatted_model_mame = model_name_or_path.replace("/", "-")
     output_k_file = f"{out_path}/{formatted_model_mame}_{model_type}_{perturbation_type}_topk_{k}.tsv"
 
     topk_df = pd.concat(topk_results)
