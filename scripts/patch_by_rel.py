@@ -68,9 +68,9 @@ def patch(model_name_or_path : str, model_type : str, in_file : str, out_path : 
         print(f"Rel Grade: {rel_grade}, Count: {len(rel_data)}")
 
         dataset = MechDataset(rel_data, pre_perturbed=True)
-        collator = collator(model.tokenizer, pre_perturbed=True)
+        datacollator = collator(model.tokenizer, pre_perturbed=True)
 
-        dataloader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, collate_fn=collator)
+        dataloader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, collate_fn=datacollator)
 
         patching_head_outputs = []
         for batch in tqdm(dataloader):
