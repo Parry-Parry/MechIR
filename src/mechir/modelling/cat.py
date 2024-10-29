@@ -17,10 +17,6 @@ from ..modelling.hooked.HookedElectra import HookedElectraForSequenceClassificat
 
 logger = logging.getLogger(__name__)
 
-def cat_linear_ranking_function(model_output, score, score_p):
-    patched_score = model_output.softmax(dim=-1)[:, -1]
-    return linear_rank_function(patched_score, score, score_p)
-
 def get_hooked(architecture):
     huggingface_token = os.environ.get("HF_TOKEN", None)
     hf_config = AutoConfig.from_pretrained(
@@ -38,6 +34,7 @@ class Cat(PatchedModel):
                  num_labels : int = 2,
                  tokenizer = None,
                  special_token: str = "X",
+                 softmax_output: bool = False
                  ) -> None:
         self.num_labels = num_labels
         self.tokenizer = AutoTokenizer.from_pretrained(model_name_or_path) if tokenizer is None else tokenizer
@@ -50,6 +47,8 @@ class Cat(PatchedModel):
         self._model_forward = partial(self._model, return_type="logits")
         self._model_run_with_cache = partial(self._model.run_with_cache, return_type="logits")
         self._model_run_with_hooks = partial(self._model.run_with_hooks, return_type="logits")
+
+        self.softmax_output = softmax_output
 
     def _forward(self, 
                 input_ids : torch.Tensor,
@@ -178,10 +177,12 @@ class Cat(PatchedModel):
     ):
         if cache: 
             logits, cache = self._forward_cache(sequences['input_ids'], sequences['attention_mask'])
-            return logits.softmax(dim=-1)[:, -1], logits, cache
+            scores = logits.softmax(dim=-1)[:, -1] if self.softmax_output else logits[:, -1]
+            return scores, logits, cache
        
         logits = self._forward(sequences['input_ids'], sequences['attention_mask'])
-        return logits.softmax(dim=-1)[:, -1], logits
+        scores = logits.softmax(dim=-1)[:, -1] if self.softmax_output else logits[:, -1]
+        return scores, logits
     
 
     def __call__(
@@ -190,7 +191,7 @@ class Cat(PatchedModel):
             sequences_p : dict,
             patch_type : str = 'block_all',
             layer_head_list : list = [],
-            patching_metric: Callable = cat_linear_ranking_function,
+            patching_metric: Callable = linear_rank_function,
     ):  
         assert patch_type in self._patch_funcs, f"Patch type {patch_type} not recognized. Choose from {self._patch_funcs.keys()}"
         scores, _ = self.score(sequences)

@@ -21,11 +21,6 @@ POOLING = {
     'mean' : lambda x : x.mean(dim=1),
 }
 
-def dot_linear_ranking_function(model_output, reps_q, score, score_p, pooling_type = 'cls'):
-    model_output = POOLING[pooling_type](model_output)
-    patched_score = batched_dot_product(reps_q, model_output)
-    return linear_rank_function(patched_score, score, score_p)
-
 def get_hooked(architecture):
     huggingface_token = os.environ.get("HF_TOKEN", None)
     hf_config = AutoConfig.from_pretrained(
@@ -208,7 +203,7 @@ class Dot(PatchedModel):
             documents_p : dict,
             patch_type : str = 'block_all',
             layer_head_list : list = [],
-            patching_metric: Callable = dot_linear_ranking_function,
+            patching_metric: Callable = linear_rank_function,
     ):  
         assert patch_type in self._patch_funcs, f"Patch type {patch_type} not recognized. Choose from {self._patch_funcs.keys()}"
         scores, reps_q, _ = self.score(queries, documents)
