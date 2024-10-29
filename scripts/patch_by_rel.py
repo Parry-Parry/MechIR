@@ -3,6 +3,7 @@ import ir_datasets as irds
 import numpy as np
 import torch
 import pandas as pd
+from tqdm import tqdm
 import mechir
 from mechir import Cat, Dot
 from mechir.data import CatDataCollator, DotDataCollator, MechDataset
@@ -72,7 +73,7 @@ def patch(model_name_or_path : str, model_type : str, in_file : str, out_path : 
         dataloader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, collate_fn=collator)
 
         patching_head_outputs = []
-        for _, batch in enumerate(dataloader):
+        for batch in tqdm(dataloader):
             # Get the queries, documents, and perturbed documents from the batch
 
             if model_type == "bi":
