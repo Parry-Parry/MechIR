@@ -14,12 +14,12 @@ def batched_dot_product(a: Tensor, b: Tensor):
     Parameters
     ----------
     a: torch.Tensor
-        size: batch_size x 1 x vector_dim
+        size: batch_size x vector_dim
     b: torch.Tensor
-        size: batch_size x group_size x vector_dim
+        size: batch_size x vector_dim
     Returns
     -------
-    torch.Tensor: size of (batch_size x group_size) # TODO: shouldn't this be just batch_size? (idk what group size is here)
+    torch.Tensor: size of (batch_size)
         dot product for each group of vectors
     """
     # if len(b.shape) == 2:

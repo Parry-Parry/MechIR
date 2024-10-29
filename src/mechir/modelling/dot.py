@@ -73,6 +73,7 @@ class Dot(PatchedModel):
         self,
         corrupted_tokens: Float[torch.Tensor, "batch pos"], 
         clean_cache: ActivationCache, 
+        reps_q : Float[torch.Tensor, "batch pos model"],
         patching_metric: Callable[[Float[torch.Tensor, "batch pos d_vocab"]], float],
         scores : Float[torch.Tensor, "batch pos"],
         scores_p : Float[torch.Tensor, "batch pos"],
@@ -103,7 +104,8 @@ class Dot(PatchedModel):
                         one_zero_attention_mask=corrupted_tokens["attention_mask"],
                         fwd_hooks = [(utils.get_act_name(component, layer), hook_fn)],
                     )
-                    results[component_idx, layer, position] = patching_metric(patched_outputs, scores, scores_p)
+                    patched_outputs = batched_dot_product(reps_q, patched_outputs)
+                    results[component_idx, layer, position] = patching_metric(patched_outputs, scores, scores_p).mean()
 
         return results
 
@@ -112,6 +114,7 @@ class Dot(PatchedModel):
         self,
         corrupted_tokens: Float[torch.Tensor, "batch pos"], 
         clean_cache: ActivationCache, 
+        reps_q : Float[torch.Tensor, "batch pos model"],
         patching_metric: Callable,
         scores : Float[torch.Tensor, "batch pos"],
         scores_p : Float[torch.Tensor, "batch pos"],
@@ -136,8 +139,8 @@ class Dot(PatchedModel):
                         one_zero_attention_mask=corrupted_tokens["attention_mask"],
                         fwd_hooks = [(utils.get_act_name("z", layer), hook_fn)],
                     )
-                batch_output = patching_metric(patched_outputs, scores, scores_p) # Size: batch_size
-                results[layer, head] = torch.mean(batch_output) # Take average of batch
+                patched_outputs = batched_dot_product(reps_q, patched_outputs)
+                results[layer, head] = patching_metric(patched_outputs, scores, scores_p).mean()
                 
         return results
 
@@ -145,6 +148,7 @@ class Dot(PatchedModel):
     def _get_act_patch_attn_head_by_pos(
         self,
         corrupted_tokens: Float[torch.Tensor, "batch pos"], 
+        reps_q : Float[torch.Tensor, "batch pos model"],
         clean_cache: ActivationCache, 
         layer_head_list,
         patching_metric: Callable,
@@ -169,8 +173,8 @@ class Dot(PatchedModel):
                         one_zero_attention_mask=corrupted_tokens["attention_mask"],
                         fwd_hooks = [(utils.get_act_name(component, layer), hook_fn)],
                     )
-                    
-                    results[component_idx, i, position] = patching_metric(patched_outputs, scores, scores_p)
+                    patched_outputs = batched_dot_product(reps_q, patched_outputs)
+                    results[component_idx, i, position] = patching_metric(patched_outputs, scores, scores_p).mean()
 
         return results
     
@@ -208,6 +212,7 @@ class Dot(PatchedModel):
         patching_kwargs = {
             'corrupted_tokens' : documents,
             'clean_cache' : cache_d,
+            'reps_q' : reps_q,
             'patching_metric' : patching_metric,
             'layer_head_list' : layer_head_list,
             'scores' : scores,
