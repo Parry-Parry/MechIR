@@ -4,11 +4,13 @@ class MonoT5DataCollator(BaseCollator):
     def __init__(self, 
                  tokenizer,
                  transformation_func : callable,
+                 special_mask=False,
+                 perturb_type='append',
                  q_max_length=30,
                  d_max_length=200,
                  special_token="X",
                  ) -> None:
-        super().__init__(tokenizer, transformation_func, q_max_length, d_max_length, special_token)
+        super().__init__(tokenizer, transformation_func, special_mask, perturb_type, q_max_length, d_max_length, special_token)
 
     def prompt(query : str, document : str):
         return f"query: {query} document: {document} relevant:"

@@ -140,7 +140,7 @@ class HookedEncoder(HookedRootModule):
 
         if return_type == "embeddings":
             return resid
-
+    
         resid = self.mlm_head(resid)
 
         if return_type is None:

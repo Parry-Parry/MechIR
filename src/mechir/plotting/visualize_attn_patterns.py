@@ -29,8 +29,6 @@ def plot_attn_for_doc(attn_pattern, doc_tokens):
 
 __all__ = ["plot_attn_for_doc", "load_doc"]
 
-
-
 ###################### Start page #########################
 
 if __name__ == "__main__":
