@@ -6,6 +6,9 @@ from ..util import is_ir_axioms_availible
 from transformers.utils import _LazyModule, OptionalDependencyNotAvailable
 
 class AbstractPerturbation(ABC):
+    """
+    Generic class for perturbations. Subclasses should implement the apply method.
+    """
     @abstractmethod
     def apply(self, document: str, query: str) -> str:
         raise NotImplementedError("This method should be implemented in the subclass")
@@ -14,10 +17,16 @@ class AbstractPerturbation(ABC):
         return self.apply(document, query)
 
 class IdentityPerturbation(AbstractPerturbation):
+    """
+    A perturbation that does nothing. Useful for testing.
+    """
     def apply(self, document: str, query: str = None) -> str:
         return document
 
 def perturbation(f):
+    """
+    An alternative decorator for subclassing AbstractPerturbation. 
+    """
     argcount = f.__code__.co_argcount
     class CustomPerturbation(AbstractPerturbation):
         def apply(self, document: str, query: str = None) -> str:

@@ -5,6 +5,18 @@ import random
 from ..index import IndexPerturbation
 
 class FrequencyPerturbation(IndexPerturbation):
+    """
+    A perturbation that adds terms to a document based on their frequency in the document or query. TFI, IDF, and TFIDF are supported.
+
+    params:
+        index_location: The location of the index to use for term frequency calculations. should be a PyTerrier index or a path to a PyTerrier index.
+        mode: The method to use for selecting terms to add. Options are 'random', 'top_k', 'max', and 'min'.
+        target: The target to use for term frequency calculations. Options are 'query' and 'document'.
+        loc: The location to insert the terms. Options are 'start' and 'end'.
+        frequency: The frequency metric to use for term selection. Options are 'tf', 'idf', and 'tfidf'.
+        num_additions: The number of terms to add to the document.
+        tokeniser: The tokeniser to use for tokenising the text. If None, the default tokeniser is used.
+    """
     def __init__(self, 
                  index_location: Any | Path | str, 
                  mode : str = 'max',
