@@ -16,9 +16,6 @@ logger = logging.getLogger(__name__)
 monoT5
 '''
 
-def mono_linear_ranking_function(model_output, score, score_p, pos_id, neg_id):
-    patched_score = model_output[:, :, (pos_id, neg_id)].softmax(dim=-1)[:, :, 0]
-    return linear_rank_function(patched_score, score, score_p)
 
 
 class MonoT5(PatchedModel):
@@ -27,6 +24,7 @@ class MonoT5(PatchedModel):
                  pos_token : str = "true",
                  neg_token : str = "false",
                  special_token: str = "X",
+                 softmax_output: bool = False
                  ) -> None:
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_name_or_path) 
         
@@ -42,9 +40,7 @@ class MonoT5(PatchedModel):
         self._model_run_with_cache = partial(self._model.run_with_cache, return_type="logits")
         self._model_run_with_hooks = partial(self._model.run_with_hooks, return_type="logits")
 
-        self._model_forward = partial(self._model, return_type="logits")
-        self._model_run_with_cache = partial(self._model.run_with_cache, return_type="logits")
-        self._model_run_with_hooks = partial(self._model.run_with_hooks, return_type="logits")
+        self.softmax_output = softmax_output
 
 
     def _forward(self, 
@@ -174,10 +170,12 @@ class MonoT5(PatchedModel):
     ):
         if cache: 
             logits, cache = self._forward_cache(sequences['input_ids'], sequences['attention_mask'])
-            return logits[:, :, (self.pos_token, self.neg_token)].softmax(dim=-1)[:, :, 0], logits, cache
+            scores = logits[:, 0, (self.pos_token, self.neg_token)].softmax(dim=-1)[:, 0] if self.softmax_output else logits[:, 0, (self.pos_token, self.neg_token)][:, 0]
+            return scores, logits, cache
        
         logits = self._forward(sequences['input_ids'], sequences['attention_mask'])
-        return logits[:, :, (self.pos_token, self.neg_token)].softmax(dim=-1)[:, :, 0], logits
+        scores = logits[:, 0, (self.pos_token, self.neg_token)].softmax(dim=-1)[:, 0] if self.softmax_output else logits[:, 0, (self.pos_token, self.neg_token)][:, 0]
+        return scores, logits
     
 
     def __call__(
@@ -186,7 +184,7 @@ class MonoT5(PatchedModel):
             sequences_p : dict,
             patch_type : str = 'block_all',
             layer_head_list : list = [],
-            patching_metric: Callable = mono_linear_ranking_function,
+            patching_metric: Callable = linear_rank_function,
     ):  
         assert patch_type in self._patch_funcs, f"Patch type {patch_type} not recognized. Choose from {self._patch_funcs.keys()}"
         scores, _ = self.score(sequences)
