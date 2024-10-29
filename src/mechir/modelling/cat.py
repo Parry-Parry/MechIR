@@ -100,7 +100,6 @@ class Cat(PatchedModel):
                         one_zero_attention_mask=corrupted_tokens["attention_mask"],
                         fwd_hooks = [(utils.get_act_name(component, layer), hook_fn)],
                     )
-                    breakpoint()
                     results[component_idx, layer, position] = patching_metric(patched_outputs, scores, scores_p)
 
         return results
@@ -134,6 +133,7 @@ class Cat(PatchedModel):
                         one_zero_attention_mask=corrupted_tokens["attention_mask"],
                         fwd_hooks = [(utils.get_act_name("z", layer), hook_fn)],
                     )
+                breakpoint()
                 results[layer, head] = patching_metric(patched_outputs, scores, scores_p)
                 
         return results
