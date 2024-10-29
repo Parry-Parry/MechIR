@@ -9,6 +9,7 @@ class MechIRDataset(Dataset):
                  lazy_load_docs : bool = False,
                  text_field : str = "text",
                  query_field : str = "text",
+                 query_id_subset: list = None,
                  ) -> None:
         super().__init__()
         self.ir_dataset = irds.load(ir_dataset)
@@ -16,6 +17,10 @@ class MechIRDataset(Dataset):
         self.pairs = pairs if pairs is not None else pd.DataFrame(self.ir_dataset.qrels_iter())
         for column in 'query_id', 'doc_id':
             if column not in self.pairs.columns: raise ValueError(f"Format not recognised, Column '{column}' not found in pairs dataframe")
+        
+        if query_id_subset is not None:
+            self.pairs = self.pairs[self.pairs['query_id'].isin(query_id_subset)]
+        
         self.lazy_load_docs = lazy_load_docs
         self._text_field = text_field
         self._query_field = query_field
