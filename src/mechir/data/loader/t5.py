@@ -16,24 +16,16 @@ class MonoT5DataCollator(BaseCollator):
         return f"query: {query} document: {document} relevant:"
 
     def __call__(self, batch) -> dict:
-        batch_queries, batch_docs = zip(*batch)
-        batch_perturbed_docs = [self.transformation_func(dx, query=q) for q, dx in batch]
-
-        batch_padded_docs, batch_padded_perturbed_docs = [], []
-
-        for doc_a, doc_b in zip(batch_docs, batch_perturbed_docs):
-            padded_a, padded_b = self.pad_by_perturb_type(doc_a, doc_b)
-            batch_padded_docs.append(padded_a)
-            batch_padded_perturbed_docs.append(padded_b)
+        batch_queries, batch_docs, batch_perturbed_docs = self.get_data(batch)
 
         tokenized_sequences = self.tokenizer(
-            [self.prompt(q, dx) for q, dx in zip(batch_queries, batch_padded_docs)],
+            [self.prompt(q, dx) for q, dx in zip(batch_queries, batch_docs)],
             padding='max_length',
             max_length=self.q_max_length + self.d_max_length,
             return_tensors="pt",
         )
         tokenized_perturbed_sequences = self.tokenizer(
-            [self.prompt(q, dx) for q, dx in zip(batch_queries, batch_padded_perturbed_docs)],
+            [self.prompt(q, dx) for q, dx in zip(batch_queries, batch_perturbed_docs)],
             padding='max_length',
             max_length=self.q_max_length + self.d_max_length,
             return_tensors="pt",

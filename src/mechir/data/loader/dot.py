@@ -1,29 +1,22 @@
-from . import BaseCollator, pad
+from . import BaseCollator
 
 class DotDataCollator(BaseCollator):
     def __init__(self, 
                  tokenizer, 
-                 transformation_func : callable,
+                 transformation_func : callable=None,
                  special_mask=False,
                  q_max_length=30,
                  d_max_length=200,
                  special_token="X",
                  perturb_type="append",
+                 pre_perturbed=False,
                  ) -> None:
-        super().__init__(tokenizer, transformation_func, special_mask, perturb_type, q_max_length, d_max_length, special_token)
+        super().__init__(tokenizer, transformation_func, special_mask, q_max_length, d_max_length, special_token, perturb_type, pre_perturbed)
 
     def __call__(self, batch) -> dict:
-        batch_perturbed_docs = [self.transformation_func(doc, query=query) for query, doc in batch]
-        batch_og_docs = [doc for _, doc in batch]
-        # batch_docs = [self.pad_by_perturb_type(doc_a, doc_b) for doc_a, doc_b in zip(batch_og_docs, batch_perturbed_docs)]
-        batch_padded_docs, batch_padded_perturbed_docs = [], []
-        for doc_a, doc_b in zip(batch_og_docs, batch_perturbed_docs):
-            padded_a, padded_b = self.pad_by_perturb_type(doc_a, doc_b)
-            batch_padded_docs.append(padded_a)
-            batch_padded_perturbed_docs.append(padded_b)
-
+        queries, batch_padded_docs, batch_padded_perturbed_docs = self.get_data(batch)
         tokenized_queries = self.tokenizer(
-            [query for query, _ in batch],
+            queries,
             padding='max_length',
             truncation=False,
             max_length=self.q_max_length,

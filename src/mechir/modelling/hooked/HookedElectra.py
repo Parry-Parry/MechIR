@@ -15,7 +15,7 @@ from torch import nn
 from typing_extensions import Literal
 from .HookedTransformerConfig import HookedTransformerConfig
 from transformer_lens.ActivationCache import ActivationCache
-from transformer_lens import HookedEncoder
+from .HookedEncoder import HookedEncoder
 from transformer_lens.hook_points import HookPoint
 from .linear import ClassificationHead, HiddenLinear
 from . import loading_from_pretrained as loading
@@ -97,7 +97,7 @@ class HookedElectraForSequenceClassification(HookedEncoder):
         hidden = super().forward(
             input,
             token_type_ids=token_type_ids,
-            return_type=return_type,
+            return_type="embeddings",
             one_zero_attention_mask=one_zero_attention_mask,
         )
         logits = self.classifier(hidden[:, 0, :])

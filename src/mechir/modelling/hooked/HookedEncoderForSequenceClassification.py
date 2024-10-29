@@ -15,10 +15,9 @@ from torch import nn
 from typing_extensions import Literal
 
 from transformer_lens.ActivationCache import ActivationCache
-from transformer_lens import HookedEncoder
+from .HookedEncoder import HookedEncoder
 from .linear import ClassificationHead
 from . import loading_from_pretrained as loading
-
 
 
 class HookedEncoderForSequenceClassification(HookedEncoder):
@@ -78,11 +77,12 @@ class HookedEncoderForSequenceClassification(HookedEncoder):
         hidden = super().forward(
             input,
             token_type_ids=token_type_ids,
-            return_type=return_type,
+            return_type="embeddings",
             one_zero_attention_mask=one_zero_attention_mask,
         )
+        breakpoint()
         logits = self.classifier(hidden[:, 0, :])
-
+        
         if return_type is None:
             return None
         return logits

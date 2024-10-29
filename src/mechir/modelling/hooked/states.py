@@ -143,7 +143,7 @@ def BertModel_state_dict(hf_config):
         "n_layers": hf_config.num_hidden_layers,
         "n_ctx": hf_config.max_position_embeddings,
         "eps": hf_config.layer_norm_eps,
-        "d_vocab": hf_config.vocab_size,
+        "d_vocab": hf_config.vocab_size + 1,
         "act_fn": "gelu",
         "attention_dir": "bidirectional",
     }
@@ -160,7 +160,7 @@ def BertForSequenceClassification_state_dict(hf_config):
         "n_layers": hf_config.num_hidden_layers,
         "n_ctx": hf_config.max_position_embeddings,
         "eps": hf_config.layer_norm_eps,
-        "d_vocab": hf_config.vocab_size,
+        "d_vocab": hf_config.vocab_size + 1,
         "act_fn": "gelu",
         "attention_dir": "bidirectional",
         "num_labels": hf_config.num_labels,

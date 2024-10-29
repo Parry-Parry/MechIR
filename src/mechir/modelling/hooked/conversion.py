@@ -120,7 +120,9 @@ def convert_bert_based_weights(bert, cfg: HookedTransformerConfig, sequence_clas
             if 'electra' in model_name:
                 state_dict["classifier.dense.W"] = classification_head.dense.weight
                 state_dict["classifier.dense.b"] = classification_head.dense.bias
-                state_dict["classifier.out_proj.w"] = classification_head.out_proj.weight
+                state_dict["classifier.out_proj.W"] = einops.rearrange(
+                   classification_head.out_proj.weight, "labels model -> model labels"
+                )
                 state_dict["classifier.out_proj.b"] = classification_head.out_proj.bias
             else:
                 state_dict["classifier.W"] = classification_head.weight
@@ -140,6 +142,7 @@ def convert_bert_based_weights(bert, cfg: HookedTransformerConfig, sequence_clas
     return state_dict
 
 def convert_bert_weights(bert, cfg: HookedTransformerConfig, sequence_classification=False, raw=False):
+    print(dir(bert))
     embeddings = bert.bert.embeddings if not raw else bert.embeddings
     state_dict = {
         "embed.embed.W_E": embeddings.word_embeddings.weight,
@@ -205,9 +208,9 @@ def convert_bert_weights(bert, cfg: HookedTransformerConfig, sequence_classifica
 
     return state_dict
 
-register_conversion("BertModel", convert_bert_weights)
-register_conversion("BertForMaskedLM", convert_bert_weights)
+register_conversion("BertModel", partial(convert_bert_weights, raw=True))
+register_conversion("BertForMaskedLM", partial(convert_bert_weights, raw=True))
 register_conversion("BertForSequenceClassification", partial(convert_bert_weights, sequence_classification=True))
 
-register_conversion("ElectraModel",  partial(convert_bert_based_weights, model_name='electra'))
+register_conversion("ElectraModel",  partial(convert_bert_based_weights, model_name='electra', raw=True))
 register_conversion("ElectraForSequenceClassification", partial(convert_bert_based_weights, sequence_classification=True, model_name='electra'))
