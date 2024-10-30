@@ -5,16 +5,17 @@ from collections import Counter
 import pyterrier as pt 
 import pyterrier.terrier as T
 from pyterrier.java import J
-J.init()
+if not pt.java.started(): 
+    pt.java.init()
 from functools import lru_cache
 from collections import defaultdict
 import math
 from nltk import word_tokenize
 
-Index = J.autoclass("org.terrier.structures.Index")
-IndexRef = J.autoclass('org.terrier.querying.IndexRef')
-IndexFactory = J.autoclass('org.terrier.structures.IndexFactory')
-Tokeniser = J.autoclass("org.terrier.indexing.tokenisation.Tokeniser")
+Index = pt.java.autoclass("org.terrier.structures.Index")
+IndexRef = pt.java.autoclass('org.terrier.querying.IndexRef')
+IndexFactory = pt.java.autoclass('org.terrier.structures.IndexFactory')
+Tokeniser = pt.java.autoclass("org.terrier.indexing.tokenisation.Tokeniser")
 
 def get_index(index_location) -> Index:
         if isinstance(index_location, Index):
