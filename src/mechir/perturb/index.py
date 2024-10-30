@@ -5,7 +5,7 @@ from collections import Counter
 import pyterrier as pt 
 import pyterrier.terrier as T
 from pyterrier.java import J
-pt.java.init()
+J.init()
 from functools import lru_cache
 from collections import defaultdict
 import math
