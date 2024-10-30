@@ -20,5 +20,9 @@ setup(
         'Programming Language :: Python :: 3',
         'Operating System :: OS Independent',
     ],
+    include_package_data=True,
+    package_data={
+        'mechir': ['perturb/data/stopwords.txt'],
+    },
     python_requires='>=3.10',
 )
