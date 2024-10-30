@@ -34,6 +34,7 @@ class IndexPerturbation(AbstractPerturbation):
                  index_location: Union[Index, IndexRef, Path, str],
                  tokeniser : Optional[callable] = None,
                  stem : bool = False,
+                 stopwords : bool = False,
                  exact_match : bool = False
                  ) -> None:
         
@@ -45,7 +46,7 @@ class IndexPerturbation(AbstractPerturbation):
         self.avg_doc_len = collection.getAverageDocumentLength()
         self._tokeniser = tokeniser if tokeniser is not None else word_tokenize 
         self._stem = T.TerrierStemmer('porter').stem if stem else lambda x: x
-        self._stopwords = T.TerrierStopwords('terrier').isStopword
+        self._stopwords = T.TerrierStopwords('terrier').isStopword if stopwords else lambda x : False
         self.exact_match = exact_match
 
         self.tf = defaultdict(float)
@@ -58,7 +59,7 @@ class IndexPerturbation(AbstractPerturbation):
 
     @lru_cache(None)
     def _terms(self, text: str) -> Dict[str, str]:
-        terms = {term : self._stem(str(term)) for term in self._tokeniser(text) if term is not None}
+        terms = {term : self._stem(str(term)) for term in self._tokeniser(text) if term is not None and not self._stopwords(str(term))}
         return terms
 
     @property
