@@ -1,4 +1,6 @@
 from . import AbstractPerturbation
+from . import data
+
 from typing import Union, Optional, Dict
 from pathlib import Path
 from collections import Counter
@@ -11,6 +13,7 @@ from functools import lru_cache
 from collections import defaultdict
 import math
 from nltk import word_tokenize
+import importlib.resources as pkg_resources
 
 Index = pt.java.autoclass("org.terrier.structures.Index")
 IndexRef = pt.java.autoclass('org.terrier.querying.IndexRef')
@@ -30,6 +33,15 @@ def get_index(index_location) -> Index:
             raise ValueError(
                 f"Cannot load index from location {index_location}."
             )
+        
+class Stopwords(object):
+    def __init__(self):
+        with pkg_resources.open_text(data, 'stopwords.txt') as file:
+            self.stopwords = [line.strip() for line in file]
+    
+    def isStopword(self, term : str):
+        return term in self.stopwords
+
 
 class IndexPerturbation(AbstractPerturbation):
     def __init__(self,
@@ -48,7 +60,7 @@ class IndexPerturbation(AbstractPerturbation):
         self.avg_doc_len = collection.getAverageDocumentLength()
         self._tokeniser = tokeniser if tokeniser is not None else word_tokenize 
         self._stem = pt.java.autoclass("org.terrier.terms.PorterStemmer")().stem if stem else lambda x : x
-        self._stopwords = pt.java.autoclass("org.terrier.terms.Stopwords")().isStopword if stopwords else lambda x : False
+        self._stopwords = Stopwords().isStopword if stopwords else lambda x : False
         self.exact_match = exact_match
 
         self.tf = defaultdict(float)
