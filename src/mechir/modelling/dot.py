@@ -104,8 +104,9 @@ class Dot(PatchedModel):
                         one_zero_attention_mask=corrupted_tokens["attention_mask"],
                         fwd_hooks = [(utils.get_act_name(component, layer), hook_fn)],
                     )
-                    patched_outputs = batched_dot_product(reps_q, patched_outputs)
-                    results[component_idx, layer, position] = patching_metric(patched_outputs, scores, scores_p).mean()
+                    patched_outputs = batched_dot_product(reps_q, self._pooling(patched_outputs))
+                    if patched_outputs.size(0) != 1: patched_outputs = patched_outputs.mean(dim=0)
+                    results[component_idx, layer, position] = patching_metric(patched_outputs, scores, scores_p)
 
         return results
 
@@ -139,8 +140,9 @@ class Dot(PatchedModel):
                         one_zero_attention_mask=corrupted_tokens["attention_mask"],
                         fwd_hooks = [(utils.get_act_name("z", layer), hook_fn)],
                     )
-                patched_outputs = batched_dot_product(reps_q, patched_outputs)
-                results[layer, head] = patching_metric(patched_outputs, scores, scores_p).mean()
+                patched_outputs = batched_dot_product(reps_q, self._pooling(patched_outputs))
+                if patched_outputs.size(0) != 1: patched_outputs = patched_outputs.mean(dim=0)
+                results[layer, head] = patching_metric(patched_outputs, scores, scores_p)
                 
         return results
 
@@ -173,8 +175,9 @@ class Dot(PatchedModel):
                         one_zero_attention_mask=corrupted_tokens["attention_mask"],
                         fwd_hooks = [(utils.get_act_name(component, layer), hook_fn)],
                     )
-                    patched_outputs = batched_dot_product(reps_q, patched_outputs)
-                    results[component_idx, i, position] = patching_metric(patched_outputs, scores, scores_p).mean()
+                    patched_outputs = batched_dot_product(reps_q, self._pooling(patched_outputs))
+                    if patched_outputs.size(0) != 1: patched_outputs = patched_outputs.mean(dim=0)
+                    results[component_idx, i, position] = patching_metric(patched_outputs, scores, scores_p)
 
         return results
     
@@ -185,15 +188,11 @@ class Dot(PatchedModel):
             reps_q=None,
             cache=False
     ):
-        if cache: 
-            if reps_q is None: reps_q = self._forward(queries['input_ids'], queries['attention_mask'])
-            reps_d, cache_d = self._forward_cache(documents['input_ids'], documents['attention_mask'])
-
-            return batched_dot_product(reps_q, reps_d), reps_q, reps_d, cache_d
-
         if reps_q is None: reps_q = self._forward(queries['input_ids'], queries['attention_mask'])
+        if cache: 
+            reps_d, cache_d = self._forward_cache(documents['input_ids'], documents['attention_mask'])
+            return batched_dot_product(reps_q, reps_d), reps_q, reps_d, cache_d
         reps_d = self._forward(documents['input_ids'], documents['attention_mask'])
-
         return batched_dot_product(reps_q, reps_d), reps_q, reps_d
     
     def __call__(

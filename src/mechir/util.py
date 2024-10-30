@@ -1,11 +1,5 @@
 import torch
 from torch import Tensor
-from types import SimpleNamespace
-
-class PatchingOutput(SimpleNamespace):
-    result: Tensor
-    scores : Tensor
-    scores_p : Tensor
 
 def batched_dot_product(a: Tensor, b: Tensor):
     """
@@ -20,11 +14,9 @@ def batched_dot_product(a: Tensor, b: Tensor):
     Returns
     -------
     torch.Tensor: size of (batch_size)
-        dot product for each group of vectors
+        dot product 
     """
-    # if len(b.shape) == 2:
-    #     return torch.matmul(a, b.transpose(0, 1))
-    return (a * b).sum(dim=1) #torch.bmm(a,torch.permute(b,[0,2,1])).squeeze(1)
+    return (a * b).sum(dim=1) 
 
 def linear_rank_function(patch_score : Tensor, score : Tensor, score_p : Tensor):
     return (patch_score - score) / (score_p - score)
