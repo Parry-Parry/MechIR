@@ -25,8 +25,10 @@ class FrequencyPerturbation(IndexPerturbation):
                  frequency : str = 'tf',
                  num_additions : int = 1,
                  tokeniser: Any | None = None, 
+                 stem : bool = False,
+                 exact_match : bool = False
                  ) -> None:
-        super().__init__(index_location, tokeniser, True)
+        super().__init__(index_location, tokeniser, stem, exact_match)
 
         self.get_freq_terms = {
             'random' : self._get_random_terms,
@@ -48,26 +50,32 @@ class FrequencyPerturbation(IndexPerturbation):
         self.num_additions = num_additions
         self.loc = loc
     
-    def _get_random_terms(self, text : str) -> list:
-        return random.choices(list(self.get_freq_text(text).keys()), k=self.num_additions)
+    def _get_random_terms(self, text : str, terms : list) -> list:
+        return random.choices(list(self.get_freq_text(text, terms).keys()), k=self.num_additions)
     
-    def _get_top_k_freq_terms(self, text : str) -> dict:  
-        freq = self.get_freq_text(text)
+    def _get_top_k_freq_terms(self, text : str, terms : list) -> dict:  
+        freq = self.get_freq_text(text, terms)
         # Get the top num_additions terms with the highest term frequency
         return sorted(freq.items(), key=lambda x: x[1], reverse=True).keys()[:self.num_additions]
 
-    def _get_max_freq_terms(self, text : str) -> str:
-        freq = self.get_freq_text(text)
+    def _get_max_freq_terms(self, text : str, terms : list) -> str:
+        freq = self.get_freq_text(text, terms)
         term = max(freq, key=freq.get)
         return [term] * self.num_additions
     
-    def _get_min_freq_terms(self, text : str) -> str:
-        freq = self.get_freq_text(text)
+    def _get_min_freq_terms(self, text : str, terms : list) -> str:
+        freq = self.get_freq_text(text, terms)
         term = min(freq, key=freq.get)
         return [term] * self.num_additions
 
     def apply(self, document : str, query : str) -> str:
-        terms = self.get_freq_terms(query if self.target == 'query' else document)
+        terms = []
+        if self.exact_match:
+            # find stemmed terms that are in the document and query
+            query_terms = self.get_terms(query)
+            document_terms = self.get_terms(document)
+            terms = [term for term in query_terms.values() if term in document_terms.values()]
+        terms = self.get_freq_terms(query if self.target == 'query' else document, terms)
         return self._insert_terms(document, terms)
     
 TFPerturbation = partial(FrequencyPerturbation, frequency='tf')

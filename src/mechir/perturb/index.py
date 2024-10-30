@@ -35,6 +35,7 @@ class IndexPerturbation(AbstractPerturbation):
                  index_location: Union[Index, IndexRef, Path, str],
                  tokeniser : Optional[callable] = None,
                  stem : bool = False,
+                 exact_match : bool = False
                  ) -> None:
         
         self.index_location = index_location
@@ -45,6 +46,7 @@ class IndexPerturbation(AbstractPerturbation):
         self.avg_doc_len = collection.getAverageDocumentLength()
         self._tokeniser = tokeniser if tokeniser is not None else word_tokenize 
         self._stem = pt.autoclass("org.terrier.terms.PorterStemmer")().stem if stem else lambda x: x
+        self.exact_match = exact_match
 
         self.tf = defaultdict(float)
         self.df = defaultdict(float)
@@ -74,28 +76,34 @@ class IndexPerturbation(AbstractPerturbation):
     def inverse_document_frequency(self, term : str):
         return math.log(self.document_count / (1 + self.document_frequency(term)))
     
-    def get_terms(self, text : str) -> Sequence[str]:
+    def get_terms(self, text : str) -> Dict[str, str]:
         return self._terms(text)
     
     def get_counts(self, text : str) -> Dict[str, int]:
-        return Counter(self.get_terms(text).values())
+        return Counter(self._terms(text).values())
     
     def get_tf(self, term : str, text : str) -> int:
         return self.get_counts(text)[term]
     
-    def get_tf_text(self, text : str) -> Dict[str, int]:
+    def get_tf_text(self, text : str, terms : list = []) -> Dict[str, int]:
+        if len(terms) > 0:
+            return {term : self.get_tf(stemmed, text) for term, stemmed in self.get_terms(text).items() if stemmed in terms}
         return {term : self.get_tf(stemmed, text) for term, stemmed in self.get_terms(text).items()}
     
     def get_idf(self, term : str, text : str) -> float:
         return self.inverse_document_frequency(term)
     
-    def get_idf_text(self, text : str) -> Dict[str, float]:
+    def get_idf_text(self, text : str, terms : list = []) -> Dict[str, float]:
+        if len(terms) > 0:
+            return {term : self.get_idf(stemmed, text) for term, stemmed in self.get_terms(text).items() if stemmed in terms}
         return {term : self.get_idf(stemmed, text) for term, stemmed in self.get_terms(text).items()}
     
     def get_tfidf(self, term : str, text : str):
         return self.get_tf(term, text) * self.get_idf(term, text)
     
-    def get_tfidf_text(self, text : str) -> Dict[str, float]:
+    def get_tfidf_text(self, text : str, terms : list = []) -> Dict[str, float]:
+        if len(terms) > 0:
+            return {term : self.get_tfidf(stemmed, text) for term, stemmed in self.get_terms(text).items() if stemmed in terms}
         return {term : self.get_tfidf(stemmed, text) for term, stemmed in self.get_terms(text).items()}
 
 __all__ = ["IndexPerturbation"]
