@@ -2,8 +2,6 @@ from fire import Fire
 import ir_datasets as irds
 import pandas as pd
 import pyterrier as pt
-if not pt.started():
-    pt.init()
 from mechir.perturb import TFC1, TDC
 from tqdm import tqdm
 
