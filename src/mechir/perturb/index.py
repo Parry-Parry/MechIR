@@ -1,20 +1,19 @@
 from . import AbstractPerturbation
-from typing import Union, Optional, Sequence, Dict
+from typing import Union, Optional, Dict
 from pathlib import Path
 from collections import Counter
 import pyterrier as pt 
-if not pt.started():
-    pt.init()
+import pyterrier.terrier as T
+import pyterrier.java.J as J
 from functools import lru_cache
 from collections import defaultdict
 import math
 from nltk import word_tokenize
 
-StringReader = pt.autoclass("java.io.StringReader")
-Index = pt.autoclass("org.terrier.structures.Index")
-IndexRef = pt.autoclass('org.terrier.querying.IndexRef')
-IndexFactory = pt.autoclass('org.terrier.structures.IndexFactory')
-Tokeniser = pt.autoclass("org.terrier.indexing.tokenisation.Tokeniser")
+Index = J.autoclass("org.terrier.structures.Index")
+IndexRef = J.autoclass('org.terrier.querying.IndexRef')
+IndexFactory = J.autoclass('org.terrier.structures.IndexFactory')
+Tokeniser = J.autoclass("org.terrier.indexing.tokenisation.Tokeniser")
 
 def get_index(index_location) -> Index:
         if isinstance(index_location, Index):
@@ -45,7 +44,8 @@ class IndexPerturbation(AbstractPerturbation):
         self.num_docs = collection.getNumberOfDocuments()
         self.avg_doc_len = collection.getAverageDocumentLength()
         self._tokeniser = tokeniser if tokeniser is not None else word_tokenize 
-        self._stem = pt.autoclass("org.terrier.terms.PorterStemmer")().stem if stem else lambda x: x
+        self._stem = T.TerrierStemmer('porter').stem if stem else lambda x: x
+        self._stopwords = T.TerrierStopwords('terrier').isStopword
         self.exact_match = exact_match
 
         self.tf = defaultdict(float)

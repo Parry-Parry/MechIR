@@ -2,7 +2,6 @@ from functools import partial
 from typing import Callable, Dict, Tuple
 import logging
 import torch 
-from tqdm import tqdm
 from jaxtyping import Float
 from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
 from transformer_lens import HookedEncoderDecoder, ActivationCache
@@ -15,8 +14,6 @@ logger = logging.getLogger(__name__)
 '''
 monoT5
 '''
-
-
 
 class MonoT5(PatchedModel):
     def __init__(self, 
