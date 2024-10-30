@@ -47,8 +47,8 @@ class IndexPerturbation(AbstractPerturbation):
         self.num_docs = collection.getNumberOfDocuments()
         self.avg_doc_len = collection.getAverageDocumentLength()
         self._tokeniser = tokeniser if tokeniser is not None else word_tokenize 
-        self._stem = pt.java.autoclass("org.terrier.terms.PorterStemmer").stem if stem else lambda x: x
-        self._stopwords = pt.java.autoclass("org.terrier.terms.Stopwords").isStopword if stopwords else lambda x: False
+        self._stem = pt.java.autoclass("org.terrier.terms.PorterStemmer")().stem if stem else lambda x : x
+        self._stopwords = pt.java.autoclass("org.terrier.terms.Stopwords")().isStopword if stopwords else lambda x : False
         self.exact_match = exact_match
 
         self.tf = defaultdict(float)
