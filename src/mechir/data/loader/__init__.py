@@ -68,57 +68,6 @@ class BaseCollator(object):
         b = self.tokenizer.tokenize(b)  
 
         return self.tokenizer.decode(self.tokenizer.tokens_to_ids(pad(a, b, self.special_token)))
-    
-    def pad_by_perturb_type(self, doc_a : str, doc_b : str):
-        accepted_perturb_types = ["append", "prepend", "replace", "inject"]
-        assert self.perturb_type in accepted_perturb_types, f"Perturbation type must be one of the following: {accepted_perturb_types}"
-        doc_a = self.tokenizer.tokenize(doc_a)
-        doc_b = self.tokenizer.tokenize(doc_b) 
-
-        if self.perturb_type == "append":
-            assert len(doc_a) < len(doc_b), "Perturbed document should be longer than original for append perturbation."
-            doc_a = doc_a + [self.special_token] * (len(doc_b) - len(doc_a))
-        elif self.perturb_type == "prepend":
-            assert len(doc_a) < len(doc_b), "Perturbed document should be longer than original for prepend perturbation."
-            doc_a = [self.special_token] * (len(doc_b) - len(doc_a)) + doc_a
-        elif self.perturb_type == "replace":
-            if len(doc_a) == len(doc_b):
-                pass # no padding needed
-            else:
-                padded_a, padded_b = [], []
-                idx_a, idx_b = 0, 0
-                while idx_a < len(doc_a) and idx_b < len(doc_b):
-                    if doc_a[idx_a] == doc_b[idx_b]:
-                        padded_a.append(doc_a[idx_a])
-                        padded_b.append(doc_b[idx_b])
-                        idx_a += 1
-                        idx_b += 1
-                    else:
-                        padded_a.append(doc_a[idx_a])
-                        padded_b.append(doc_b[idx_b])
-                        idx_a += 1
-                        idx_b += 1
-
-                        if len(doc_a) < len(doc_b):
-                        # Replaced term is shorter in length than the term it was replaced with
-                            while idx_b < len(doc_b) and (idx_a >= len(doc_a) or doc_b[idx_b] != doc_a[idx_a]):
-                                padded_a.append(self.special_token)
-                                padded_b.append(doc_b[idx_b])
-                                idx_b += 1
-                        if len(doc_a) > len(doc_b):
-                        # Replaced term is longer than the term it was replaced with
-                            while idx_a < len(doc_a) and (idx_b >= len(doc_b) or doc_b[idx_b] != doc_a[idx_a]):
-                                padded_a.append(doc_a[idx_a])
-                                padded_b.append(self.special_token)
-                                idx_a += 1
-
-                doc_a, doc_b = padded_a, padded_b
-
-        elif self.perturb_type == "inject":
-            pass
-
-        assert len(doc_a) == len(doc_b), "Failed to pad input pairs, mismatch in document lengths post-padding."
-        return self.tokenizer.convert_tokens_to_string(doc_a), self.tokenizer.convert_tokens_to_string(doc_b)
 
     def pad_by_perturb_type(self, doc_a : str, doc_b : str):
         accepted_perturb_types = ["append", "prepend", "replace", "inject"]
