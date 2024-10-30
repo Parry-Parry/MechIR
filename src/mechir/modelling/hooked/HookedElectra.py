@@ -22,7 +22,7 @@ from . import loading_from_pretrained as loading
 
 class ElectraClassificationHead(nn.Module):
     """
-    Transforms BERT embeddings into logits. The purpose of this module is to predict masked tokens in a sentence.
+    Transforms ELECTRA embeddings into logits. The purpose of this module is to predict masked tokens in a sentence.
     """
 
     def __init__(self, cfg: Union[Dict, HookedTransformerConfig]):
@@ -42,7 +42,7 @@ class ElectraClassificationHead(nn.Module):
 
 class HookedElectraForSequenceClassification(HookedEncoder):
     """
-    This class implements a BERT-style encoder using the components in ./components.py, with HookPoints on every interesting activation. It inherits from HookedRootModule.
+    This class implements a BERT-style encoder for ELECTRA using the components in ./components.py, with HookPoints on every interesting activation. It inherits from HookedRootModule.
 
     Limitations:
     - The current MVP implementation supports only the masked language modelling (MLM) task. Next sentence prediction (NSP), causal language modelling, and other tasks are not yet supported.
