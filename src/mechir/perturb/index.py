@@ -61,7 +61,7 @@ class IndexPerturbation(AbstractPerturbation):
 
     @lru_cache(None)
     def _terms(self, text: str) -> Dict[str, str]:
-        terms = {term : self._stem(str(term)) for term in self._tokeniser(text) if term is not None and not self._stopwords[str(term)]}
+        terms = {term : self._stem(str(term)) for term in self._tokeniser(text) if term is not None and not self._stopwords(str(term))}
         print(terms)
         return terms
 
