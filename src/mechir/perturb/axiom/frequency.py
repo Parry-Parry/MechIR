@@ -16,6 +16,9 @@ class FrequencyPerturbation(IndexPerturbation):
         frequency: The frequency metric to use for term selection. Options are 'tf', 'idf', and 'tfidf'.
         num_additions: The number of terms to add to the document.
         tokeniser: The tokeniser to use for tokenising the text. If None, the default tokeniser is used.
+        stem: Whether or not to apply porter stemming for matching and lookup
+        stopwords: Whether or not to filter valid terms with a stopword list
+        exact_match: Forces returned terms to be present in both texts
     """
     def __init__(self, 
                  index_location: Any | Path | str, 
@@ -26,9 +29,10 @@ class FrequencyPerturbation(IndexPerturbation):
                  num_additions : int = 1,
                  tokeniser: Any | None = None, 
                  stem : bool = False,
+                 stopwords : bool = False,
                  exact_match : bool = False
                  ) -> None:
-        super().__init__(index_location, tokeniser, stem, exact_match)
+        super().__init__(index_location, tokeniser, stem, stopwords, exact_match)
 
         self.get_freq_terms = {
             'random' : self._get_random_terms,
