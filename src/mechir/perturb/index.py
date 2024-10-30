@@ -4,7 +4,7 @@ from pathlib import Path
 from collections import Counter
 import pyterrier as pt 
 import pyterrier.terrier as T
-import pyterrier.java.J as J
+from pyterrier.java import J
 from functools import lru_cache
 from collections import defaultdict
 import math
