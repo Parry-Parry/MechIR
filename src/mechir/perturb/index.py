@@ -47,7 +47,7 @@ class IndexPerturbation(AbstractPerturbation):
         self.num_docs = collection.getNumberOfDocuments()
         self.avg_doc_len = collection.getAverageDocumentLength()
         self._tokeniser = tokeniser if tokeniser is not None else word_tokenize 
-        self._stem = T.TerrierStemmer('porter').stem if stem else lambda x: x
+        self._stem = pt.java.autoclass("org.terrier.terms.PorterStemmer").stem if stem else lambda x: x
         self._stopwords = pt.java.autoclass("org.terrier.terms.Stopwords").isStopword if stopwords else lambda x: False
         self.exact_match = exact_match
 
@@ -61,7 +61,7 @@ class IndexPerturbation(AbstractPerturbation):
 
     @lru_cache(None)
     def _terms(self, text: str) -> Dict[str, str]:
-        terms = {term : self._stem(str(term)) for term in self._tokeniser(text) if term is not None and not self._stopwords(str(term))}
+        terms = {term : self._stem(str(term)) for term in self._tokeniser(text) if term is not None and not self._stopwords[str(term)]}
         print(terms)
         return terms
 
