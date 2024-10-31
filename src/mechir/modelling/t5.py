@@ -26,13 +26,11 @@ class MonoT5(PatchedModel):
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_name_or_path) 
         
         self.special_token = special_token
-        self.tokenizer.add_special_tokens({"additional_special_tokens": [self.special_token]})
-        self.special_token_id = self.tokenizer.convert_tokens_to_ids(self.special_token)
-
         self.pos_token = self.tokenizer.encode(pos_token, return_tensors="pt")[0]
         self.neg_token = self.tokenizer.encode(neg_token, return_tensors="pt")[0]
 
-        super().__init__(model_name_or_path, AutoModelForSeq2SeqLM.from_pretrained, HookedEncoderDecoder, tokenizer_len=len(self.tokenizer))
+        super().__init__(model_name_or_path, AutoModelForSeq2SeqLM.from_pretrained, HookedEncoderDecoder)
+        
         self._model_forward = partial(self._model, return_type="logits")
         self._model_run_with_cache = partial(self._model.run_with_cache, return_type="logits")
         self._model_run_with_hooks = partial(self._model.run_with_hooks, return_type="logits")
