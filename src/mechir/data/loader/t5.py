@@ -23,12 +23,14 @@ class MonoT5DataCollator(BaseCollator):
             padding='max_length',
             max_length=self.q_max_length + self.d_max_length,
             return_tensors="pt",
+            return_special_tokens_mask=self.special_mask
         )
         tokenized_perturbed_sequences = self.tokenizer(
             [self.prompt(q, dx) for q, dx in zip(batch_queries, batch_perturbed_docs)],
             padding='max_length',
             max_length=self.q_max_length + self.d_max_length,
             return_tensors="pt",
+            return_special_tokens_mask=self.special_mask
         )
         
         return {

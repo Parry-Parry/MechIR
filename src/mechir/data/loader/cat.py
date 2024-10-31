@@ -24,6 +24,7 @@ class CatDataCollator(BaseCollator):
             truncation=False,
             max_length=self.q_max_length + self.d_max_length,
             return_tensors="pt",
+            return_special_tokens_mask=self.special_mask
         )
 
         tokenized_perturbed_sequences = self.tokenizer(
@@ -33,6 +34,7 @@ class CatDataCollator(BaseCollator):
             truncation=False,
             max_length=self.q_max_length + self.d_max_length,
             return_tensors="pt",
+            return_special_tokens_mask=self.special_mask
         )
 
         return {
