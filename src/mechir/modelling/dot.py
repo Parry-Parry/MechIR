@@ -104,7 +104,7 @@ class Dot(PatchedModel):
                         one_zero_attention_mask=corrupted_tokens["attention_mask"],
                         fwd_hooks = [(utils.get_act_name(component, layer), hook_fn)],
                     )
-                    patched_outputs = reps_q @ self._pooling(patched_outputs)
+                    patched_outputs = reps_q @ self._pooling(patched_outputs).T
                     if patched_outputs.size(0) != 1: patched_outputs = patched_outputs.mean(dim=0)
                     results[component_idx, layer, position] = patching_metric(patched_outputs, scores, scores_p)
 
