@@ -26,15 +26,16 @@ class BaseCollator(object):
     special_mask : bool = False
     q_max_length : int = 30
     d_max_length : int = 300
-    special_token : int = "X"
+    special_token : int = "a"
     perturb_type : str = "append"
     pre_perturbed : bool = False
+
       
-    def __init__(self, tokenizer, transformation_func=None, special_mask=False, q_max_length=30, d_max_length=200, special_token="X", perturb_type="append", pre_perturbed=False) -> None:
+    def __init__(self, tokenizer, transformation_func=None, special_mask=False, q_max_length=30, d_max_length=200, special_token="a", perturb_type="append", pre_perturbed=False) -> None:
         assert transformation_func is not None or pre_perturbed, "Either a transformation function or pre-perturbed data must be provided."
         self.tokenizer = tokenizer
-        self.tokenizer.add_special_tokens({"additional_special_tokens": [special_token]})
-        self.special_token_id = self.tokenizer.convert_tokens_to_ids(special_token)
+        #self.tokenizer.add_special_tokens({"additional_special_tokens": [special_token]})
+        #self.special_token_id = self.tokenizer.convert_tokens_to_ids(special_token)
 
         self.transformation_func = transformation_func
         self.special_mask = special_mask

@@ -7,7 +7,7 @@ class CatDataCollator(BaseCollator):
                  special_mask=False,
                  q_max_length=30,
                  d_max_length=300,
-                 special_token="X",
+                 special_token="a",
                  perturb_type="append",
                  pre_perturbed=False,
                  ) -> None:

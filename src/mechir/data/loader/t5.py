@@ -7,8 +7,8 @@ class MonoT5DataCollator(BaseCollator):
                  special_mask=False,
                  perturb_type='append',
                  q_max_length=30,
-                 d_max_length=200,
-                 special_token="X",
+                 d_max_length=300,
+                 special_token="a",
                  ) -> None:
         super().__init__(tokenizer, transformation_func, special_mask, perturb_type, q_max_length, d_max_length, special_token)
 

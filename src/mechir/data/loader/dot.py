@@ -6,8 +6,8 @@ class DotDataCollator(BaseCollator):
                  transformation_func : callable=None,
                  special_mask=False,
                  q_max_length=30,
-                 d_max_length=200,
-                 special_token="X",
+                 d_max_length=300,
+                 special_token="a",
                  perturb_type="append",
                  pre_perturbed=False,
                  ) -> None:
