@@ -138,8 +138,9 @@ class Dot(PatchedModel):
                     )
                 patched_outputs = batched_dot_product(reps_q, self._pooling(patched_outputs))
                 if patched_outputs.size(0) != 1: patched_outputs = patched_outputs.mean(dim=0)
-                results[layer, head] = patching_metric(patched_outputs, scores, scores_p)
-                
+                batch_results = patching_metric(patched_outputs, scores, scores_p)
+                results[layer, head] = batch_results if batch_results.size(0) == 1 else batch_results.mean(dim=0).mean() # hacky fix, should change later
+
         return results
 
 
