@@ -56,7 +56,7 @@ Plot results for individual attention heads, with the option to include MLPs for
 '''
 def plot_components(
         data, # shape: (num_layers, num_heads) or (num_layers, num_heads + 1) if include_mlp=True
-        save_path,
+        save_path=None,
         title="Component Patching Results",
         include_mlp=False
     ):
@@ -72,14 +72,9 @@ def plot_components(
         xticklabels=True,
         yticklabels=True,
         fmt=".2f",
+        annot=True,
         annot_kws={"size": 8},
-        annot=False
     )
-
-    for i in range(data.shape[0]):
-        for j in range(data.shape[1]):
-            plt.text(j+0.5, i+0.5, f'{data[i, j]:.2f}', ha='center', va='center', color='black')
-
     
     if include_mlp:
         new_labels = list(map(str, range(data.shape[1]-1)))
@@ -94,6 +89,7 @@ def plot_components(
         plt.savefig(save_path)
         plt.close()
 
-    return plt.gcf()
+    else:
+        plt.show()
 
 __all__ = ["plot_blocks", "plot_components"]
