@@ -27,7 +27,7 @@ class DistilBertEmbed(nn.Module):
 
         self.hook_embed = HookPoint()
         self.hook_pos_embed = HookPoint()
-        self.hook_token_type_embed = HookPoint()
+        # self.hook_token_type_embed = HookPoint()
 
     def forward(
         self,
