@@ -44,11 +44,12 @@ from transformer_lens.pretrained.weight_conversions import (
     convert_qwen_weights,
     convert_t5_weights,
 )
+import transformer_lens.loading_from_pretrained as loading_from_pretrained
 from transformer_lens.loading_from_pretrained import (
-    NON_HF_HOSTED_MODEL_NAMES as _NON_HF_HOSTED_MODEL_NAMES,
-    NEED_REMOTE_CODE_MODELS as _NEED_REMOTE_CODE_MODELS,
-    MODEL_ALIASES as _MODEL_ALIASES,
-    OFFICIAL_MODEL_NAMES as _OFFICIAL_MODEL_NAMES,
+    NON_HF_HOSTED_MODEL_NAMES,
+    NEED_REMOTE_CODE_MODELS,
+    MODEL_ALIASES,
+    OFFICIAL_MODEL_NAMES,
     STANFORD_CRFM_CHECKPOINTS,
     get_checkpoint_labels,
     PYTHIA_V0_CHECKPOINTS,
@@ -123,45 +124,16 @@ def add_official_model(model_name: str) -> None:
         tl_module.OFFICIAL_MODEL_NAMES.append(model_name)
         logger.info(f"Added {model_name} to transformer_lens.OFFICIAL_MODEL_NAMES")
 
-REGISTERED_ARCHITECTURES = {}
+add_official_model("sebastian-hofstaetter/distilbert-dot-tas_b-b256-msmarco")
 
-def register_architecture(architecture: str, cfg_fn: callable):
-    """Register a weight conversion function for a given architecture."""
-    REGISTERED_ARCHITECTURES[architecture] = cfg_fn
-
-REGISTERED_CONVERSIONS = {}
-
-def register_conversion(architecture: str, conversion_fn: callable):
-    """Register a weight conversion function for a given architecture."""
-    REGISTERED_CONVERSIONS[architecture] = conversion_fn
-
-OFFICIAL_MODEL_NAMES = [
-    "sebastian-hofstaetter/distilbert-dot-tas_b-b256-msmarco",
-   * _OFFICIAL_MODEL_NAMES,
-]
-
-def register_official_model_name(model_name: str):
-    """Register an official model name."""
-    OFFICIAL_MODEL_NAMES.append(model_name)
 
 """Official model names for models on HuggingFace."""
-
-# Model Aliases:
-MODEL_ALIASES = {
-    "sebastian-hofstaetter/distilbert-dot-tas_b-b256-msmarco": ["tas-b"],
-    **_MODEL_ALIASES,
-}
-"""Model aliases for models on HuggingFace."""
 
 def register_model_alias(official_model_name: str, alias: str):
     """Register an alias for an official model name."""
     if official_model_name not in MODEL_ALIASES:
         MODEL_ALIASES[official_model_name] = []
     MODEL_ALIASES[official_model_name].append(alias)
-
-NON_HF_HOSTED_MODEL_NAMES = [
-    * _NON_HF_HOSTED_MODEL_NAMES,
-]
 
 def register_non_hf_hosted_model_name(model_name: str):
     """Register an official model name."""
@@ -174,9 +146,7 @@ DEFAULT_MODEL_ALIASES = [
     MODEL_ALIASES[name][0] if name in MODEL_ALIASES else name for name in OFFICIAL_MODEL_NAMES
 ]
 
-NEED_REMOTE_CODE_MODELS = (
-    * _NEED_REMOTE_CODE_MODELS,
-)
+
 from . import conversion as conversion
 from . import states as states
 
