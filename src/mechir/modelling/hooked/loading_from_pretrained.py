@@ -76,7 +76,7 @@ def register_with_transformer_lens(
         architecture_names = [architecture_names]
     
     # Get the transformer_lens module
-    tl_module = sys.modules.get('transformer_lens')
+    tl_module = sys.modules.get('transformer_lens.loading_from_pretrained')
     if tl_module is None:
         raise ImportError("transformer_lens must be imported before registering new functions")
     

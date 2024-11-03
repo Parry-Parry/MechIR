@@ -1,7 +1,8 @@
 # Description: This file contains the state dictionary for the models in the hooked library.
 import torch
-from .loading_from_pretrained import register_architecture
+from .loading_from_pretrained import register_architecture, register_with_transformer_lens, extend_transformer_lens_registry
 
+@extend_transformer_lens_registry("GPTNeoForCausalLM")
 def GPTNeoForCausalLM_state_dict(hf_config):
     return {
         "d_model": hf_config.hidden_size,
@@ -21,8 +22,8 @@ def GPTNeoForCausalLM_state_dict(hf_config):
         "normalization_type": "LN",
         }
 
-register_architecture("GPTNeoForCausalLM", GPTNeoForCausalLM_state_dict)
 
+@extend_transformer_lens_registry("GPT2LMHeadModel")
 def GPT2LMHeadModel_state_dict(hf_config):
     return {
         "d_model": hf_config.n_embd,
@@ -40,8 +41,7 @@ def GPT2LMHeadModel_state_dict(hf_config):
         "normalization_type": "LN",
         }
 
-register_architecture("GPT2LMHeadModel", GPT2LMHeadModel_state_dict)
-
+@extend_transformer_lens_registry("OPTForCausalLM")
 def OPTForCausalLM_state_dict(hf_config):
     return {
         "d_model": hf_config.hidden_size,
@@ -59,8 +59,7 @@ def OPTForCausalLM_state_dict(hf_config):
         "normalization_type": "LN",
         }
 
-register_architecture("OPTForCausalLM", OPTForCausalLM_state_dict)
-
+@extend_transformer_lens_registry("GPTJForCausalLM")
 def GPTJForCausalLM_state_dict(hf_config):
     return {
         "d_model": hf_config.n_embd,
@@ -82,33 +81,7 @@ def GPTJForCausalLM_state_dict(hf_config):
         "normalization_type": "LN",
         }
 
-register_architecture("GPTJForCausalLM", GPTJForCausalLM_state_dict)
-
-def GPT2LMHeadModel_state_dict(hf_config):
-    state = {
-            "d_model": hf_config.hidden_size,
-            "d_head": hf_config.hidden_size // hf_config.num_attention_heads,
-            "n_heads": hf_config.num_attention_heads,
-            "d_mlp": hf_config.intermediate_size,
-            "n_layers": hf_config.num_hidden_layers,
-            "n_ctx": hf_config.max_position_embeddings,
-            "eps": hf_config.layer_norm_eps,
-            "d_vocab": hf_config.vocab_size,
-            "act_fn": hf_config.hidden_act,
-            "use_attn_scale": True,
-            "use_local_attn": False,
-            "scale_attn_by_inverse_layer_idx": False,
-            "parallel_attn_mlp": True,
-            "positional_embedding_type": "rotary",
-            "rotary_adjacent_pairs": False,
-            "normalization_type": "LN",
-        }
-    rotary_pct = hf_config.rotary_pct
-    state["rotary_dim"] = round(rotary_pct * state["d_head"])
-    return state
-
-register_architecture("GPT2LMHeadModel", GPT2LMHeadModel_state_dict)
-
+@extend_transformer_lens_registry("GPTNeoForCausalLM")
 def GPTNeoForCausalLM_state_dict(hf_config):
     state = {
             "d_model": hf_config.hidden_size,
@@ -132,8 +105,7 @@ def GPTNeoForCausalLM_state_dict(hf_config):
     state["rotary_dim"] = round(rotary_pct * state["d_head"])
     return state
 
-register_architecture("GPTNeoForCausalLM", GPTNeoForCausalLM_state_dict)
-
+@extend_transformer_lens_registry(["BertModel", "BertForMaskedLM", "ElectraForPreTraining"])
 def BertModel_state_dict(hf_config):
     return {
         "d_model": hf_config.hidden_size,
@@ -148,9 +120,7 @@ def BertModel_state_dict(hf_config):
         "attention_dir": "bidirectional",
     }
 
-register_architecture("BertModel", BertModel_state_dict)
-register_architecture("BertForMaskedLM", BertModel_state_dict)
-
+@extend_transformer_lens_registry(["BertForSequenceClassification", "ElectraForSequenceClassification"])
 def BertForSequenceClassification_state_dict(hf_config):
     return {
         "d_model": hf_config.hidden_size,
@@ -166,10 +136,8 @@ def BertForSequenceClassification_state_dict(hf_config):
         "num_labels": hf_config.num_labels,
     }
 
-register_architecture("BertForSequenceClassification", BertForSequenceClassification_state_dict)
-register_architecture("ElectraForPreTraining", BertModel_state_dict)
-register_architecture("ElectraForSequenceClassification", BertForSequenceClassification_state_dict)
 
+@extend_transformer_lens_registry(["DistilBert", "DistilBertModel"])
 def DistilBert_state_dict(hf_config):
         return {
             "d_model": hf_config.dim,
@@ -185,17 +153,14 @@ def DistilBert_state_dict(hf_config):
             # dropout, initializer_range, pad_token_id, qa_dropout, seq_classif_dropout, sinusoidal_pos_embds, tie_weights
         }
 
-register_architecture("DistilBert", DistilBert_state_dict)
-register_architecture("DistilBertModel", DistilBert_state_dict)
-
+@extend_transformer_lens_registry(["DistilBertForSequenceClassification"])
 def DistilBertForSequenceClassification_state_dict(hf_config):
     return {
         **DistilBert_state_dict(hf_config),
         "num_labels": hf_config.num_labels,
     }
 
-register_architecture("DistilBertForSequenceClassification", DistilBertForSequenceClassification_state_dict)
-
+@extend_transformer_lens_registry("MistralForCausalLM")
 def MistralForCausalLM_state_dict(hf_config):
     return {
         "d_model": 4096,
@@ -217,8 +182,7 @@ def MistralForCausalLM_state_dict(hf_config):
         "rotary_dim": 4096 // 32,
     }
 
-register_architecture("MistralForCausalLM", MistralForCausalLM_state_dict)
-
+@extend_transformer_lens_registry("MixtralForCausalLM")
 def MixtralForCausalLM_state_dict(hf_config):
     return {
         "dtype": torch.bfloat16,
@@ -244,8 +208,7 @@ def MixtralForCausalLM_state_dict(hf_config):
         "experts_per_token": hf_config.num_experts_per_tok,
     }
 
-register_architecture("MixtralForCausalLM", MixtralForCausalLM_state_dict)
-
+@extend_transformer_lens_registry("BloomForCausalLM")
 def BloomForCausalLM_state_dict(hf_config):
     return {
         "d_model": hf_config.hidden_size,
@@ -262,8 +225,7 @@ def BloomForCausalLM_state_dict(hf_config):
         "positional_embedding_type": "alibi",
     }
 
-register_architecture("BloomForCausalLM", BloomForCausalLM_state_dict)
-
+@extend_transformer_lens_registry("GPT2LMHeadCustomModel")
 def GPT2LMHeadCustomModel_state_dict(hf_config):
     return {
         "d_model": hf_config.n_embd,
@@ -282,8 +244,7 @@ def GPT2LMHeadCustomModel_state_dict(hf_config):
         "normalization_type": "LN",
     }
 
-register_architecture("GPT2LMHeadCustomModel", GPT2LMHeadCustomModel_state_dict)
-
+@extend_transformer_lens_registry("LlamaForCausalLM")
 def LlamaForCausalLM_state_dict(hf_config):
     return {
         "d_model": hf_config.hidden_size,
@@ -311,8 +272,7 @@ def LlamaForCausalLM_state_dict(hf_config):
         "gated_mlp": True,
     }
 
-register_architecture("LlamaForCausalLM", LlamaForCausalLM_state_dict)
-
+@extend_transformer_lens_registry("QWenLMHeadModel")
 def QWenLMHeadModel_state_dict(hf_config):
     return {
         "d_model": hf_config.hidden_size,
@@ -336,8 +296,7 @@ def QWenLMHeadModel_state_dict(hf_config):
         "gated_mlp": True,
     }
 
-register_architecture("QWenLMHeadModel", QWenLMHeadModel_state_dict)
-
+@extend_transformer_lens_registry("QWen2ForCausalLM")
 def Qwen2ForCausalLM_state_dict(hf_config):
     return {
         "d_model": hf_config.hidden_size,
@@ -361,8 +320,7 @@ def Qwen2ForCausalLM_state_dict(hf_config):
         "gated_mlp": True,
     }
 
-register_architecture("Qwen2ForCausalLM", Qwen2ForCausalLM_state_dict)
-
+@extend_transformer_lens_registry("PhiForCausalLM")
 def PhiForCausalLM_state_dict(hf_config):
     return {
         "d_model": hf_config.hidden_size,
@@ -383,8 +341,7 @@ def PhiForCausalLM_state_dict(hf_config):
         "parallel_attn_mlp": True,
     }
 
-register_architecture("PhiForCausalLM", PhiForCausalLM_state_dict)
-
+@extend_transformer_lens_registry("Phi3ForCausalLM")
 def Phi3ForCausalLM_state_dict(hf_config):
     return {
         "d_model": hf_config.hidden_size,
@@ -407,8 +364,7 @@ def Phi3ForCausalLM_state_dict(hf_config):
         "rotary_dim": hf_config.hidden_size // hf_config.num_attention_heads,
     }
 
-register_architecture("Phi3ForCausalLM", Phi3ForCausalLM_state_dict)
-
+@extend_transformer_lens_registry("T5forConditionalGeneration")
 def T5forConditionalGeneration_state_dict(hf_config):
     return {
         "d_model": hf_config.d_model,
@@ -428,5 +384,3 @@ def T5forConditionalGeneration_state_dict(hf_config):
         "use_attn_scale": False,
         "tie_word_embeddings": hf_config.tie_word_embeddings,
     }
-
-register_architecture("T5forConditionalGeneration", T5forConditionalGeneration_state_dict)

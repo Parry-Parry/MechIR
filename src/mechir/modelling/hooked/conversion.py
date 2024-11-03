@@ -1,6 +1,6 @@
 import einops
 from functools import partial
-from .loading_from_pretrained import register_conversion
+from .loading_from_pretrained import register_with_transformer_lens
 from .HookedTransformerConfig import HookedTransformerConfig
 
 def convert_distilbert_weights(distilbert, cfg: HookedTransformerConfig, sequence_classification=False, raw=False):
@@ -62,9 +62,8 @@ def convert_distilbert_weights(distilbert, cfg: HookedTransformerConfig, sequenc
 
     return state_dict
 
-register_conversion("DistilBert", convert_distilbert_weights)
-register_conversion("DistilBertModel", convert_distilbert_weights)
-register_conversion("DistilBertForSequenceClassification", partial(convert_distilbert_weights, sequence_classification=True))
+register_with_transformer_lens(convert_distilbert_weights, ["DistilBert", "DistilBertModel"], function_type="conversion")
+register_with_transformer_lens(partial(convert_distilbert_weights, sequence_classification=True), "DistilBertForSequenceClassification", function_type="conversion")
 
 def convert_bert_based_weights(bert, cfg: HookedTransformerConfig, sequence_classification=False, raw=False, model_name : str = 'bert'):
     embeddings = getattr(bert, model_name).embeddings if not raw else bert.embeddings
@@ -208,9 +207,9 @@ def convert_bert_weights(bert, cfg: HookedTransformerConfig, sequence_classifica
 
     return state_dict
 
-register_conversion("BertModel", partial(convert_bert_weights, raw=True))
-register_conversion("BertForMaskedLM", partial(convert_bert_weights, raw=True))
-register_conversion("BertForSequenceClassification", partial(convert_bert_weights, sequence_classification=True))
-
-register_conversion("ElectraModel",  partial(convert_bert_based_weights, model_name='electra', raw=True))
-register_conversion("ElectraForSequenceClassification", partial(convert_bert_based_weights, sequence_classification=True, model_name='electra'))
+register_with_transformer_lens(partial(convert_bert_weights, raw=True), ["BertModel", "BertForMaskedLM"], function_type="conversion")
+register_with_transformer_lens(partial(convert_bert_weights, sequence_classification=True), "BertForSequenceClassification", function_type="conversion")
+register_with_transformer_lens(partial(convert_bert_based_weights, model_name='roberta', raw=True), ["RobertaModel", "RobertaForMaskedLM"], function_type="conversion")
+register_with_transformer_lens(partial(convert_bert_based_weights, sequence_classification=True, model_name='roberta'), "RobertaForSequenceClassification", function_type="conversion")
+register_with_transformer_lens(partial(convert_bert_based_weights, model_name='electra', raw=True), ["ElectraModel"], function_type="conversion")
+register_with_transformer_lens(partial(convert_bert_based_weights, sequence_classification=True, model_name='electra'), "ElectraForSequenceClassification", function_type="conversion")
