@@ -12,6 +12,7 @@ class PatchedModel(ABC):
                  model_name_or_path : str,
                  model_func : Any,
                  hook_obj : Any,
+                 return_cache : bool = False,
                  ) -> None:
         torch.set_grad_enabled(False)
         self._device = utils.get_device()
@@ -29,6 +30,8 @@ class PatchedModel(ABC):
             'head_all' : self._get_act_patch_attn_head_out_all_pos,
             'head_by_pos' : self._get_act_patch_attn_head_by_pos,
         }
+
+        self._return_cache = return_cache
 
 
     @abstractmethod

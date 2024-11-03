@@ -206,4 +206,5 @@ class Cat(PatchedModel):
             'scores_p' : scores_p,
         }
         patched_output = self._patch_funcs[patch_type](**patching_kwargs)
+        if self._return_cache: return patched_output, cache
         return patched_output

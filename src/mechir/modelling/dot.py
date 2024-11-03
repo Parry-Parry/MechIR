@@ -216,4 +216,5 @@ class Dot(PatchedModel):
         }
 
         patched_output = self._patch_funcs[patch_type](**patching_kwargs)
+        if self._return_cache: return patched_output, cache_d
         return patched_output #PatchingOutput(output, scores, scores_p)
