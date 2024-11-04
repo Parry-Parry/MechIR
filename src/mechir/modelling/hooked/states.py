@@ -1,6 +1,6 @@
 # Description: This file contains the state dictionary for the models in the hooked library.
 import torch
-from .loading_from_pretrained import register_architecture, register_with_transformer_lens, extend_transformer_lens_registry
+from .loading_from_pretrained import extend_transformer_lens_registry
 
 @extend_transformer_lens_registry("GPTNeoForCausalLM")
 def GPTNeoForCausalLM_state_dict(hf_config):
