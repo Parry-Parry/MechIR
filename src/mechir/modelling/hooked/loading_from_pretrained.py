@@ -56,7 +56,6 @@ def register_with_transformer_lens(
     architecture_names: Union[str, List[str]],
     function_type: str = "architecture"
 ) -> Callable:
-    print(fn.__name__)
     print(architecture_names)
     print(function_type)
     """
