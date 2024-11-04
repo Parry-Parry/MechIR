@@ -72,3 +72,21 @@ dataloader = DataLoader(dataset, collate_fn=collate_fn, batch_size=8)
 ```
 
 ### Activation Patching
+
+Activation patching is a method to isolate model behaviour to particular components of the model commonly attention heads. There are several ways to perform activation patching, a simple case is to patch all heads:
+
+```
+patch_output = []
+for batch in dataloader:
+    patch_output.append(model(**batch, patch_type="head_all"))
+
+patch_output = torch.mean(torch.stack(patch_output), axis=0)
+```
+
+We can then easily visualise the attention heads which activate strongly for our perturbation:
+
+```
+from mechir.plotting import plot_components
+
+plot_components(patch_output)
+```
