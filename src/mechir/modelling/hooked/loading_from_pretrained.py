@@ -157,10 +157,6 @@ DEFAULT_MODEL_ALIASES = [
     MODEL_ALIASES[name][0] if name in MODEL_ALIASES else name for name in OFFICIAL_MODEL_NAMES
 ]
 
-
-from . import conversion as conversion
-from . import states as states
-
 def register_need_remote_code_model_name(model_name: str):
     from transformer_lens.loading_from_pretrained import NEED_REMOTE_CODE_MODELS
     """Register an official model name."""
@@ -900,6 +896,9 @@ def get_basic_config(model_name: str, **kwargs) -> Config:
             ]
         }
     )
+
+from . import conversion as conversion
+from . import states as states
 
 ### HARDCODED REGISTRATION OF MODELS ###
 add_official_model("sebastian-hofstaetter/distilbert-dot-tas_b-b256-msmarco")
