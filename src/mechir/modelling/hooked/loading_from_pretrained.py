@@ -49,6 +49,7 @@ import transformer_lens.loading_from_pretrained as loading_from_pretrained
 logger = logging.getLogger(__name__)
 
 REGISTERED_CONVERSIONS = {}
+REGISTERED_ARCHITECTURES = {}
 
 def register_with_transformer_lens(
     fn: Callable,
@@ -76,6 +77,8 @@ def register_with_transformer_lens(
     # Determine the registry
     if function_type == "architecture":
         registry = getattr(tl_module, 'REGISTERED_ARCHITECTURES', None)
+        if registry is None:
+            registry = REGISTERED_ARCHITECTURES
         registry_name = 'REGISTERED_ARCHITECTURES'
     elif function_type == "conversion":
         registry = getattr(tl_module, 'REGISTERED_CONVERSIONS', None)
@@ -203,7 +206,6 @@ def convert_hf_model_config(model_name: str, **kwargs):
 
     Takes the official_model_name as an input.
     """
-    from transformer_lens.loading_from_pretrained import REGISTERED_ARCHITECTURES
 
     # In case the user passed in an alias
     if (Path(model_name) / "config.json").exists():
