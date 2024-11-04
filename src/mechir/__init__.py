@@ -68,3 +68,6 @@ from .modelling import (
     MonoT5,
     PatchedModel
 )
+
+from .modelling.hooked import conversion
+from .modelling.hooked import states

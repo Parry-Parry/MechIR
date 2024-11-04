@@ -8,6 +8,7 @@ import mechir
 from mechir import Cat, Dot
 from mechir.data import CatDataCollator, DotDataCollator, MechDataset
 import pyterrier as pt
+from mechir.modelling.hooked.loading_from_pretrained import REGISTERED_CONVERSIONS, REGISTERED_ARCHITECTURES
 
 mechir.config('ignore-official', True)
 
@@ -42,6 +43,8 @@ def process_frame(frame):
     return pd.DataFrame(output)
 
 def patch(model_name_or_path : str, model_type : str, in_file : str, out_path : str, batch_size : int = 256, perturbation_type : str = 'TFC1', k : int = 1000):
+    print(REGISTERED_ARCHITECTURES)
+    print(REGISTERED_CONVERSIONS)
     if model_type == "bi":
         model, collator = load_bi(model_name_or_path)
     elif model_type == "cross":
