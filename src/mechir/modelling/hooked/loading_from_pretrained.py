@@ -133,9 +133,6 @@ def add_model_alias(official_model_name: str, alias: str) -> None:
         tl_module.MODEL_ALIASES[official_model_name].append(alias)
         logger.info(f"Added alias {alias} for {official_model_name}")
 
-add_official_model("sebastian-hofstaetter/distilbert-dot-tas_b-b256-msmarco")
-
-
 """Official model names for models on HuggingFace."""
 
 def register_model_alias(official_model_name: str, alias: str):
@@ -903,3 +900,7 @@ def get_basic_config(model_name: str, **kwargs) -> Config:
             ]
         }
     )
+
+### HARDCODED REGISTRATION OF MODELS ###
+add_official_model("sebastian-hofstaetter/distilbert-dot-tas_b-b256-msmarco")
+add_official_model("crystina-z/monoELECTRA_LCE_nneg31")
