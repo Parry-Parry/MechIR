@@ -113,7 +113,7 @@ def extend_transformer_lens_registry(
 
 def add_official_model(model_name: str) -> None:
     """Directly adds a model name to transformer_lens's OFFICIAL_MODEL_NAMES."""
-    tl_module = sys.modules.get('transformer_lens')
+    tl_module = sys.modules.get('transformer_lens.loading_from_pretrained')
     if tl_module is None:
         raise ImportError("transformer_lens must be imported before adding official models")
         
@@ -123,6 +123,21 @@ def add_official_model(model_name: str) -> None:
     if model_name not in tl_module.OFFICIAL_MODEL_NAMES:
         tl_module.OFFICIAL_MODEL_NAMES.append(model_name)
         logger.info(f"Added {model_name} to transformer_lens.OFFICIAL_MODEL_NAMES")
+
+def add_model_alias(official_model_name: str, alias: str) -> None:
+    """Directly adds an alias for an official model name."""
+    tl_module = sys.modules.get('transformer_lens.loading_from_pretrained')
+    if tl_module is None:
+        raise ImportError("transformer_lens must be imported before adding model aliases")
+        
+    if not hasattr(tl_module, 'MODEL_ALIASES'):
+        raise AttributeError("Could not find MODEL_ALIASES in transformer_lens")
+        
+    if official_model_name not in tl_module.MODEL_ALIASES:
+        tl_module.MODEL_ALIASES[official_model_name] = []
+    if alias not in tl_module.MODEL_ALIASES[official_model_name]:
+        tl_module.MODEL_ALIASES[official_model_name].append(alias)
+        logger.info(f"Added alias {alias} for {official_model_name}")
 
 add_official_model("sebastian-hofstaetter/distilbert-dot-tas_b-b256-msmarco")
 
