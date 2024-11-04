@@ -897,9 +897,6 @@ def get_basic_config(model_name: str, **kwargs) -> Config:
         }
     )
 
-from . import conversion as conversion
-from . import states as states
-
 ### HARDCODED REGISTRATION OF MODELS ###
 add_official_model("sebastian-hofstaetter/distilbert-dot-tas_b-b256-msmarco")
 add_official_model("crystina-z/monoELECTRA_LCE_nneg31")
