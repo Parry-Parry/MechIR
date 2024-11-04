@@ -6,7 +6,7 @@ Heavily inspired by the paper **Axiomatic Causal Interventions for Reverse Engin
 
 ## Demonstration
 
-Primary files can be found in the /notebooks folder. 
+Primary files can be found in the /notebooks folder. If you use our live versions and want to run our experiments make sure to choose a GPU instance of Colab.
 
-* experiment.ipynb: This notebook demonstrates how to use the MechIR library to perform activation patching on a simple neural retrieval model. 
-* activation_patching_considerations.ipynb: This notebook provides a more in-depth look at the activation patching process and the considerations that go into it.
+* experiment.ipynb: This notebook demonstrates how to use the MechIR library to perform activation patching on a simple neural retrieval model. Here is a live version [on Colab](https://drive.google.com/file/d/1L34CPsgKSW8akHOet15j_nuuXNINX7gt/view?usp=sharing)
+* activation_patching_considerations.ipynb: This notebook provides a more in-depth look at the activation patching process and the considerations that go into it. Here is a live version [on Colab](https://drive.google.com/file/d/1TSRCvixMo4YPRwDqsjf7kuci6fGwwQG2/view?usp=sharing)
