@@ -35,7 +35,7 @@ Currently we support common bi- and cross-encoder models for neural retrieval. T
 
 To load a model, for example TAS-B, you can use the following code:
 
-```
+```python
 from mechir import Dot
 
 model = Dot('sebastian-hofstaetter/distilbert-dot-tas_b-b256-msmarco')
@@ -45,7 +45,7 @@ model = Dot('sebastian-hofstaetter/distilbert-dot-tas_b-b256-msmarco')
 
 To probe model behaviour we need queries and documents, we retrieve these from ir-datasets though you can use your own (MechDataset). To load an IR dataset, for example MS MARCO, you can use the following code:
 
-```
+```python
 from mechir import MechIRDataset
 
 dataset = MechIRDataset('msmarco-passage/dev')
@@ -53,7 +53,7 @@ dataset = MechIRDataset('msmarco-passage/dev')
 
 The second step of probing is to create a perturbation of text to observe how model behaviour changes, we can do this simply with the perturbation decorator:
 
-```
+```python
 from mechir.perturb import perturbation
 
 @perturbation
@@ -63,7 +63,7 @@ def my_perturbation(text):
 
 We can then apply this perturbation efficiently using our dataset and a torch dataloader
 
-```
+```python
 from torch.utils.data import DataLoader
 from mechir.data import DotDataCollator
 
@@ -75,7 +75,7 @@ dataloader = DataLoader(dataset, collate_fn=collate_fn, batch_size=8)
 
 Activation patching is a method to isolate model behaviour to particular components of the model commonly attention heads. There are several ways to perform activation patching, a simple case is to patch all heads:
 
-```
+```python
 patch_output = []
 for batch in dataloader:
     patch_output.append(model(**batch, patch_type="head_all"))
@@ -85,7 +85,7 @@ patch_output = torch.mean(torch.stack(patch_output), axis=0)
 
 We can then easily visualise the attention heads which activate strongly for our perturbation:
 
-```
+```python
 from mechir.plotting import plot_components
 
 plot_components(patch_output)
