@@ -45,18 +45,10 @@ from transformer_lens.pretrained.weight_conversions import (
     convert_t5_weights,
 )
 import transformer_lens.loading_from_pretrained as loading_from_pretrained
-from transformer_lens.loading_from_pretrained import (
-    NON_HF_HOSTED_MODEL_NAMES,
-    NEED_REMOTE_CODE_MODELS,
-    MODEL_ALIASES,
-    OFFICIAL_MODEL_NAMES,
-    STANFORD_CRFM_CHECKPOINTS,
-    get_checkpoint_labels,
-    PYTHIA_V0_CHECKPOINTS,
-    PYTHIA_CHECKPOINTS
-)
 
 logger = logging.getLogger(__name__)
+
+REGISTERED_CONVERSIONS = {}
 
 def register_with_transformer_lens(
     fn: Callable,
@@ -87,6 +79,8 @@ def register_with_transformer_lens(
         registry_name = 'REGISTERED_ARCHITECTURES'
     elif function_type == "conversion":
         registry = getattr(tl_module, 'REGISTERED_CONVERSIONS', None)
+        if registry is None:
+            registry = REGISTERED_CONVERSIONS
         registry_name = 'REGISTERED_CONVERSIONS'
     else:
         raise ValueError("function_type must be either 'architecture' or 'conversion'")
@@ -145,6 +139,7 @@ add_official_model("sebastian-hofstaetter/distilbert-dot-tas_b-b256-msmarco")
 """Official model names for models on HuggingFace."""
 
 def register_model_alias(official_model_name: str, alias: str):
+    from transformer_lens.loading_from_pretrained import MODEL_ALIASES
     """Register an alias for an official model name."""
     if official_model_name not in MODEL_ALIASES:
         MODEL_ALIASES[official_model_name] = []
@@ -152,11 +147,15 @@ def register_model_alias(official_model_name: str, alias: str):
 
 def register_non_hf_hosted_model_name(model_name: str):
     """Register an official model name."""
+    from transformer_lens.loading_from_pretrained import NON_HF_HOSTED_MODEL_NAMES
     NON_HF_HOSTED_MODEL_NAMES.append(model_name)
 
 """Official model names for models not hosted on HuggingFace."""
 
 # Sets a default model alias, by convention the first one in the model alias table, else the official name if it has no aliases
+
+from transformer_lens.loading_from_pretrained import MODEL_ALIASES, OFFICIAL_MODEL_NAMES
+
 DEFAULT_MODEL_ALIASES = [
     MODEL_ALIASES[name][0] if name in MODEL_ALIASES else name for name in OFFICIAL_MODEL_NAMES
 ]
@@ -166,10 +165,12 @@ from . import conversion as conversion
 from . import states as states
 
 def register_need_remote_code_model_name(model_name: str):
+    from transformer_lens.loading_from_pretrained import NEED_REMOTE_CODE_MODELS
     """Register an official model name."""
     NEED_REMOTE_CODE_MODELS.append(model_name)
 
 def make_model_alias_map():
+    from transformer_lens.loading_from_pretrained import MODEL_ALIASES, OFFICIAL_MODEL_NAMES
     """
     Converts OFFICIAL_MODEL_NAMES (the list of actual model names on
     HuggingFace) and MODEL_ALIASES (a dictionary mapping official model names to
@@ -185,6 +186,7 @@ def make_model_alias_map():
 
 
 def get_official_model_name(model_name: str):
+    from transformer_lens.loading_from_pretrained import OFFICIAL_MODEL_NAMES
     """
     Returns the official model name for a given model name (or alias).
     """
@@ -208,6 +210,8 @@ def convert_hf_model_config(model_name: str, **kwargs):
 
     Takes the official_model_name as an input.
     """
+    from transformer_lens.loading_from_pretrained import REGISTERED_ARCHITECTURES
+
     # In case the user passed in an alias
     if (Path(model_name) / "config.json").exists():
         logging.info("Loading model config from local directory")
@@ -551,6 +555,7 @@ def get_pretrained_model_config(
     dtype: torch.dtype = torch.float32,
     **kwargs,
 ):
+    from transformer_lens.loading_from_pretrained import NEED_REMOTE_CODE_MODELS
     """Returns the pretrained model config as an HookedTransformerConfig object.
 
     There are two types of pretrained models: HuggingFace models (where
@@ -666,6 +671,11 @@ def get_pretrained_model_config(
     return cfg
 
 def get_checkpoint_labels(model_name: str, **kwargs):
+    from transformer_lens.loading_from_pretrained import (
+        PYTHIA_CHECKPOINTS,
+        PYTHIA_V0_CHECKPOINTS,
+        STANFORD_CRFM_CHECKPOINTS,
+    )
     """Returns the checkpoint labels for a given model, and the label_type
     (step or token). Raises an error for models that are not checkpointed."""
     official_model_name = get_official_model_name(model_name)
@@ -707,6 +717,7 @@ def get_pretrained_state_dict(
     dtype: torch.dtype = torch.float32,
     **kwargs,
 ) -> Dict[str, torch.Tensor]:
+    from transformer_lens.loading_from_pretrained import NON_HF_HOSTED_MODEL_NAMES, NEED_REMOTE_CODE_MODELS
     """
     Loads in the model weights for a pretrained model, and processes them to
     have the HookedTransformer parameter names and shapes. Supports checkpointed
