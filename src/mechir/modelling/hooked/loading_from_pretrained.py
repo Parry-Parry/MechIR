@@ -56,8 +56,6 @@ def register_with_transformer_lens(
     architecture_names: Union[str, List[str]],
     function_type: str = "architecture"
 ) -> Callable:
-    print(architecture_names)
-    print(function_type)
     """
     Directly registers a function with transformer_lens registries.
     Can be used as a function or decorator.
