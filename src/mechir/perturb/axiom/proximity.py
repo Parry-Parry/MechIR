@@ -1,15 +1,7 @@
-from functools import 
 from typing import Any, Path
 import random
+from functools import partial
 from ..index import IndexPerturbation
-from .. import AbstractPerturbation
-
-class ProximityPerturbation(AbstractPerturbation):
-    def __init__(self) -> None:
-        super().__init__()
-    def apply(self, document : str, query : str) -> str:
-        terms = self.get_freq_terms(query if self.target=='query' else document)
-        return self._insert_terms(document, terms)
     
 class ProximityPerturbation(IndexPerturbation):
     """
@@ -85,9 +77,10 @@ class ProximityPerturbation(IndexPerturbation):
         if self.exact_match:
             # find stemmed terms that are in the document and query
             query_terms = self.get_terms(query)
-            document_terms = self.get_terms(document)
-            terms = [term for term in query_terms.values() if term in document_terms.values()]
-        terms = self.get_freq_terms(query if self.target == 'query' else document, terms)
+            terms = [term for term in query_terms.values()]
+        terms = self.get_freq_terms(query, terms)
         return self._insert_terms(document, terms)
+
+
 
 __all__ = ['ProximityPerturbation']
