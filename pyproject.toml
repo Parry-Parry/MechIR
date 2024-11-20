@@ -8,6 +8,7 @@ version = "0.0.1"
 dependencies = [
   "torch",
   "transformers",
+  "transformer_lens"
 ]
 requires-python = ">=3.9"
 authors = [
