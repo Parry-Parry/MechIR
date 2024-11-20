@@ -1,0 +1,47 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mechir"
+version = "0.0.1"
+dependencies = [
+  "torch",
+  "transformers",
+]
+requires-python = ">=3.9"
+authors = [
+  {name = "Andrew Parry", email = "0andrewparry@gmail.com"}
+  {name = "Catherine Chen", email = "catherine_s_chen@brown.edu"}
+]
+maintainers = [
+  {name = "Andrew Parry", email = "0andrewparry@gmail.com"}
+]
+description = "A package for mechanistic interpretability in Neural IR"
+readme = "README.md"
+license = {file = "LICENSE"}
+keywords = ["pytorch", "transformers", "ranking", "information retrieval"]
+classifiers = [
+    "Programming Language :: Python",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
+[project.urls]
+Repository = "https://github.com/Parry-Parry/MechIR.git"
+
+[tool.flake8]
+max-line-length = 127
+max-complexity = 10
+disable-noqa = true
+ignore = ["E9", "F63", "F7", "F82"]
+exclude = ["tests/*"]
+
+# Per-file ignores to handle test files or other specific cases
+per-file-ignores = { 
+    "tests/*" = ["E999", "F821"]
+}
