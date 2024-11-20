@@ -38,5 +38,5 @@ Repository = "https://github.com/Parry-Parry/MechIR.git"
 [tool.flake8]
 max-line-length = 127
 max-complexity = 10
-disable-noqa = true
+disable-noqa = false
 ignore = ["E9", "F63", "F7", "F82", "F722"]
