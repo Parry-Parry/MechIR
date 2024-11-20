@@ -3,7 +3,6 @@ from typing import Callable, Dict, Tuple
 import logging
 import os
 import torch 
-from tqdm import tqdm
 from jaxtyping import Float
 from transformers import AutoModel, AutoTokenizer, AutoConfig
 from transformer_lens import ActivationCache

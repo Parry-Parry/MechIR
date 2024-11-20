@@ -16,7 +16,8 @@ def batched_dot_product(a: Tensor, b: Tensor):
     torch.Tensor: size of (batch_size)
         dot product 
     """
-    return a @ b.T
+    return (a * b).sum(dim=-1)
+
 
 def linear_rank_function(patch_score : Tensor, score : Tensor, score_p : Tensor):
     return (patch_score - score) / (score_p - score)
