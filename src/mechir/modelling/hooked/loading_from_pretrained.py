@@ -51,15 +51,16 @@ logger = logging.getLogger(__name__)
 REGISTERED_CONVERSIONS = {}
 REGISTERED_ARCHITECTURES = {}
 
+
 def register_with_transformer_lens(
     fn: Callable,
     architecture_names: Union[str, List[str]],
-    function_type: str = "architecture"
+    function_type: str = "architecture",
 ) -> Callable:
     """
     Directly registers a function with transformer_lens registries.
     Can be used as a function or decorator.
-    
+
     Args:
         fn: The function to register
         architecture_names: Single architecture name or list of names to register for
@@ -68,87 +69,103 @@ def register_with_transformer_lens(
     # Convert single string to list for consistent handling
     if isinstance(architecture_names, str):
         architecture_names = [architecture_names]
-    
+
     # Get the transformer_lens module
-    tl_module = sys.modules.get('transformer_lens.loading_from_pretrained')
+    tl_module = sys.modules.get("transformer_lens.loading_from_pretrained")
     if tl_module is None:
-        raise ImportError("transformer_lens must be imported before registering new functions")
-    
+        raise ImportError(
+            "transformer_lens must be imported before registering new functions"
+        )
+
     # Determine the registry
     if function_type == "architecture":
-        registry = getattr(tl_module, 'REGISTERED_ARCHITECTURES', None)
+        registry = getattr(tl_module, "REGISTERED_ARCHITECTURES", None)
         if registry is None:
             registry = REGISTERED_ARCHITECTURES
-        registry_name = 'REGISTERED_ARCHITECTURES'
+        registry_name = "REGISTERED_ARCHITECTURES"
     elif function_type == "conversion":
-        registry = getattr(tl_module, 'REGISTERED_CONVERSIONS', None)
+        registry = getattr(tl_module, "REGISTERED_CONVERSIONS", None)
         if registry is None:
             registry = REGISTERED_CONVERSIONS
-        registry_name = 'REGISTERED_CONVERSIONS'
+        registry_name = "REGISTERED_CONVERSIONS"
     else:
         raise ValueError("function_type must be either 'architecture' or 'conversion'")
-        
+
     if registry is None:
         raise AttributeError(f"Could not find {registry_name} in transformer_lens")
-    
+
     # Register for each architecture name
     for arch_name in architecture_names:
         registry[arch_name] = fn
         logger.info(f"Registered {arch_name} in transformer_lens.{registry_name}")
-    
+
     return fn
+
 
 # Decorator-style helper functions
 def extend_transformer_lens_registry(
-    architecture_name: Union[str, List[str]],
-    function_type: str = "architecture"
+    architecture_name: Union[str, List[str]], function_type: str = "architecture"
 ) -> Callable:
     """Decorator version of register_with_transformer_lens."""
+
     def decorator(fn: Callable) -> Callable:
         return register_with_transformer_lens(fn, architecture_name, function_type)
+
     return decorator
+
 
 def add_official_model(model_name: str) -> None:
     """Directly adds a model name to transformer_lens's OFFICIAL_MODEL_NAMES."""
-    tl_module = sys.modules.get('transformer_lens.loading_from_pretrained')
+    tl_module = sys.modules.get("transformer_lens.loading_from_pretrained")
     if tl_module is None:
-        raise ImportError("transformer_lens must be imported before adding official models")
-        
-    if not hasattr(tl_module, 'OFFICIAL_MODEL_NAMES'):
+        raise ImportError(
+            "transformer_lens must be imported before adding official models"
+        )
+
+    if not hasattr(tl_module, "OFFICIAL_MODEL_NAMES"):
         raise AttributeError("Could not find OFFICIAL_MODEL_NAMES in transformer_lens")
-        
+
     if model_name not in tl_module.OFFICIAL_MODEL_NAMES:
         tl_module.OFFICIAL_MODEL_NAMES.append(model_name)
         logger.info(f"Added {model_name} to transformer_lens.OFFICIAL_MODEL_NAMES")
 
+
 def add_model_alias(official_model_name: str, alias: str) -> None:
     """Directly adds an alias for an official model name."""
-    tl_module = sys.modules.get('transformer_lens.loading_from_pretrained')
+    tl_module = sys.modules.get("transformer_lens.loading_from_pretrained")
     if tl_module is None:
-        raise ImportError("transformer_lens must be imported before adding model aliases")
-        
-    if not hasattr(tl_module, 'MODEL_ALIASES'):
+        raise ImportError(
+            "transformer_lens must be imported before adding model aliases"
+        )
+
+    if not hasattr(tl_module, "MODEL_ALIASES"):
         raise AttributeError("Could not find MODEL_ALIASES in transformer_lens")
-        
+
     if official_model_name not in tl_module.MODEL_ALIASES:
         tl_module.MODEL_ALIASES[official_model_name] = []
     if alias not in tl_module.MODEL_ALIASES[official_model_name]:
         tl_module.MODEL_ALIASES[official_model_name].append(alias)
         logger.info(f"Added alias {alias} for {official_model_name}")
 
+
 """Official model names for models on HuggingFace."""
+
 
 def register_model_alias(official_model_name: str, alias: str):
     from transformer_lens.loading_from_pretrained import MODEL_ALIASES
+
     """Register an alias for an official model name."""
     if official_model_name not in MODEL_ALIASES:
         MODEL_ALIASES[official_model_name] = []
     MODEL_ALIASES[official_model_name].append(alias)
 
+
 def register_non_hf_hosted_model_name(model_name: str):
     """Register an official model name."""
     from transformer_lens.loading_from_pretrained import NON_HF_HOSTED_MODEL_NAMES
+
     NON_HF_HOSTED_MODEL_NAMES.append(model_name)
+
 
 """Official model names for models not hosted on HuggingFace."""
 
@@ -157,16 +174,24 @@ def register_non_hf_hosted_model_name(model_name: str):
 from transformer_lens.loading_from_pretrained import MODEL_ALIASES, OFFICIAL_MODEL_NAMES
 
 DEFAULT_MODEL_ALIASES = [
-    MODEL_ALIASES[name][0] if name in MODEL_ALIASES else name for name in OFFICIAL_MODEL_NAMES
+    MODEL_ALIASES[name][0] if name in MODEL_ALIASES else name
+    for name in OFFICIAL_MODEL_NAMES
 ]
+
 
 def register_need_remote_code_model_name(model_name: str):
     from transformer_lens.loading_from_pretrained import NEED_REMOTE_CODE_MODELS
+
     """Register an official model name."""
     NEED_REMOTE_CODE_MODELS.append(model_name)
 
+
 def make_model_alias_map():
-    from transformer_lens.loading_from_pretrained import MODEL_ALIASES, OFFICIAL_MODEL_NAMES
+    from transformer_lens.loading_from_pretrained import (
+        MODEL_ALIASES,
+        OFFICIAL_MODEL_NAMES,
+    )
+
     """
     Converts OFFICIAL_MODEL_NAMES (the list of actual model names on
     HuggingFace) and MODEL_ALIASES (a dictionary mapping official model names to
@@ -183,6 +208,7 @@ def make_model_alias_map():
 
 def get_official_model_name(model_name: str):
     from transformer_lens.loading_from_pretrained import OFFICIAL_MODEL_NAMES
+
     """
     Returns the official model name for a given model name (or alias).
     """
@@ -190,8 +216,10 @@ def get_official_model_name(model_name: str):
         return model_name
     model_alias_map = make_model_alias_map()
     official_model_name = model_alias_map.get(model_name.lower(), None)
-    if official_model_name is None and config['ignore-official']:
-        logging.warning(f'Could not find official model name for "{model_name}, behaviour may be unpredictable."')
+    if official_model_name is None and config["ignore-official"]:
+        logging.warning(
+            f'Could not find official model name for "{model_name}, behaviour may be unpredictable."'
+        )
         return model_name
     elif official_model_name is None:
         raise ValueError(f'Could not find official model name for "{model_name}"')
@@ -250,7 +278,9 @@ def convert_hf_model_config(model_name: str, **kwargs):
             "final_rms": True,
             "gated_mlp": True,
         }
-    elif official_model_name.startswith("CodeLlama-7b"):  # same architecture CodeLlama and Llama-2
+    elif official_model_name.startswith(
+        "CodeLlama-7b"
+    ):  # same architecture CodeLlama and Llama-2
         cfg_dict = {
             "d_model": 4096,
             "d_head": 4096 // 32,
@@ -484,7 +514,7 @@ def convert_hf_model_config(model_name: str, **kwargs):
             "final_rms": True,
             "use_normalization_before_and_after": True,
         }
-    elif architecture in REGISTERED_ARCHITECTURES:  
+    elif architecture in REGISTERED_ARCHITECTURES:
         # If the architecture is registered, we can use the registered config
         cfg_dict = REGISTERED_ARCHITECTURES[architecture](hf_config)
     else:
@@ -507,7 +537,9 @@ def convert_neel_model_config(official_model_name: str, **kwargs):
     AutoConfig is not supported, because these models are in the HookedTransformer format, so we directly download and load the json.
     """
     official_model_name = get_official_model_name(official_model_name)
-    cfg_json: dict = utils.download_file_from_hf(official_model_name, "config.json", **kwargs)
+    cfg_json: dict = utils.download_file_from_hf(
+        official_model_name, "config.json", **kwargs
+    )
     cfg_arch = cfg_json.get(
         "architecture", "neel" if "_old" not in official_model_name else "neel-solu-old"
     )
@@ -551,6 +583,7 @@ def get_pretrained_model_config(
     **kwargs,
 ):
     from transformer_lens.loading_from_pretrained import NEED_REMOTE_CODE_MODELS
+
     """Returns the pretrained model config as an HookedTransformerConfig object.
 
     There are two types of pretrained models: HuggingFace models (where
@@ -660,10 +693,13 @@ def get_pretrained_model_config(
     cfg_dict["n_devices"] = n_devices
     cfg_dict["default_prepend_bos"] = default_prepend_bos
     if hf_cfg is not None:
-        cfg_dict["load_in_4bit"] = hf_cfg.get("quantization_config", {}).get("load_in_4bit", False)
+        cfg_dict["load_in_4bit"] = hf_cfg.get("quantization_config", {}).get(
+            "load_in_4bit", False
+        )
 
     cfg = HookedTransformerConfig.from_dict(cfg_dict)
     return cfg
+
 
 def get_checkpoint_labels(model_name: str, **kwargs):
     from transformer_lens.loading_from_pretrained import (
@@ -671,6 +707,7 @@ def get_checkpoint_labels(model_name: str, **kwargs):
         PYTHIA_V0_CHECKPOINTS,
         STANFORD_CRFM_CHECKPOINTS,
     )
+
     """Returns the checkpoint labels for a given model, and the label_type
     (step or token). Raises an error for models that are not checkpointed."""
     official_model_name = get_official_model_name(model_name)
@@ -712,7 +749,11 @@ def get_pretrained_state_dict(
     dtype: torch.dtype = torch.float32,
     **kwargs,
 ) -> Dict[str, torch.Tensor]:
-    from transformer_lens.loading_from_pretrained import NON_HF_HOSTED_MODEL_NAMES, NEED_REMOTE_CODE_MODELS
+    from transformer_lens.loading_from_pretrained import (
+        NON_HF_HOSTED_MODEL_NAMES,
+        NEED_REMOTE_CODE_MODELS,
+    )
+
     """
     Loads in the model weights for a pretrained model, and processes them to
     have the HookedTransformer parameter names and shapes. Supports checkpointed
@@ -755,7 +796,9 @@ def get_pretrained_state_dict(
             )[0]
         else:
             file_name = list(filter(lambda x: x.endswith("final.pth"), repo_files))[0]
-        state_dict = utils.download_file_from_hf(official_model_name, file_name, **kwargs)
+        state_dict = utils.download_file_from_hf(
+            official_model_name, file_name, **kwargs
+        )
 
         # Convert to dtype
         state_dict = {k: v.to(dtype) for k, v in state_dict.items()}
@@ -785,11 +828,15 @@ def get_pretrained_state_dict(
                     **kwargs,
                 )
             else:
-                raise ValueError(f"Checkpoints for model {official_model_name} are not supported")
+                raise ValueError(
+                    f"Checkpoints for model {official_model_name} are not supported"
+                )
         elif hf_model is None:
             huggingface_token = os.environ.get("HF_TOKEN", None)
             if official_model_name in NON_HF_HOSTED_MODEL_NAMES:
-                raise NotImplementedError("Model not hosted on HuggingFace, must pass in hf_model")
+                raise NotImplementedError(
+                    "Model not hosted on HuggingFace, must pass in hf_model"
+                )
             elif "bert" in official_model_name:
                 hf_model = BertForPreTraining.from_pretrained(
                     official_model_name,
@@ -852,7 +899,9 @@ def get_pretrained_state_dict(
         elif cfg.original_architecture == "Gemma2ForCausalLM":
             state_dict = convert_gemma_weights(hf_model, cfg)
         elif cfg.original_architecture in REGISTERED_CONVERSIONS:
-            state_dict = REGISTERED_CONVERSIONS[cfg.original_architecture](hf_model, cfg)
+            state_dict = REGISTERED_CONVERSIONS[cfg.original_architecture](
+                hf_model, cfg
+            )
         else:
             raise ValueError(
                 f"Loading weights from the architecture is not currently supported: {cfg.original_architecture}, generated from model name {cfg.model_name}. Feel free to open an issue on GitHub to request this feature."
@@ -873,7 +922,7 @@ class Config:
     d_mlp: int = 3072
     n_heads: int = 12
     n_layers: int = 12
-    n_labels : int = 2
+    n_labels: int = 2
 
 
 # Returns the configuration parameters of the model as a basic Config dataclass
@@ -881,7 +930,9 @@ def get_basic_config(model_name: str, **kwargs) -> Config:
     return Config(
         **{
             k: v
-            for k, v in get_pretrained_model_config(model_name, **kwargs).to_dict().items()
+            for k, v in get_pretrained_model_config(model_name, **kwargs)
+            .to_dict()
+            .items()
             if k
             in [
                 "d_model",
@@ -898,6 +949,7 @@ def get_basic_config(model_name: str, **kwargs) -> Config:
             ]
         }
     )
+
 
 ### HARDCODED REGISTRATION OF MODELS ###
 add_official_model("sebastian-hofstaetter/distilbert-dot-tas_b-b256-msmarco")

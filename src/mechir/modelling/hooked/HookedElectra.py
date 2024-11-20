@@ -20,6 +20,7 @@ from transformer_lens.hook_points import HookPoint
 from .linear import ClassificationHead, HiddenLinear
 from . import loading_from_pretrained as loading
 
+
 class ElectraClassificationHead(nn.Module):
     """
     Transforms ELECTRA embeddings into logits. The purpose of this module is to predict masked tokens in a sentence.
@@ -40,6 +41,7 @@ class ElectraClassificationHead(nn.Module):
         post_act = self.hook_post(self.activation(pre_act))
         return self.out_proj(post_act)
 
+
 class HookedElectraForSequenceClassification(HookedEncoder):
     """
     This class implements a BERT-style encoder for ELECTRA using the components in ./components.py, with HookPoints on every interesting activation. It inherits from HookedRootModule.
@@ -57,7 +59,7 @@ class HookedElectraForSequenceClassification(HookedEncoder):
         super().__init__(cfg, tokenizer, move_to_device, **kwargs)
         self.classifier = ElectraClassificationHead(cfg)
         self.setup()
-        
+
     @overload
     def forward(
         self,
@@ -65,8 +67,7 @@ class HookedElectraForSequenceClassification(HookedEncoder):
         return_type: Literal["logits"],
         token_type_ids: Optional[Int[torch.Tensor, "batch pos"]] = None,
         one_zero_attention_mask: Optional[Int[torch.Tensor, "batch pos"]] = None,
-    ) -> Float[torch.Tensor, "batch n_labels"]:
-        ...
+    ) -> Float[torch.Tensor, "batch n_labels"]: ...
 
     @overload
     def forward(
@@ -75,8 +76,7 @@ class HookedElectraForSequenceClassification(HookedEncoder):
         return_type: Literal[None],
         token_type_ids: Optional[Int[torch.Tensor, "batch pos"]] = None,
         one_zero_attention_mask: Optional[Int[torch.Tensor, "batch pos"]] = None,
-    ) -> Optional[Float[torch.Tensor, "batch n_labels"]]:
-        ...
+    ) -> Optional[Float[torch.Tensor, "batch n_labels"]]: ...
 
     def forward(
         self,
@@ -109,14 +109,12 @@ class HookedElectraForSequenceClassification(HookedEncoder):
     @overload
     def run_with_cache(
         self, *model_args, return_cache_object: Literal[True] = True, **kwargs
-    ) -> Tuple[Float[torch.Tensor, "batch pos d_vocab"], ActivationCache]:
-        ...
+    ) -> Tuple[Float[torch.Tensor, "batch pos d_vocab"], ActivationCache]: ...
 
     @overload
     def run_with_cache(
         self, *model_args, return_cache_object: Literal[False], **kwargs
-    ) -> Tuple[Float[torch.Tensor, "batch pos d_vocab"], Dict[str, torch.Tensor]]:
-        ...
+    ) -> Tuple[Float[torch.Tensor, "batch pos d_vocab"], Dict[str, torch.Tensor]]: ...
 
     def run_with_cache(
         self,
@@ -135,7 +133,9 @@ class HookedElectraForSequenceClassification(HookedEncoder):
             *model_args, remove_batch_dim=remove_batch_dim, **kwargs
         )
         if return_cache_object:
-            cache = ActivationCache(cache_dict, self, has_batch_dim=not remove_batch_dim)
+            cache = ActivationCache(
+                cache_dict, self, has_batch_dim=not remove_batch_dim
+            )
             return out, cache
         else:
             return out, cache_dict

@@ -6,6 +6,7 @@ from transformers import AutoTokenizer, AutoModel
 
 from transformer_lens import HookedEncoder
 
+
 def test_files(fname1, fname2):
 
     # Test corpus and query embeddings
@@ -37,7 +38,9 @@ def test_full_model(tl_model, hf_model, tokenizer, test_strings):
     hf_out = hf_model(input_ids, attention_mask=attention_mask)[0]
     print("hf out shape:", hf_out.shape)
 
-    tl_out = tl_model(input_ids, return_type="embeddings", one_zero_attention_mask=attention_mask)
+    tl_out = tl_model(
+        input_ids, return_type="embeddings", one_zero_attention_mask=attention_mask
+    )
 
     assert_close(hf_out, tl_out, rtol=1.3e-6, atol=4e-5)
 
@@ -47,9 +50,9 @@ def test_run_with_cache(hf_model, tl_model, tokenizer, test_string):
     attn_mask = input_tokens["attention_mask"]
 
     tl_embeddings, cache = tl_model.run_with_cache(
-        input_tokens["input_ids"], 
+        input_tokens["input_ids"],
         return_type="embeddings",
-        one_zero_attention_mask=attn_mask
+        one_zero_attention_mask=attn_mask,
     )
 
     # check that an arbitrary subset of the keys exist
@@ -61,7 +64,6 @@ def test_run_with_cache(hf_model, tl_model, tokenizer, test_string):
     # check embeddings match HF implementation
     hf_embeddings = hf_model(input_tokens["input_ids"], attention_mask=attn_mask)[0]
     assert_close(hf_embeddings, tl_embeddings, rtol=1.3e-6, atol=4e-5)
-
 
 
 if __name__ == "__main__":

@@ -3,7 +3,10 @@ from functools import partial
 from .loading_from_pretrained import register_with_transformer_lens
 from .HookedTransformerConfig import HookedTransformerConfig
 
-def convert_distilbert_weights(distilbert, cfg: HookedTransformerConfig, sequence_classification=False, raw=False):
+
+def convert_distilbert_weights(
+    distilbert, cfg: HookedTransformerConfig, sequence_classification=False, raw=False
+):
     embeddings = distilbert.embeddings
     state_dict = {
         "embed.embed.W_E": embeddings.word_embeddings.weight,
@@ -62,10 +65,26 @@ def convert_distilbert_weights(distilbert, cfg: HookedTransformerConfig, sequenc
 
     return state_dict
 
-register_with_transformer_lens(convert_distilbert_weights, ["DistilBert", "DistilBertModel"], function_type="conversion")
-register_with_transformer_lens(partial(convert_distilbert_weights, sequence_classification=True), "DistilBertForSequenceClassification", function_type="conversion")
 
-def convert_bert_based_weights(bert, cfg: HookedTransformerConfig, sequence_classification=False, raw=False, model_name : str = 'bert'):
+register_with_transformer_lens(
+    convert_distilbert_weights,
+    ["DistilBert", "DistilBertModel"],
+    function_type="conversion",
+)
+register_with_transformer_lens(
+    partial(convert_distilbert_weights, sequence_classification=True),
+    "DistilBertForSequenceClassification",
+    function_type="conversion",
+)
+
+
+def convert_bert_based_weights(
+    bert,
+    cfg: HookedTransformerConfig,
+    sequence_classification=False,
+    raw=False,
+    model_name: str = "bert",
+):
     embeddings = getattr(bert, model_name).embeddings if not raw else bert.embeddings
     state_dict = {
         "embed.embed.W_E": embeddings.word_embeddings.weight,
@@ -76,7 +95,11 @@ def convert_bert_based_weights(bert, cfg: HookedTransformerConfig, sequence_clas
     }
 
     for l in range(cfg.n_layers):
-        block = getattr(bert, model_name).encoder.layer[l] if not raw else bert.encoder.layer[l]
+        block = (
+            getattr(bert, model_name).encoder.layer[l]
+            if not raw
+            else bert.encoder.layer[l]
+        )
         state_dict[f"blocks.{l}.attn.W_Q"] = einops.rearrange(
             block.attention.self.query.weight, "(i h) m -> i m h", i=cfg.n_heads
         )
@@ -116,18 +139,18 @@ def convert_bert_based_weights(bert, cfg: HookedTransformerConfig, sequence_clas
     if not raw:
         if sequence_classification:
             classification_head = bert.classifier
-            if 'electra' in model_name:
+            if "electra" in model_name:
                 state_dict["classifier.dense.W"] = classification_head.dense.weight
                 state_dict["classifier.dense.b"] = classification_head.dense.bias
                 state_dict["classifier.out_proj.W"] = einops.rearrange(
-                   classification_head.out_proj.weight, "labels model -> model labels"
+                    classification_head.out_proj.weight, "labels model -> model labels"
                 )
                 state_dict["classifier.out_proj.b"] = classification_head.out_proj.bias
             else:
                 state_dict["classifier.W"] = classification_head.weight
                 state_dict["classifier.b"] = classification_head.bias
         else:
-            if not 'electra' in model_name:
+            if not "electra" in model_name:
                 mlm_head = bert.cls.predictions
                 state_dict["mlm_head.W"] = mlm_head.transform.dense.weight
                 state_dict["mlm_head.b"] = mlm_head.transform.dense.bias
@@ -140,7 +163,10 @@ def convert_bert_based_weights(bert, cfg: HookedTransformerConfig, sequence_clas
 
     return state_dict
 
-def convert_bert_weights(bert, cfg: HookedTransformerConfig, sequence_classification=False, raw=False):
+
+def convert_bert_weights(
+    bert, cfg: HookedTransformerConfig, sequence_classification=False, raw=False
+):
     print(dir(bert))
     embeddings = bert.bert.embeddings if not raw else bert.embeddings
     state_dict = {
@@ -207,9 +233,38 @@ def convert_bert_weights(bert, cfg: HookedTransformerConfig, sequence_classifica
 
     return state_dict
 
-register_with_transformer_lens(partial(convert_bert_weights, raw=True), ["BertModel", "BertForMaskedLM"], function_type="conversion")
-register_with_transformer_lens(partial(convert_bert_weights, sequence_classification=True), "BertForSequenceClassification", function_type="conversion")
-register_with_transformer_lens(partial(convert_bert_based_weights, model_name='roberta', raw=True), ["RobertaModel", "RobertaForMaskedLM"], function_type="conversion")
-register_with_transformer_lens(partial(convert_bert_based_weights, sequence_classification=True, model_name='roberta'), "RobertaForSequenceClassification", function_type="conversion")
-register_with_transformer_lens(partial(convert_bert_based_weights, model_name='electra', raw=True), ["ElectraModel"], function_type="conversion")
-register_with_transformer_lens(partial(convert_bert_based_weights, sequence_classification=True, model_name='electra'), "ElectraForSequenceClassification", function_type="conversion")
+
+register_with_transformer_lens(
+    partial(convert_bert_weights, raw=True),
+    ["BertModel", "BertForMaskedLM"],
+    function_type="conversion",
+)
+register_with_transformer_lens(
+    partial(convert_bert_weights, sequence_classification=True),
+    "BertForSequenceClassification",
+    function_type="conversion",
+)
+register_with_transformer_lens(
+    partial(convert_bert_based_weights, model_name="roberta", raw=True),
+    ["RobertaModel", "RobertaForMaskedLM"],
+    function_type="conversion",
+)
+register_with_transformer_lens(
+    partial(
+        convert_bert_based_weights, sequence_classification=True, model_name="roberta"
+    ),
+    "RobertaForSequenceClassification",
+    function_type="conversion",
+)
+register_with_transformer_lens(
+    partial(convert_bert_based_weights, model_name="electra", raw=True),
+    ["ElectraModel"],
+    function_type="conversion",
+)
+register_with_transformer_lens(
+    partial(
+        convert_bert_based_weights, sequence_classification=True, model_name="electra"
+    ),
+    "ElectraForSequenceClassification",
+    function_type="conversion",
+)

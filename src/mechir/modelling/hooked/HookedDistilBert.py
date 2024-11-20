@@ -3,6 +3,7 @@
 Contains a BERT style model. This is separate from :class:`transformer_lens.HookedTransformer`
 because it has a significantly different architecture to e.g. GPT style transformers.
 """
+
 from __future__ import annotations
 
 import logging
@@ -21,6 +22,7 @@ from transformer_lens.hook_points import HookedRootModule, HookPoint
 from transformer_lens.utilities import devices
 from . import loading_from_pretrained as loading
 from .hooked_components import DistilBertEmbed
+
 
 class HookedDistilBert(HookedRootModule):
     def __init__(self, cfg, tokenizer=None, move_to_device=True, **kwargs):
@@ -72,8 +74,7 @@ class HookedDistilBert(HookedRootModule):
         input: Int[torch.Tensor, "batch pos"],
         return_type: Literal["logits"],
         one_zero_attention_mask: Optional[Int[torch.Tensor, "batch pos"]] = None,
-    ) -> Float[torch.Tensor, "batch pos d_vocab"]:
-        ...
+    ) -> Float[torch.Tensor, "batch pos d_vocab"]: ...
 
     @overload
     def forward(
@@ -81,8 +82,7 @@ class HookedDistilBert(HookedRootModule):
         input: Int[torch.Tensor, "batch pos"],
         return_type: Literal[None],
         one_zero_attention_mask: Optional[Int[torch.Tensor, "batch pos"]] = None,
-    ) -> Optional[Float[torch.Tensor, "batch pos d_vocab"]]:
-        ...
+    ) -> Optional[Float[torch.Tensor, "batch pos d_vocab"]]: ...
 
     def forward(
         self,
@@ -137,14 +137,12 @@ class HookedDistilBert(HookedRootModule):
     @overload
     def run_with_cache(
         self, *model_args, return_cache_object: Literal[True] = True, **kwargs
-    ) -> Tuple[Float[torch.Tensor, "batch pos d_vocab"], ActivationCache]:
-        ...
+    ) -> Tuple[Float[torch.Tensor, "batch pos d_vocab"], ActivationCache]: ...
 
     @overload
     def run_with_cache(
         self, *model_args, return_cache_object: Literal[False] = False, **kwargs
-    ) -> Tuple[Float[torch.Tensor, "batch pos d_vocab"], Dict[str, torch.Tensor]]:
-        ...
+    ) -> Tuple[Float[torch.Tensor, "batch pos d_vocab"], Dict[str, torch.Tensor]]: ...
 
     def run_with_cache(
         self,
@@ -381,6 +379,7 @@ class HookedDistilBert(HookedRootModule):
             for h in range(self.cfg.n_heads)
         ]
 
+
 class HookedDistilBertForSequenceClassification(HookedDistilBert):
     """
     This class implements a BERT-style encoder for sequence classification using the components in ./components.py, with HookPoints on every interesting activation. It inherits from HookedDistilBert.
@@ -405,8 +404,7 @@ class HookedDistilBertForSequenceClassification(HookedDistilBert):
         input: Int[torch.Tensor, "batch pos"],
         return_type: Literal["logits"],
         one_zero_attention_mask: Optional[Int[torch.Tensor, "batch pos"]] = None,
-    ) -> Float[torch.Tensor, "batch pos d_vocab"]:
-        ...
+    ) -> Float[torch.Tensor, "batch pos d_vocab"]: ...
 
     @overload
     def forward(
@@ -414,8 +412,7 @@ class HookedDistilBertForSequenceClassification(HookedDistilBert):
         input: Int[torch.Tensor, "batch pos"],
         return_type: Literal[None],
         one_zero_attention_mask: Optional[Int[torch.Tensor, "batch pos"]] = None,
-    ) -> Optional[Float[torch.Tensor, "batch pos d_vocab"]]:
-        ...
+    ) -> Optional[Float[torch.Tensor, "batch pos d_vocab"]]: ...
 
     def forward(
         self,

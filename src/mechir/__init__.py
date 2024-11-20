@@ -1,10 +1,12 @@
 __version__ = "0.0.1"
 
+
 class MechirConfig:
     """Configuration manager for the mechir package."""
+
     _instance = None
     _config = {
-        'ignore-official': False,  # default value
+        "ignore-official": False,  # default value
         # Add other default config options here
     }
 
@@ -17,24 +19,24 @@ class MechirConfig:
     def __call__(self, key, value=None):
         """
         Get or set a configuration value using function-style access.
-        
+
         Args:
             key (str): The configuration key
             value (Any, optional): If provided, sets the configuration value
-            
+
         Returns:
             The configuration value if value=None, otherwise None
-        
+
         Raises:
             KeyError: If the configuration key doesn't exist
         """
         if key not in self._config:
             raise KeyError(f"Unknown configuration option: {key}")
-        
+
         if value is not None:
             self._config[key] = value
             return None
-        
+
         return self._config[key]
 
     def __getitem__(self, key):
@@ -56,18 +58,14 @@ class MechirConfig:
     def reset(self):
         """Reset all configurations to their default values."""
         self._config = {
-            'ignore-official': False,
+            "ignore-official": False,
             # Add other default config options here
         }
 
+
 config = MechirConfig()
 
-from .modelling import (
-    Cat,
-    Dot,
-    MonoT5,
-    PatchedModel
-)
+from .modelling import Cat, Dot, MonoT5, PatchedModel
 
 from .modelling.hooked import conversion
 from .modelling.hooked import states

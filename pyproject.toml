@@ -12,7 +12,7 @@ dependencies = [
 ]
 requires-python = ">=3.9"
 authors = [
-  {name = "Andrew Parry", email = "0andrewparry@gmail.com"}
+  {name = "Andrew Parry", email = "0andrewparry@gmail.com"},
   {name = "Catherine Chen", email = "catherine_s_chen@brown.edu"}
 ]
 maintainers = [
@@ -40,9 +40,3 @@ max-line-length = 127
 max-complexity = 10
 disable-noqa = true
 ignore = ["E9", "F63", "F7", "F82", "F722"]
-exclude = ["tests/*"]
-
-# Per-file ignores to handle test files or other specific cases
-per-file-ignores = { 
-    "tests/*" = ["E999", "F821"]
-}

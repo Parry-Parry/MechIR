@@ -45,8 +45,7 @@ class HookedEncoderForSequenceClassification(HookedEncoder):
         return_type: Literal["logits"],
         token_type_ids: Optional[Int[torch.Tensor, "batch pos"]] = None,
         one_zero_attention_mask: Optional[Int[torch.Tensor, "batch pos"]] = None,
-    ) -> Float[torch.Tensor, "batch pos d_vocab"]:
-        ...
+    ) -> Float[torch.Tensor, "batch pos d_vocab"]: ...
 
     @overload
     def forward(
@@ -55,8 +54,7 @@ class HookedEncoderForSequenceClassification(HookedEncoder):
         return_type: Literal[None],
         token_type_ids: Optional[Int[torch.Tensor, "batch pos"]] = None,
         one_zero_attention_mask: Optional[Int[torch.Tensor, "batch pos"]] = None,
-    ) -> Optional[Float[torch.Tensor, "batch pos d_vocab"]]:
-        ...
+    ) -> Optional[Float[torch.Tensor, "batch pos d_vocab"]]: ...
 
     def forward(
         self,
@@ -82,7 +80,7 @@ class HookedEncoderForSequenceClassification(HookedEncoder):
         )
         breakpoint()
         logits = self.classifier(hidden[:, 0, :])
-        
+
         if return_type is None:
             return None
         return logits
@@ -90,14 +88,12 @@ class HookedEncoderForSequenceClassification(HookedEncoder):
     @overload
     def run_with_cache(
         self, *model_args, return_cache_object: Literal[True] = True, **kwargs
-    ) -> Tuple[Float[torch.Tensor, "batch n_labels"], ActivationCache]:
-        ...
+    ) -> Tuple[Float[torch.Tensor, "batch n_labels"], ActivationCache]: ...
 
     @overload
     def run_with_cache(
         self, *model_args, return_cache_object: Literal[False], **kwargs
-    ) -> Tuple[Float[torch.Tensor, "batch n_labels"], Dict[str, torch.Tensor]]:
-        ...
+    ) -> Tuple[Float[torch.Tensor, "batch n_labels"], Dict[str, torch.Tensor]]: ...
 
     def run_with_cache(
         self,
@@ -116,7 +112,9 @@ class HookedEncoderForSequenceClassification(HookedEncoder):
             *model_args, remove_batch_dim=remove_batch_dim, **kwargs
         )
         if return_cache_object:
-            cache = ActivationCache(cache_dict, self, has_batch_dim=not remove_batch_dim)
+            cache = ActivationCache(
+                cache_dict, self, has_batch_dim=not remove_batch_dim
+            )
             return out, cache
         else:
             return out, cache_dict

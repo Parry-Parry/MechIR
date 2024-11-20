@@ -2,6 +2,7 @@
 import torch
 from .loading_from_pretrained import extend_transformer_lens_registry
 
+
 @extend_transformer_lens_registry("GPTNeoForCausalLM")
 def GPTNeoForCausalLM_state_dict(hf_config):
     return {
@@ -20,7 +21,7 @@ def GPTNeoForCausalLM_state_dict(hf_config):
         "window_size": hf_config.window_size,
         "scale_attn_by_inverse_layer_idx": False,
         "normalization_type": "LN",
-        }
+    }
 
 
 @extend_transformer_lens_registry("GPT2LMHeadModel")
@@ -39,7 +40,8 @@ def GPT2LMHeadModel_state_dict(hf_config):
         "use_local_attn": False,
         "scale_attn_by_inverse_layer_idx": hf_config.scale_attn_by_inverse_layer_idx,
         "normalization_type": "LN",
-        }
+    }
+
 
 @extend_transformer_lens_registry("OPTForCausalLM")
 def OPTForCausalLM_state_dict(hf_config):
@@ -57,7 +59,8 @@ def OPTForCausalLM_state_dict(hf_config):
         "use_local_attn": False,
         "scale_attn_by_inverse_layer_idx": False,
         "normalization_type": "LN",
-        }
+    }
+
 
 @extend_transformer_lens_registry("GPTJForCausalLM")
 def GPTJForCausalLM_state_dict(hf_config):
@@ -79,33 +82,37 @@ def GPTJForCausalLM_state_dict(hf_config):
         "rotary_dim": hf_config.rotary_dim,
         "rotary_adjacent_pairs": True,
         "normalization_type": "LN",
-        }
+    }
+
 
 @extend_transformer_lens_registry("GPTNeoForCausalLM")
 def GPTNeoForCausalLM_state_dict(hf_config):
     state = {
-            "d_model": hf_config.hidden_size,
-            "d_head": hf_config.hidden_size // hf_config.num_heads,
-            "n_heads": hf_config.num_heads,
-            "d_mlp": hf_config.hidden_size * 4,
-            "n_layers": hf_config.num_layers,
-            "n_ctx": hf_config.max_position_embeddings,
-            "eps": hf_config.layer_norm_epsilon,
-            "d_vocab": hf_config.vocab_size,
-            "act_fn": hf_config.hidden_act,
-            "use_attn_scale": False,
-            "use_local_attn": True,
-            "scale_attn_by_inverse_layer_idx": False,
-            "parallel_attn_mlp": True,
-            "positional_embedding_type": "rotary",
-            "rotary_adjacent_pairs": False,
-            "normalization_type": "LN",
-        }
+        "d_model": hf_config.hidden_size,
+        "d_head": hf_config.hidden_size // hf_config.num_heads,
+        "n_heads": hf_config.num_heads,
+        "d_mlp": hf_config.hidden_size * 4,
+        "n_layers": hf_config.num_layers,
+        "n_ctx": hf_config.max_position_embeddings,
+        "eps": hf_config.layer_norm_epsilon,
+        "d_vocab": hf_config.vocab_size,
+        "act_fn": hf_config.hidden_act,
+        "use_attn_scale": False,
+        "use_local_attn": True,
+        "scale_attn_by_inverse_layer_idx": False,
+        "parallel_attn_mlp": True,
+        "positional_embedding_type": "rotary",
+        "rotary_adjacent_pairs": False,
+        "normalization_type": "LN",
+    }
     rotary_pct = hf_config.rotary_pct
     state["rotary_dim"] = round(rotary_pct * state["d_head"])
     return state
 
-@extend_transformer_lens_registry(["BertModel", "BertForMaskedLM", "ElectraForPreTraining"])
+
+@extend_transformer_lens_registry(
+    ["BertModel", "BertForMaskedLM", "ElectraForPreTraining"]
+)
 def BertModel_state_dict(hf_config):
     return {
         "d_model": hf_config.hidden_size,
@@ -120,7 +127,10 @@ def BertModel_state_dict(hf_config):
         "attention_dir": "bidirectional",
     }
 
-@extend_transformer_lens_registry(["BertForSequenceClassification", "ElectraForSequenceClassification"])
+
+@extend_transformer_lens_registry(
+    ["BertForSequenceClassification", "ElectraForSequenceClassification"]
+)
 def BertForSequenceClassification_state_dict(hf_config):
     return {
         "d_model": hf_config.hidden_size,
@@ -139,19 +149,20 @@ def BertForSequenceClassification_state_dict(hf_config):
 
 @extend_transformer_lens_registry(["DistilBert", "DistilBertModel"])
 def DistilBert_state_dict(hf_config):
-        return {
-            "d_model": hf_config.dim,
-            "d_head": hf_config.dim // hf_config.n_heads,
-            "n_heads": hf_config.n_heads,
-            "d_mlp": hf_config.hidden_dim,
-            "n_layers": hf_config.n_layers,
-            "n_ctx": hf_config.max_position_embeddings,
-            "eps": 1e-12,
-            "d_vocab": hf_config.vocab_size, # hacky fix for special pad token
-            "act_fn": hf_config.activation,
-            "attention_dir": "birectional",
-            # dropout, initializer_range, pad_token_id, qa_dropout, seq_classif_dropout, sinusoidal_pos_embds, tie_weights
-        }
+    return {
+        "d_model": hf_config.dim,
+        "d_head": hf_config.dim // hf_config.n_heads,
+        "n_heads": hf_config.n_heads,
+        "d_mlp": hf_config.hidden_dim,
+        "n_layers": hf_config.n_layers,
+        "n_ctx": hf_config.max_position_embeddings,
+        "eps": 1e-12,
+        "d_vocab": hf_config.vocab_size,  # hacky fix for special pad token
+        "act_fn": hf_config.activation,
+        "attention_dir": "birectional",
+        # dropout, initializer_range, pad_token_id, qa_dropout, seq_classif_dropout, sinusoidal_pos_embds, tie_weights
+    }
+
 
 @extend_transformer_lens_registry(["DistilBertForSequenceClassification"])
 def DistilBertForSequenceClassification_state_dict(hf_config):
@@ -159,6 +170,7 @@ def DistilBertForSequenceClassification_state_dict(hf_config):
         **DistilBert_state_dict(hf_config),
         "num_labels": hf_config.num_labels,
     }
+
 
 @extend_transformer_lens_registry("MistralForCausalLM")
 def MistralForCausalLM_state_dict(hf_config):
@@ -181,6 +193,7 @@ def MistralForCausalLM_state_dict(hf_config):
         "use_local_attn": True,
         "rotary_dim": 4096 // 32,
     }
+
 
 @extend_transformer_lens_registry("MixtralForCausalLM")
 def MixtralForCausalLM_state_dict(hf_config):
@@ -208,6 +221,7 @@ def MixtralForCausalLM_state_dict(hf_config):
         "experts_per_token": hf_config.num_experts_per_tok,
     }
 
+
 @extend_transformer_lens_registry("BloomForCausalLM")
 def BloomForCausalLM_state_dict(hf_config):
     return {
@@ -224,6 +238,7 @@ def BloomForCausalLM_state_dict(hf_config):
         "post_embedding_ln": True,
         "positional_embedding_type": "alibi",
     }
+
 
 @extend_transformer_lens_registry("GPT2LMHeadCustomModel")
 def GPT2LMHeadCustomModel_state_dict(hf_config):
@@ -243,6 +258,7 @@ def GPT2LMHeadCustomModel_state_dict(hf_config):
         "scale_attn_by_inverse_layer_idx": hf_config.scale_attn_by_inverse_layer_idx,
         "normalization_type": "LN",
     }
+
 
 @extend_transformer_lens_registry("LlamaForCausalLM")
 def LlamaForCausalLM_state_dict(hf_config):
@@ -272,6 +288,7 @@ def LlamaForCausalLM_state_dict(hf_config):
         "gated_mlp": True,
     }
 
+
 @extend_transformer_lens_registry("QWenLMHeadModel")
 def QWenLMHeadModel_state_dict(hf_config):
     return {
@@ -295,6 +312,7 @@ def QWenLMHeadModel_state_dict(hf_config):
         "final_rms": True,
         "gated_mlp": True,
     }
+
 
 @extend_transformer_lens_registry("QWen2ForCausalLM")
 def Qwen2ForCausalLM_state_dict(hf_config):
@@ -320,6 +338,7 @@ def Qwen2ForCausalLM_state_dict(hf_config):
         "gated_mlp": True,
     }
 
+
 @extend_transformer_lens_registry("PhiForCausalLM")
 def PhiForCausalLM_state_dict(hf_config):
     return {
@@ -340,6 +359,7 @@ def PhiForCausalLM_state_dict(hf_config):
         "use_attn_scale": True,
         "parallel_attn_mlp": True,
     }
+
 
 @extend_transformer_lens_registry("Phi3ForCausalLM")
 def Phi3ForCausalLM_state_dict(hf_config):
@@ -363,6 +383,7 @@ def Phi3ForCausalLM_state_dict(hf_config):
         "parallel_attn_mlp": False,
         "rotary_dim": hf_config.hidden_size // hf_config.num_attention_heads,
     }
+
 
 @extend_transformer_lens_registry("T5forConditionalGeneration")
 def T5forConditionalGeneration_state_dict(hf_config):

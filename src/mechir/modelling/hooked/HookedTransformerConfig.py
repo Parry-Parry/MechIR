@@ -243,7 +243,7 @@ class HookedTransformerConfig:
     use_normalization_before_and_after: bool = False
     attn_scores_soft_cap: float = -1.0
     output_logits_soft_cap: float = -1.0
-    num_labels : int = 1
+    num_labels: int = 1
 
     def __post_init__(self):
         if self.n_heads == -1:
@@ -261,13 +261,19 @@ class HookedTransformerConfig:
         if self.seed is not None:
             self.set_seed_everywhere(self.seed)
         if self.use_local_attn:
-            assert self.window_size is not None, "window_size must be specified for local attention"
-            assert self.attn_types is not None, "attn_types must be specified for local attention"
+            assert (
+                self.window_size is not None
+            ), "window_size must be specified for local attention"
+            assert (
+                self.attn_types is not None
+            ), "attn_types must be specified for local attention"
         if not self.attn_only:
             if self.d_mlp is None:
                 # For some reason everyone hard codes in this hyper-parameter!
                 self.d_mlp: int = self.d_model * 4
-            assert self.act_fn is not None, "act_fn must be specified for non-attn-only models"
+            assert (
+                self.act_fn is not None
+            ), "act_fn must be specified for non-attn-only models"
             assert (
                 self.act_fn in SUPPORTED_ACTIVATIONS
             ), f"act_fn={self.act_fn} must be one of {SUPPORTED_ACTIVATIONS}"
@@ -297,7 +303,9 @@ class HookedTransformerConfig:
             ), "num_experts must be set if experts_per_token is set"
 
         # The number of parameters in attention layers (ignoring biases and layer norm). 4 because W_Q, W_K, W_V and W_O
-        self.n_params = self.n_layers * ((self.d_model * self.d_head * self.n_heads * 4))
+        self.n_params = self.n_layers * (
+            (self.d_model * self.d_head * self.n_heads * 4)
+        )
         if not self.attn_only:
             assert self.d_mlp is not None  # mypy
             # Number of parameters in MLP layers (ignoring biases and layer norm). 2 because W_in and W_out
@@ -305,7 +313,9 @@ class HookedTransformerConfig:
 
             if self.num_experts:
                 # If we are using MoE, we multiply by num_experts, and add the expert gate parameters (d_model * num_experts)
-                mlp_params_per_layer = (mlp_params_per_layer + self.d_model) * self.num_experts
+                mlp_params_per_layer = (
+                    mlp_params_per_layer + self.d_model
+                ) * self.num_experts
             self.n_params += self.n_layers * mlp_params_per_layer
 
         if self.device is None:
@@ -325,11 +335,17 @@ class HookedTransformerConfig:
         ], f"padding_side must be either True or False, but {self.default_prepend_bos} is given"
 
     @classmethod
-    def unwrap(cls, config: Union[Dict, "HookedTransformerConfig"]) -> HookedTransformerConfig:
+    def unwrap(
+        cls, config: Union[Dict, "HookedTransformerConfig"]
+    ) -> HookedTransformerConfig:
         """
         Convenience function to avoid duplicate code from a common way config is passed to various components
         """
-        return HookedTransformerConfig.from_dict(config) if isinstance(config, Dict) else config
+        return (
+            HookedTransformerConfig.from_dict(config)
+            if isinstance(config, Dict)
+            else config
+        )
 
     @classmethod
     def from_dict(cls, config_dict: Dict[str, Any]) -> HookedTransformerConfig:
