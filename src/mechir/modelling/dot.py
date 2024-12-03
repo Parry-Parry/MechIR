@@ -50,9 +50,7 @@ class Dot(HookedRootModule, PatchedMixin):
         torch.set_grad_enabled(False)
         self._device = utils.get_device()
         self.model_name_or_path = get_official_model_name(model_name_or_path)
-        self.__hf_model = (
-            AutoModel.from_pretrained(model_name_or_path).eval().to(self._device)
-        )
+        self.__hf_model = AutoModel.from_pretrained(model_name_or_path).eval().to(self._device)
         self._model = get_hooked(model_name_or_path).from_pretrained(
             self.model_name_or_path, device=self._device, hf_model=self.__hf_model
         )
@@ -66,6 +64,8 @@ class Dot(HookedRootModule, PatchedMixin):
 
         self._pooling_type = pooling_type
         self._pooling = POOLING[pooling_type]
+
+        self.setup()
 
     def _forward(
         self,
@@ -115,11 +115,11 @@ class Dot(HookedRootModule, PatchedMixin):
             dtype=torch.float32,
         )
 
-        for index, output in self._get_act_patch_block_every(
-            corrupted_tokens=corrupted_tokens, clean_cache=clean_cache
-        ):
+        for index, output in self._get_act_patch_block_every(corrupted_tokens=corrupted_tokens, clean_cache=clean_cache):
             output = batched_dot_product(reps_q, self._pooling(output))
-            results[index] = patching_metric(output, scores, scores_p).mean()
+            results[index] = patching_metric(
+                output, scores, scores_p
+            ).mean()
 
         return results
 
@@ -148,11 +148,11 @@ class Dot(HookedRootModule, PatchedMixin):
             dtype=torch.float32,
         )
 
-        for index, output in self._get_act_patch_block_every(
-            corrupted_tokens=corrupted_tokens, clean_cache=clean_cache
-        ):
+        for index, output in self._get_act_patch_block_every(corrupted_tokens=corrupted_tokens, clean_cache=clean_cache):
             output = batched_dot_product(reps_q, self._pooling(output))
-            results[index] = patching_metric(output, scores, scores_p).mean()
+            results[index] = patching_metric(
+                output, scores, scores_p
+            ).mean()
 
         return results
 
