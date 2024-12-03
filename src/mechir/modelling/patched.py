@@ -107,7 +107,7 @@ class PatchedMixin(ABC):
                         pos=position,
                         clean_cache=clean_cache,
                     )
-                    patched_outputs = self._model_run_with_hooks(
+                    patched_outputs = self.run_with_hooks(
                         corrupted_tokens["input_ids"],
                         one_zero_attention_mask=corrupted_tokens["attention_mask"],
                         fwd_hooks=[(utils.get_act_name(component, layer), hook_fn)],
@@ -134,7 +134,7 @@ class PatchedMixin(ABC):
                 hook_fn = partial(
                     self._patch_head_vector, head_index=head, clean_cache=clean_cache
                 )
-                patched_outputs = self._model_run_with_hooks(
+                patched_outputs = self.run_with_hooks(
                     corrupted_tokens["input_ids"],
                     one_zero_attention_mask=corrupted_tokens["attention_mask"],
                     fwd_hooks=[(utils.get_act_name("z", layer), hook_fn)],
@@ -164,7 +164,7 @@ class PatchedMixin(ABC):
                     hook_fn = partial(
                         patch_fn, pos=position, head_index=head, clean_cache=clean_cache
                     )
-                    patched_outputs = self._model_run_with_hooks(
+                    patched_outputs = self.run_with_hooks(
                         corrupted_tokens["input_ids"],
                         one_zero_attention_mask=corrupted_tokens["attention_mask"],
                         fwd_hooks=[(utils.get_act_name(component, layer), hook_fn)],
@@ -172,19 +172,19 @@ class PatchedMixin(ABC):
                     yield (component_idx, i, position), patched_outputs
 
     @abstractmethod
-    def _model_forward(*args, **kwargs):
+    def forward(*args, **kwargs):
         raise NotImplementedError(
             "Instantiate a subclass of PatchedMixin and implement the _model_forward method"
         )
 
     @abstractmethod
-    def _model_run_with_cache(*args, **kwargs):
+    def run_with_cache(*args, **kwargs):
         raise NotImplementedError(
             "Instantiate a subclass of PatchedMixin and implement the _model_run_with_cache method"
         )
 
     @abstractmethod
-    def _model_run_with_hooks(*args, **kwargs):
+    def run_with_hooks(*args, **kwargs):
         raise NotImplementedError(
             "Instantiate a subclass of PatchedMixin and implement the _model_run_with_hooks method"
         )

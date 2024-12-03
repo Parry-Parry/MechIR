@@ -259,34 +259,29 @@ class MonoT5(HookedRootModule, PatchedMixin):
             self.model_name_or_path, device=self._device, hf_model=self.__hf_model
         )
 
-        self._model_forward = partial(self._model, return_type="logits")
-        self._model_run_with_cache = partial(
-            self._model.run_with_cache, return_type="logits"
-        )
-        self._model_run_with_hooks = partial(
-            self._model.run_with_hooks, return_type="logits"
-        )
-
         self.softmax_output = softmax_output
 
-    def _forward(
-        self,
-        input_ids: torch.Tensor,
-        attention_mask: torch.Tensor,
-    ) -> torch.Tensor:
+    def forward(self, 
+                input_ids: Float[torch.Tensor, "batch seq"],
+                attention_mask: Float[torch.Tensor, "batch seq"]):
+        model_output = self._model(input_ids, attention_mask, return_type="logits")
+        model_output = model_output[:, 0, (self.pos_token, self.neg_token)].softmax(dim=-1)[:, 0] if self.softmax_output else model_output[:, 0, (self.pos_token, self.neg_token)][:, 0]
+        return model_output
 
-        return self._model_forward(input_ids, one_zero_attention_mask=attention_mask)
+    def run_with_cache(self, 
+                input_ids: Float[torch.Tensor, "batch seq"],
+                attention_mask: Float[torch.Tensor, "batch seq"]):
+        model_output, cache = self._model.run_with_cache(input_ids, attention_mask, return_type="logits")
+        model_output = model_output[:, 0, (self.pos_token, self.neg_token)].softmax(dim=-1)[:, 0] if self.softmax_output else model_output[:, 0, (self.pos_token, self.neg_token)][:, 0]
+        return model_output, cache
 
-    def _forward_cache(
-        self,
-        input_ids: torch.Tensor,
-        attention_mask: torch.Tensor,
-    ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
-
-        logits, cached = self._model_run_with_cache(
-            input_ids, one_zero_attention_mask=attention_mask
-        )
-        return logits, cached
+    def run_with_hooks(self, 
+                input_ids: Float[torch.Tensor, "batch seq"],
+                attention_mask: Float[torch.Tensor, "batch seq"]):
+        model_output = self._model.run_with_hooks(input_ids, attention_mask, return_type="logits")
+        model_output = model_output[:, 0, (self.pos_token, self.neg_token)].softmax(dim=-1)[:, 0] if self.softmax_output else model_output[:, 0, (self.pos_token, self.neg_token)][:, 0]
+        
+        return model_output
 
     def get_act_patch_block_every(
         self,

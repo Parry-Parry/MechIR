@@ -33,13 +33,13 @@ def get_hooked(architecture):
 
 
 class Dot(HookedRootModule, PatchedMixin):
-    
     def __init__(
         self,
         model_name_or_path: str,
         pooling_type: str = "cls",
         tokenizer=None,
         special_token: str = "X",
+        return_cache: bool = False,
     ) -> None:
         super().__init__()
         self.tokenizer = (
@@ -55,38 +55,30 @@ class Dot(HookedRootModule, PatchedMixin):
         self._model = get_hooked(model_name_or_path).from_pretrained(
             self.model_name_or_path, device=self._device, hf_model=self.__hf_model
         )
-        self._model_forward = partial(self._model, return_type="embeddings")
-        self._model_run_with_cache = partial(
-            self._model.run_with_cache, return_type="embeddings"
-        )
-        self._model_run_with_hooks = partial(
-            self._model.run_with_hooks, return_type="embeddings"
-        )
+
         self._pooling_type = pooling_type
         self._pooling = POOLING[pooling_type]
+        self._return_cache = return_cache
 
         self.setup()
 
-    def _forward(
-        self,
-        input_ids: torch.Tensor,
-        attention_mask: torch.Tensor,
-    ) -> torch.Tensor:
+    def forward(self, 
+                input_ids: Float[torch.Tensor, "batch seq"],
+                attention_mask: Float[torch.Tensor, "batch seq"]):
+        model_output = self._model(input_ids, attention_mask, return_type="embeddings")
+        return self._pooling(model_output)
 
-        return self._pooling(
-            self._model_forward(input_ids, one_zero_attention_mask=attention_mask)
-        )
+    def run_with_cache(self, 
+                input_ids: Float[torch.Tensor, "batch seq"],
+                attention_mask: Float[torch.Tensor, "batch seq"]):
+        model_output, cache = self._model.run_with_cache(input_ids, attention_mask, return_type="embeddings")
+        return self._pooling(model_output), cache
 
-    def _forward_cache(
-        self,
-        input_ids: torch.Tensor,
-        attention_mask: torch.Tensor,
-    ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
-
-        reps, cached = self._model_run_with_cache(
-            input_ids, one_zero_attention_mask=attention_mask
-        )
-        return self._pooling(reps), cached
+    def run_with_hooks(self, 
+                input_ids: Float[torch.Tensor, "batch seq"],
+                attention_mask: Float[torch.Tensor, "batch seq"]):
+        model_output = self._model.run_with_hooks(input_ids, attention_mask, return_type="embeddings")
+        return self._pooling(model_output)
 
     def get_act_patch_block_every(
         self,
@@ -185,9 +177,9 @@ class Dot(HookedRootModule, PatchedMixin):
 
     def score(self, queries: dict, documents: dict, reps_q=None, cache=False):
         if reps_q is None:
-            reps_q = self._forward(queries["input_ids"], queries["attention_mask"])
+            reps_q = self.forward(queries["input_ids"], queries["attention_mask"])
         if cache:
-            reps_d, cache_d = self._forward_cache(
+            reps_d, cache_d = self.run_with_cache(
                 documents["input_ids"], documents["attention_mask"]
             )
             return batched_dot_product(reps_q, reps_d), reps_q, reps_d, cache_d
