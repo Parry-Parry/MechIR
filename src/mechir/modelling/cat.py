@@ -8,7 +8,7 @@ from jaxtyping import Float
 from transformers import AutoModelForSequenceClassification, AutoTokenizer, AutoConfig
 from transformer_lens import ActivationCache
 import transformer_lens.utils as utils
-from . import PatchedModel
+from . import PatchedMixin
 from .hooked.loading_from_pretrained import get_official_model_name
 from .hooked.HookedDistilBert import HookedDistilBertForSequenceClassification
 from ..util import linear_rank_function
@@ -33,7 +33,7 @@ def get_hooked(architecture):
     return HookedEncoderForSequenceClassification
 
 
-class Cat(PatchedModel):
+class Cat(HookedRootModule, PatchedMixin):
     def __init__(
         self,
         model_name_or_path: str,
@@ -42,6 +42,7 @@ class Cat(PatchedModel):
         special_token: str = "X",
         softmax_output: bool = False,
     ) -> None:
+        super().__init__()
         self.num_labels = num_labels
         self.tokenizer = (
             AutoTokenizer.from_pretrained(model_name_or_path)
@@ -49,14 +50,17 @@ class Cat(PatchedModel):
             else tokenizer
         )
         self.special_token = special_token
+        torch.set_grad_enabled(False)
+        self._device = utils.get_device()
+        self.model_name_or_path = get_official_model_name(model_name_or_path)
+        self.__hf_model = (
+            AutoModelForSequenceClassification.from_pretrained(self.model_name_or_path)
+            .eval()
+            .to(self._device)
+        )
 
-        super().__init__(
-            model_name_or_path,
-            partial(
-                AutoModelForSequenceClassification.from_pretrained,
-                num_labels=num_labels,
-            ),
-            get_hooked(model_name_or_path),
+        self._model = get_hooked(model_name_or_path).from_pretrained(
+            self.model_name_or_path, device=self._device, hf_model=self.__hf_model
         )
 
         self._model_forward = partial(self._model, return_type="logits")
@@ -88,7 +92,7 @@ class Cat(PatchedModel):
         )
         return logits, cached
 
-    def _get_act_patch_block_every(
+    def get_act_patch_block_every(
         self,
         corrupted_tokens: Float[torch.Tensor, "batch pos"],
         clean_cache: ActivationCache,
@@ -104,8 +108,6 @@ class Cat(PatchedModel):
         The results are calculated using the patching_metric function, which should be
         called on the model's logit output.
         """
-
-        self._model.reset_hooks()
         _, seq_len = corrupted_tokens["input_ids"].size()
         results = torch.zeros(
             3,
@@ -121,31 +123,17 @@ class Cat(PatchedModel):
             self._device
         )
 
-        for component_idx, component in enumerate(["resid_pre", "attn_out", "mlp_out"]):
-            for layer in range(self._model.cfg.n_layers):
-                for position in range(seq_len):
-                    hook_fn = partial(
-                        self._patch_residual_component,
-                        pos=position,
-                        clean_cache=clean_cache,
-                    )
-                    patched_outputs = self._model_run_with_hooks(
-                        corrupted_tokens["input_ids"],
-                        one_zero_attention_mask=corrupted_tokens["attention_mask"],
-                        fwd_hooks=[(utils.get_act_name(component, layer), hook_fn)],
-                    )
-                    patched_outputs = (
-                        patched_outputs.softmax(dim=-1)[:, -1]
-                        if self.softmax_output
-                        else patched_outputs[:, -1]
-                    )
-                    results[component_idx, layer, position] = patching_metric(
-                        patched_outputs, scores, scores_p
-                    ).mean()
+        for index, output in self._get_act_patch_block_every(
+            corrupted_tokens=corrupted_tokens, clean_cache=clean_cache
+        ):
+            output = (
+                output.softmax(dim=-1)[:, -1] if self.softmax_output else output[:, -1]
+            )
+            results[index] = patching_metric(output, scores, scores_p).mean()
 
         return results
 
-    def _get_act_patch_attn_head_out_all_pos(
+    def get_act_patch_attn_head_out_all_pos(
         self,
         corrupted_tokens: Float[torch.Tensor, "batch pos"],
         clean_cache: ActivationCache,
@@ -162,7 +150,6 @@ class Cat(PatchedModel):
         called on the model's embedding output.
         """
 
-        self._model.reset_hooks()
         results = torch.zeros(
             self._model.cfg.n_layers,
             self._model.cfg.n_heads,
@@ -170,28 +157,17 @@ class Cat(PatchedModel):
             dtype=torch.float32,
         )
 
-        for layer in range(self._model.cfg.n_layers):
-            for head in range(self._model.cfg.n_heads):
-                hook_fn = partial(
-                    self._patch_head_vector, head_index=head, clean_cache=clean_cache
-                )
-                patched_outputs = self._model_run_with_hooks(
-                    corrupted_tokens["input_ids"],
-                    one_zero_attention_mask=corrupted_tokens["attention_mask"],
-                    fwd_hooks=[(utils.get_act_name("z", layer), hook_fn)],
-                )
-                patched_outputs = (
-                    patched_outputs.softmax(dim=-1)[:, -1]
-                    if self.softmax_output
-                    else patched_outputs[:, -1]
-                )
-                results[layer, head] = patching_metric(
-                    patched_outputs, scores, scores_p
-                ).mean()
+        for index, output in self._get_act_patch_attn_head_out_all_pos(
+            corrupted_tokens=corrupted_tokens, clean_cache=clean_cache
+        ):
+            output = (
+                output.softmax(dim=-1)[:, -1] if self.softmax_output else output[:, -1]
+            )
+            results[index] = patching_metric(output, scores, scores_p).mean()
 
         return results
 
-    def _get_act_patch_attn_head_by_pos(
+    def get_act_patch_attn_head_by_pos(
         self,
         corrupted_tokens: Float[torch.Tensor, "batch pos"],
         clean_cache: ActivationCache,
@@ -202,38 +178,20 @@ class Cat(PatchedModel):
         **kwargs,
     ) -> Float[torch.Tensor, "layer pos head"]:
 
-        self._model.reset_hooks()
         _, seq_len = corrupted_tokens["input_ids"].size()
         results = torch.zeros(
             2, len(layer_head_list), seq_len, device=self._device, dtype=torch.float32
         )
 
-        for component_idx, component in enumerate(["z", "pattern"]):
-            for i, layer_head in enumerate(layer_head_list):
-                layer = layer_head[0]
-                head = layer_head[1]
-                for position in range(seq_len):
-                    patch_fn = (
-                        self._patch_head_vector_by_pos_pattern
-                        if component == "pattern"
-                        else self._patch_head_vector_by_pos
-                    )
-                    hook_fn = partial(
-                        patch_fn, pos=position, head_index=head, clean_cache=clean_cache
-                    )
-                    patched_outputs = self._model_run_with_hooks(
-                        corrupted_tokens["input_ids"],
-                        one_zero_attention_mask=corrupted_tokens["attention_mask"],
-                        fwd_hooks=[(utils.get_act_name(component, layer), hook_fn)],
-                    )
-                    patched_outputs = (
-                        patched_outputs.softmax(dim=-1)[:, -1]
-                        if self.softmax_output
-                        else patched_outputs[:, -1]
-                    )
-                    results[component_idx, i, position] = patching_metric(
-                        patched_outputs, scores, scores_p
-                    ).mean()
+        for index, output in self._get_act_patch_attn_head_by_pos(
+            corrupted_tokens=corrupted_tokens,
+            clean_cache=clean_cache,
+            layer_head_list=layer_head_list,
+        ):
+            output = (
+                output.softmax(dim=-1)[:, -1] if self.softmax_output else output[:, -1]
+            )
+            results[index] = patching_metric(output, scores, scores_p).mean()
 
         return results
 
