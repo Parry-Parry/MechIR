@@ -1,9 +1,7 @@
 import torch
-from typing import Any, Dict, Tuple, Callable
 from jaxtyping import Float
 from transformer_lens import ActivationCache
 import transformer_lens.utils as utils
-from .hooked.loading_from_pretrained import get_official_model_name
 from abc import ABC, abstractmethod
 from functools import partial
 from transformer_lens.hook_points import HookPoint
@@ -12,6 +10,12 @@ from transformer_lens.hook_points import HookPoint
 class PatchedMixin(ABC):
     def __init__(self) -> None:
         super().__init__()
+
+        self._patch_funcs = {
+            "block_all": self.get_act_patch_block_every,
+            "head_out_all_pos": self.get_act_patch_attn_head_out_all_pos,
+            "head_by_pos": self.get_act_patch_attn_head_by_pos,
+        }
 
     def _patch_residual_component(
         self,

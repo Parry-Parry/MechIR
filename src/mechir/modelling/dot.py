@@ -33,6 +33,7 @@ def get_hooked(architecture):
 
 
 class Dot(HookedRootModule, PatchedMixin):
+    
     def __init__(
         self,
         model_name_or_path: str,
@@ -61,7 +62,6 @@ class Dot(HookedRootModule, PatchedMixin):
         self._model_run_with_hooks = partial(
             self._model.run_with_hooks, return_type="embeddings"
         )
-
         self._pooling_type = pooling_type
         self._pooling = POOLING[pooling_type]
 
@@ -194,7 +194,7 @@ class Dot(HookedRootModule, PatchedMixin):
         reps_d = self._forward(documents["input_ids"], documents["attention_mask"])
         return batched_dot_product(reps_q, reps_d), reps_q, reps_d
 
-    def __call__(
+    def patch(
         self,
         queries: dict,
         documents: dict,
