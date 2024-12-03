@@ -78,7 +78,6 @@ class HookedEncoderForSequenceClassification(HookedEncoder):
             return_type="embeddings",
             one_zero_attention_mask=one_zero_attention_mask,
         )
-        breakpoint()
         logits = self.classifier(hidden[:, 0, :])
 
         if return_type is None:
