@@ -51,7 +51,9 @@ class Dot(HookedRootModule, PatchedMixin):
         torch.set_grad_enabled(False)
         self._device = utils.get_device()
         self.model_name_or_path = get_official_model_name(model_name_or_path)
-        self.__hf_model = AutoModel.from_pretrained(model_name_or_path).eval().to(self._device)
+        self.__hf_model = (
+            AutoModel.from_pretrained(model_name_or_path).eval().to(self._device)
+        )
         self._model = get_hooked(model_name_or_path).from_pretrained(
             self.model_name_or_path, device=self._device, hf_model=self.__hf_model
         )
@@ -62,22 +64,32 @@ class Dot(HookedRootModule, PatchedMixin):
 
         self.setup()
 
-    def forward(self, 
-                input_ids: Float[torch.Tensor, "batch seq"],
-                attention_mask: Float[torch.Tensor, "batch seq"]):
+    def forward(
+        self,
+        input_ids: Float[torch.Tensor, "batch seq"],
+        attention_mask: Float[torch.Tensor, "batch seq"],
+    ):
         model_output = self._model(input_ids, attention_mask, return_type="embeddings")
         return self._pooling(model_output)
 
-    def run_with_cache(self, 
-                input_ids: Float[torch.Tensor, "batch seq"],
-                attention_mask: Float[torch.Tensor, "batch seq"]):
-        model_output, cache = self._model.run_with_cache(input_ids, attention_mask, return_type="embeddings")
+    def run_with_cache(
+        self,
+        input_ids: Float[torch.Tensor, "batch seq"],
+        attention_mask: Float[torch.Tensor, "batch seq"],
+    ):
+        model_output, cache = self._model.run_with_cache(
+            input_ids, attention_mask, return_type="embeddings"
+        )
         return self._pooling(model_output), cache
 
-    def run_with_hooks(self, 
-                input_ids: Float[torch.Tensor, "batch seq"],
-                attention_mask: Float[torch.Tensor, "batch seq"]):
-        model_output = self._model.run_with_hooks(input_ids, attention_mask, return_type="embeddings")
+    def run_with_hooks(
+        self,
+        input_ids: Float[torch.Tensor, "batch seq"],
+        attention_mask: Float[torch.Tensor, "batch seq"],
+    ):
+        model_output = self._model.run_with_hooks(
+            input_ids, attention_mask, return_type="embeddings"
+        )
         return self._pooling(model_output)
 
     def get_act_patch_block_every(
@@ -107,11 +119,11 @@ class Dot(HookedRootModule, PatchedMixin):
             dtype=torch.float32,
         )
 
-        for index, output in self._get_act_patch_block_every(corrupted_tokens=corrupted_tokens, clean_cache=clean_cache):
+        for index, output in self._get_act_patch_block_every(
+            corrupted_tokens=corrupted_tokens, clean_cache=clean_cache
+        ):
             output = batched_dot_product(reps_q, self._pooling(output))
-            results[index] = patching_metric(
-                output, scores, scores_p
-            ).mean()
+            results[index] = patching_metric(output, scores, scores_p).mean()
 
         return results
 
@@ -140,11 +152,11 @@ class Dot(HookedRootModule, PatchedMixin):
             dtype=torch.float32,
         )
 
-        for index, output in self._get_act_patch_block_every(corrupted_tokens=corrupted_tokens, clean_cache=clean_cache):
+        for index, output in self._get_act_patch_block_every(
+            corrupted_tokens=corrupted_tokens, clean_cache=clean_cache
+        ):
             output = batched_dot_product(reps_q, self._pooling(output))
-            results[index] = patching_metric(
-                output, scores, scores_p
-            ).mean()
+            results[index] = patching_metric(output, scores, scores_p).mean()
 
         return results
 

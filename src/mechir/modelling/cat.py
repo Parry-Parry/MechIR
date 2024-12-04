@@ -64,35 +64,53 @@ class Cat(HookedRootModule, PatchedMixin):
         )
 
         self._forward = partial(self._model, return_type="logits")
-        self.run_with_cache = partial(
-            self._model.run_with_cache, return_type="logits"
-        )
-        self.run_with_hooks = partial(
-            self._model.run_with_hooks, return_type="logits"
-        )
+        self.run_with_cache = partial(self._model.run_with_cache, return_type="logits")
+        self.run_with_hooks = partial(self._model.run_with_hooks, return_type="logits")
 
         self.softmax_output = softmax_output
-    
-    def forward(self, 
-                input_ids: Float[torch.Tensor, "batch seq"],
-                attention_mask: Float[torch.Tensor, "batch seq"]):
+
+    def forward(
+        self,
+        input_ids: Float[torch.Tensor, "batch seq"],
+        attention_mask: Float[torch.Tensor, "batch seq"],
+    ):
         model_output = self._model(input_ids, attention_mask, return_type="logits")
-        model_output = F.log_softmax(model_output, dim=-1)[:, 0] if self.softmax_output else model_output[:, 0]
+        model_output = (
+            F.log_softmax(model_output, dim=-1)[:, 0]
+            if self.softmax_output
+            else model_output[:, 0]
+        )
         return model_output
 
-    def run_with_cache(self, 
-                input_ids: Float[torch.Tensor, "batch seq"],
-                attention_mask: Float[torch.Tensor, "batch seq"]):
-        model_output, cache = self._model.run_with_cache(input_ids, attention_mask, return_type="logits")
-        model_output = F.log_softmax(model_output, dim=-1)[:, 0] if self.softmax_output else model_output[:, 0]
+    def run_with_cache(
+        self,
+        input_ids: Float[torch.Tensor, "batch seq"],
+        attention_mask: Float[torch.Tensor, "batch seq"],
+    ):
+        model_output, cache = self._model.run_with_cache(
+            input_ids, attention_mask, return_type="logits"
+        )
+        model_output = (
+            F.log_softmax(model_output, dim=-1)[:, 0]
+            if self.softmax_output
+            else model_output[:, 0]
+        )
         return model_output, cache
 
-    def run_with_hooks(self, 
-                input_ids: Float[torch.Tensor, "batch seq"],
-                attention_mask: Float[torch.Tensor, "batch seq"]):
-        model_output = self._model.run_with_hooks(input_ids, attention_mask, return_type="logits")
-        model_output = F.log_softmax(model_output, dim=-1)[:, 0] if self.softmax_output else model_output[:, 0]
-        
+    def run_with_hooks(
+        self,
+        input_ids: Float[torch.Tensor, "batch seq"],
+        attention_mask: Float[torch.Tensor, "batch seq"],
+    ):
+        model_output = self._model.run_with_hooks(
+            input_ids, attention_mask, return_type="logits"
+        )
+        model_output = (
+            F.log_softmax(model_output, dim=-1)[:, 0]
+            if self.softmax_output
+            else model_output[:, 0]
+        )
+
         return model_output
 
     def get_act_patch_block_every(
@@ -118,12 +136,6 @@ class Cat(HookedRootModule, PatchedMixin):
             seq_len,
             device=self._device,
             dtype=torch.float32,
-        )
-
-        # send tokens to device if not already there
-        corrupted_tokens["input_ids"] = corrupted_tokens["input_ids"].to(self._device)
-        corrupted_tokens["attention_mask"] = corrupted_tokens["attention_mask"].to(
-            self._device
         )
 
         for index, output in self._get_act_patch_block_every(
