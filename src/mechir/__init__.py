@@ -65,7 +65,7 @@ class MechirConfig:
 
 config = MechirConfig()
 
-from .modelling import Cat, Dot, MonoT5, PatchedModel
+from .modelling import Cat, Dot, MonoT5, PatchedMixin, SAEMixin
 
 from .modelling.hooked import conversion
 from .modelling.hooked import states
