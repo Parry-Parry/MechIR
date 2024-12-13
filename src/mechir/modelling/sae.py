@@ -58,6 +58,12 @@ class PlaceHolderMixin(ABC):
     def __init__(self):
         super().__init__()
 
+    def __getattr__(self, name):
+        raise NotImplementedError(
+            f"'{name}' requires SAE Lens functionality, but SAE Lens is not available. "
+            "Ensure SAE Lens is installed or check your configuration."
+        )
+
 
 class SAEMixin(ABC):
     acts_to_saes: Dict[str, SAE] = {}
