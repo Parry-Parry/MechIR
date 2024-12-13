@@ -7,7 +7,8 @@ from jaxtyping import Float
 from transformers import AutoModel, AutoTokenizer, AutoConfig
 from transformer_lens import ActivationCache
 import transformer_lens.utils as utils
-from . import PatchedMixin
+from .patched import PatchedMixin
+from .sae import SAEMixin
 from .hooked.HookedDistilBert import HookedDistilBert
 from .hooked.HookedEncoder import HookedEncoder
 from .hooked.loading_from_pretrained import get_official_model_name
@@ -32,7 +33,7 @@ def get_hooked(architecture):
     return HookedEncoder
 
 
-class Dot(HookedRootModule, PatchedMixin):
+class Dot(HookedRootModule, PatchedMixin, SAEMixin):
     def __init__(
         self,
         model_name_or_path: str,

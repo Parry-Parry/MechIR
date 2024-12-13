@@ -6,15 +6,18 @@ from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
 from transformer_lens import HookedEncoderDecoder, ActivationCache, HookedRootModule
 import transformer_lens.utils as utils
 from .patched import PatchedMixin
+from .sae import SAEMixin
 from ..util import linear_rank_function
 from .hooked.loading_from_pretrained import get_official_model_name
+
 logger = logging.getLogger(__name__)
 
 """
 monoT5
 """
 
-class MonoT5(HookedRootModule, PatchedMixin):
+
+class MonoT5(HookedRootModule, PatchedMixin, SAEMixin):
     def __init__(
         self,
         model_name_or_path: str,

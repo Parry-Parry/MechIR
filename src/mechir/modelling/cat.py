@@ -8,7 +8,8 @@ from jaxtyping import Float
 from transformers import AutoModelForSequenceClassification, AutoTokenizer, AutoConfig
 from transformer_lens import ActivationCache
 import transformer_lens.utils as utils
-from . import PatchedMixin
+from .patched import PatchedMixin
+from .sae import SAEMixin
 from .hooked.loading_from_pretrained import get_official_model_name
 from .hooked.HookedDistilBert import HookedDistilBertForSequenceClassification
 from ..util import linear_rank_function
@@ -33,7 +34,7 @@ def get_hooked(architecture):
     return HookedEncoderForSequenceClassification
 
 
-class Cat(HookedRootModule, PatchedMixin):
+class Cat(HookedRootModule, PatchedMixin, SAEMixin):
     def __init__(
         self,
         model_name_or_path: str,

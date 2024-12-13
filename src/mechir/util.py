@@ -63,6 +63,15 @@ def is_ir_datasets_availible():
         return False
 
 
+def is_sae_lens_availible():
+    try:
+        import sae_lens
+
+        return True
+    except ImportError:
+        return False
+
+
 def load_json(file: str):
     import json
     import gzip
