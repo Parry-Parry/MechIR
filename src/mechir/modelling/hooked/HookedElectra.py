@@ -100,6 +100,8 @@ class HookedElectraForSequenceClassification(HookedEncoder):
             return_type="embeddings",
             one_zero_attention_mask=one_zero_attention_mask,
         )
+        if return_type == "embeddings":
+            return hidden
         logits = self.classifier(hidden[:, 0, :])
 
         if return_type is None:

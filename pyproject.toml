@@ -4,13 +4,14 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mechir"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
   "torch",
   "transformers",
   "transformer_lens"
+  "sae_lens"
 ]
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 authors = [
   {name = "Andrew Parry", email = "0andrewparry@gmail.com"},
   {name = "Catherine Chen", email = "catherine_s_chen@brown.edu"}
