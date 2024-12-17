@@ -1,11 +1,11 @@
-from functools import partial
-from typing import Callable, Dict, Tuple
+from typing import Callable
 import logging
 import os
 import torch
 from jaxtyping import Float
 from transformers import AutoModel, AutoTokenizer, AutoConfig
-from transformer_lens import ActivationCache
+from transformer_lens.ActivationCache import ActivationCache
+from transformer_lens.hook_points import HookedRootModule
 import transformer_lens.utils as utils
 from .patched import PatchedMixin
 from .sae import SAEMixin
@@ -68,29 +68,9 @@ class Dot(HookedRootModule, PatchedMixin, SAEMixin):
     def forward(
         self,
         input_ids: Float[torch.Tensor, "batch seq"],
-        attention_mask: Float[torch.Tensor, "batch seq"],
+        one_zero_attention_mask: Float[torch.Tensor, "batch seq"],
     ):
-        model_output = self._model(input_ids, attention_mask, return_type="embeddings")
-        return self._pooling(model_output)
-
-    def run_with_cache(
-        self,
-        input_ids: Float[torch.Tensor, "batch seq"],
-        attention_mask: Float[torch.Tensor, "batch seq"],
-    ):
-        model_output, cache = self._model.run_with_cache(
-            input_ids, attention_mask, return_type="embeddings"
-        )
-        return self._pooling(model_output), cache
-
-    def run_with_hooks(
-        self,
-        input_ids: Float[torch.Tensor, "batch seq"],
-        attention_mask: Float[torch.Tensor, "batch seq"],
-    ):
-        model_output = self._model.run_with_hooks(
-            input_ids, attention_mask, return_type="embeddings"
-        )
+        model_output = self._model(input_ids, one_zero_attention_mask, return_type="embeddings")
         return self._pooling(model_output)
 
     def get_act_patch_block_every(
@@ -123,7 +103,7 @@ class Dot(HookedRootModule, PatchedMixin, SAEMixin):
         for index, output in self._get_act_patch_block_every(
             corrupted_tokens=corrupted_tokens, clean_cache=clean_cache
         ):
-            output = batched_dot_product(reps_q, self._pooling(output))
+            output = batched_dot_product(reps_q, output)
             results[index] = patching_metric(output, scores, scores_p).mean()
 
         return results
@@ -183,20 +163,20 @@ class Dot(HookedRootModule, PatchedMixin, SAEMixin):
             clean_cache=clean_cache,
             layer_head_list=layer_head_list,
         ):
-            output = batched_dot_product(reps_q, self._pooling(output))
+            output = batched_dot_product(reps_q, output)
             results[index] = patching_metric(output, scores, scores_p).mean()
 
         return results
 
     def score(self, queries: dict, documents: dict, reps_q=None, cache=False):
         if reps_q is None:
-            reps_q = self.forward(queries["input_ids"], queries["attention_mask"])
+            reps_q = self.forward(queries["input_ids"], queries["one_zero_attention_mask"])
         if cache:
             reps_d, cache_d = self.run_with_cache(
-                documents["input_ids"], documents["attention_mask"]
+                documents["input_ids"], documents["one_zero_attention_mask"]
             )
             return batched_dot_product(reps_q, reps_d), reps_q, reps_d, cache_d
-        reps_d = self._forward(documents["input_ids"], documents["attention_mask"])
+        reps_d = self.forward(documents["input_ids"], documents["one_zero_attention_mask"])
         return batched_dot_product(reps_q, reps_d), reps_q, reps_d
 
     def patch(
