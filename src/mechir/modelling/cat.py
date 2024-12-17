@@ -1,21 +1,19 @@
 from functools import partial
-from typing import Callable, Dict, Tuple
+from typing import Callable
 import logging
 import os
 import torch
-from tqdm import tqdm
 from jaxtyping import Float
 from transformers import AutoModelForSequenceClassification, AutoTokenizer, AutoConfig
-from transformer_lens import ActivationCache
+from transformer_lens import ActivationCache, HookedRootModule
 import transformer_lens.utils as utils
+import torch.nn.functional as F
 from .patched import PatchedMixin
 from .sae import SAEMixin
 from .hooked.loading_from_pretrained import get_official_model_name
 from .hooked.HookedDistilBert import HookedDistilBertForSequenceClassification
 from ..util import linear_rank_function
-from ..modelling.hooked.HookedEncoderForSequenceClassification import (
-    HookedEncoderForSequenceClassification,
-)
+from ..modelling.hooked.HookedEncoderForSequenceClassification import HookedEncoderForSequenceClassification
 from ..modelling.hooked.HookedElectra import HookedElectraForSequenceClassification
 
 logger = logging.getLogger(__name__)
@@ -42,6 +40,7 @@ class Cat(HookedRootModule, PatchedMixin, SAEMixin):
         tokenizer=None,
         special_token: str = "X",
         softmax_output: bool = False,
+        return_cache: bool = False,
     ) -> None:
         super().__init__()
         self.num_labels = num_labels
@@ -64,54 +63,20 @@ class Cat(HookedRootModule, PatchedMixin, SAEMixin):
             self.model_name_or_path, device=self._device, hf_model=self.__hf_model
         )
 
-        self._forward = partial(self._model, return_type="logits")
-        self.run_with_cache = partial(self._model.run_with_cache, return_type="logits")
-        self.run_with_hooks = partial(self._model.run_with_hooks, return_type="logits")
-
         self.softmax_output = softmax_output
+        self._return_cache = return_cache
 
     def forward(
         self,
         input_ids: Float[torch.Tensor, "batch seq"],
-        attention_mask: Float[torch.Tensor, "batch seq"],
+        one_zero_attention_mask: Float[torch.Tensor, "batch seq"],
     ):
-        model_output = self._model(input_ids, attention_mask, return_type="logits")
+        model_output = self._model(input_ids, one_zero_attention_mask, return_type="logits")
         model_output = (
             F.log_softmax(model_output, dim=-1)[:, 0]
             if self.softmax_output
             else model_output[:, 0]
         )
-        return model_output
-
-    def run_with_cache(
-        self,
-        input_ids: Float[torch.Tensor, "batch seq"],
-        attention_mask: Float[torch.Tensor, "batch seq"],
-    ):
-        model_output, cache = self._model.run_with_cache(
-            input_ids, attention_mask, return_type="logits"
-        )
-        model_output = (
-            F.log_softmax(model_output, dim=-1)[:, 0]
-            if self.softmax_output
-            else model_output[:, 0]
-        )
-        return model_output, cache
-
-    def run_with_hooks(
-        self,
-        input_ids: Float[torch.Tensor, "batch seq"],
-        attention_mask: Float[torch.Tensor, "batch seq"],
-    ):
-        model_output = self._model.run_with_hooks(
-            input_ids, attention_mask, return_type="logits"
-        )
-        model_output = (
-            F.log_softmax(model_output, dim=-1)[:, 0]
-            if self.softmax_output
-            else model_output[:, 0]
-        )
-
         return model_output
 
     def get_act_patch_block_every(
@@ -142,9 +107,6 @@ class Cat(HookedRootModule, PatchedMixin, SAEMixin):
         for index, output in self._get_act_patch_block_every(
             corrupted_tokens=corrupted_tokens, clean_cache=clean_cache
         ):
-            output = (
-                output.softmax(dim=-1)[:, -1] if self.softmax_output else output[:, -1]
-            )
             results[index] = patching_metric(output, scores, scores_p).mean()
 
         return results
@@ -176,9 +138,6 @@ class Cat(HookedRootModule, PatchedMixin, SAEMixin):
         for index, output in self._get_act_patch_attn_head_out_all_pos(
             corrupted_tokens=corrupted_tokens, clean_cache=clean_cache
         ):
-            output = (
-                output.softmax(dim=-1)[:, -1] if self.softmax_output else output[:, -1]
-            )
             results[index] = patching_metric(output, scores, scores_p).mean()
 
         return results
@@ -204,28 +163,21 @@ class Cat(HookedRootModule, PatchedMixin, SAEMixin):
             clean_cache=clean_cache,
             layer_head_list=layer_head_list,
         ):
-            output = (
-                output.softmax(dim=-1)[:, -1] if self.softmax_output else output[:, -1]
-            )
             results[index] = patching_metric(output, scores, scores_p).mean()
 
         return results
 
     def score(self, sequences: dict, cache=False):
         if cache:
-            logits, cache = self._forward_cache(
-                sequences["input_ids"], sequences["attention_mask"]
+            logits, cache = self.run_with_cache(
+                sequences["input_ids"], sequences["one_zero_attention_mask"]
             )
-            scores = (
-                logits.softmax(dim=-1)[:, -1] if self.softmax_output else logits[:, -1]
-            )
-            return scores, logits, cache
+            return logits, cache
 
-        logits = self._forward(sequences["input_ids"], sequences["attention_mask"])
-        scores = logits.softmax(dim=-1)[:, -1] if self.softmax_output else logits[:, -1]
-        return scores, logits
+        logits = self.forward(sequences["input_ids"], sequences["one_zero_attention_mask"])
+        return logits, logits
 
-    def __call__(
+    def patch(
         self,
         sequences: dict,
         sequences_p: dict,
@@ -237,7 +189,7 @@ class Cat(HookedRootModule, PatchedMixin, SAEMixin):
             patch_type in self._patch_funcs
         ), f"Patch type {patch_type} not recognized. Choose from {self._patch_funcs.keys()}"
         scores, _ = self.score(sequences)
-        scores_p, _, cache = self.score(sequences_p, cache=True)
+        scores_p, cache = self.score(sequences_p, cache=True)
 
         patching_kwargs = {
             "corrupted_tokens": sequences,

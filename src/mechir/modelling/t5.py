@@ -3,7 +3,9 @@ import logging
 import torch
 from jaxtyping import Float
 from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
-from transformer_lens import HookedEncoderDecoder, ActivationCache, HookedRootModule
+from transformer_lens import HookedEncoderDecoder
+from transformer_lens.ActivationCache import ActivationCache
+from transformer_lens.hook_points import HookedRootModule
 import transformer_lens.utils as utils
 from .patched import PatchedMixin
 from .sae import SAEMixin
@@ -25,6 +27,7 @@ class MonoT5(HookedRootModule, PatchedMixin, SAEMixin):
         neg_token: str = "false",
         special_token: str = "X",
         softmax_output: bool = False,
+        return_cache: bool = False,
     ) -> None:
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_name_or_path)
         self.special_token = special_token
@@ -44,6 +47,7 @@ class MonoT5(HookedRootModule, PatchedMixin, SAEMixin):
         )
 
         self.softmax_output = softmax_output
+        self._return_cache = return_cache
 
     def forward(
         self,
@@ -56,37 +60,6 @@ class MonoT5(HookedRootModule, PatchedMixin, SAEMixin):
             if self.softmax_output
             else model_output[:, 0, (self.pos_token, self.neg_token)][:, 0]
         )
-        return model_output
-
-    def run_with_cache(
-        self,
-        input_ids: Float[torch.Tensor, "batch seq"],
-        attention_mask: Float[torch.Tensor, "batch seq"],
-    ):
-        model_output, cache = self._model.run_with_cache(
-            input_ids, attention_mask, return_type="logits"
-        )
-        model_output = (
-            model_output[:, 0, (self.pos_token, self.neg_token)].softmax(dim=-1)[:, 0]
-            if self.softmax_output
-            else model_output[:, 0, (self.pos_token, self.neg_token)][:, 0]
-        )
-        return model_output, cache
-
-    def run_with_hooks(
-        self,
-        input_ids: Float[torch.Tensor, "batch seq"],
-        attention_mask: Float[torch.Tensor, "batch seq"],
-    ):
-        model_output = self._model.run_with_hooks(
-            input_ids, attention_mask, return_type="logits"
-        )
-        model_output = (
-            model_output[:, 0, (self.pos_token, self.neg_token)].softmax(dim=-1)[:, 0]
-            if self.softmax_output
-            else model_output[:, 0, (self.pos_token, self.neg_token)][:, 0]
-        )
-
         return model_output
 
     def get_act_patch_block_every(
@@ -154,11 +127,6 @@ class MonoT5(HookedRootModule, PatchedMixin, SAEMixin):
         for index, output in self._get_act_patch_attn_head_out_all_pos(
             corrupted_tokens=corrupted_tokens, clean_cache=clean_cache
         ):
-            output = (
-                output[:, 0, (self.pos_token, self.neg_token)].softmax(dim=-1)[:, 0]
-                if self.softmax_output
-                else output[:, 0, (self.pos_token, self.neg_token)][:, 0]
-            )
             results[index] = patching_metric(output, scores, scores_p)
 
         return results
@@ -184,36 +152,21 @@ class MonoT5(HookedRootModule, PatchedMixin, SAEMixin):
             clean_cache=clean_cache,
             layer_head_list=layer_head_list,
         ):
-            output = (
-                output[:, 0, (self.pos_token, self.neg_token)].softmax(dim=-1)[:, 0]
-                if self.softmax_output
-                else output[:, 0, (self.pos_token, self.neg_token)][:, 0]
-            )
             results[index] = patching_metric(output, scores, scores_p)
 
         return results
 
     def score(self, sequences: dict, cache=False):
         if cache:
-            logits, cache = self._forward_cache(
+            logits, cache = self.run_with_cache(
                 sequences["input_ids"], sequences["attention_mask"]
             )
-            scores = (
-                logits[:, 0, (self.pos_token, self.neg_token)].softmax(dim=-1)[:, 0]
-                if self.softmax_output
-                else logits[:, 0, (self.pos_token, self.neg_token)][:, 0]
-            )
-            return scores, logits, cache
+            return logits, cache
 
-        logits = self._forward(sequences["input_ids"], sequences["attention_mask"])
-        scores = (
-            logits[:, 0, (self.pos_token, self.neg_token)].softmax(dim=-1)[:, 0]
-            if self.softmax_output
-            else logits[:, 0, (self.pos_token, self.neg_token)][:, 0]
-        )
-        return scores, logits
+        logits = self.forward(sequences["input_ids"], sequences["attention_mask"])
+        return logits
 
-    def __call__(
+    def patch(
         self,
         sequences: dict,
         sequences_p: dict,
@@ -225,7 +178,7 @@ class MonoT5(HookedRootModule, PatchedMixin, SAEMixin):
             patch_type in self._patch_funcs
         ), f"Patch type {patch_type} not recognized. Choose from {self._patch_funcs.keys()}"
         scores, _ = self.score(sequences)
-        scores_p, _, cache = self.score(sequences_p, cache=True)
+        scores_p, cache = self.score(sequences_p, cache=True)
 
         patching_kwargs = {
             "corrupted_tokens": sequences,

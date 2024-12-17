@@ -8,6 +8,9 @@ from transformer_lens.hook_points import HookPoint
 
 
 class PatchedMixin(ABC):
+    _model = None
+    _device = None
+
     def __init__(self) -> None:
         super().__init__()
 

@@ -66,6 +66,7 @@ class MechirConfig:
 config = MechirConfig()
 
 from .modelling import Cat, Dot, MonoT5, PatchedMixin, SAEMixin
-
 from .modelling.hooked import conversion
 from .modelling.hooked import states
+from . import perturb as perturb
+from . import data as data
