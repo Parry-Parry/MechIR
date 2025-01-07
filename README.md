@@ -78,7 +78,7 @@ Activation patching is a method to isolate model behaviour to particular compone
 ```python
 patch_output = []
 for batch in dataloader:
-    patch_output.append(model(**batch, patch_type="head_all"))
+    patch_output.append(model.patch(**batch, patch_type="head_all"))
 
 patch_output = torch.mean(torch.stack(patch_output), axis=0)
 ```
