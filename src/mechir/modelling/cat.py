@@ -1,11 +1,11 @@
-from functools import partial
 from typing import Callable
 import logging
 import os
 import torch
 from jaxtyping import Float
 from transformers import AutoModelForSequenceClassification, AutoTokenizer, AutoConfig
-from transformer_lens import ActivationCache, HookedRootModule
+from transformer_lens.ActivationCache import ActivationCache
+from transformer_lens.hook_points import HookedRootModule
 import transformer_lens.utils as utils
 import torch.nn.functional as F
 from .patched import PatchedMixin

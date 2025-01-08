@@ -1,6 +1,6 @@
 import torch
 from jaxtyping import Float
-from transformer_lens import ActivationCache
+from transformer_lens.ActivationCache import ActivationCache
 import transformer_lens.utils as utils
 from abc import ABC, abstractmethod
 from functools import partial
