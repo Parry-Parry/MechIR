@@ -1,4 +1,6 @@
 torch
 transformers
 transformer_lens
+sae_lens
 ir_datasets
+streamlit

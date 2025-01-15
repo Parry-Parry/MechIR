@@ -8,9 +8,6 @@ from transformer_lens.hook_points import HookPoint
 
 
 class PatchedMixin(ABC):
-    _model = None
-    _device = None
-
     def __init__(self) -> None:
         super().__init__()
 
@@ -19,6 +16,8 @@ class PatchedMixin(ABC):
             "head_out_all_pos": self.get_act_patch_attn_head_out_all_pos,
             "head_by_pos": self.get_act_patch_attn_head_by_pos,
         }
+        self._model = None
+        self._device = None
 
     def _patch_residual_component(
         self,
