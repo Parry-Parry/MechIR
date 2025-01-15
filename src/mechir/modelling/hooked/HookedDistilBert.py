@@ -73,6 +73,7 @@ class HookedDistilBert(HookedRootModule):
         self,
         input: Int[torch.Tensor, "batch pos"],
         return_type: Literal["embeddings"],
+        token_type_ids: Optional[Int[torch.Tensor, "batch pos"]] = None,
         attention_mask: Optional[Int[torch.Tensor, "batch pos"]] = None,
     ) -> Float[torch.Tensor, "batch pos d_vocab"]: ...
 
@@ -81,6 +82,7 @@ class HookedDistilBert(HookedRootModule):
         self,
         input: Int[torch.Tensor, "batch pos"],
         return_type: Literal[None],
+        token_type_ids: Optional[Int[torch.Tensor, "batch pos"]] = None,
         attention_mask: Optional[Int[torch.Tensor, "batch pos"]] = None,
     ) -> Optional[Float[torch.Tensor, "batch pos d_vocab"]]: ...
 
@@ -88,6 +90,7 @@ class HookedDistilBert(HookedRootModule):
         self,
         input: Int[torch.Tensor, "batch pos"],
         return_type: Optional[str] = "embeddings",
+        token_type_ids: Optional[Int[torch.Tensor, "batch pos"]] = None,
         attention_mask: Optional[Int[torch.Tensor, "batch pos"]] = None,
     ) -> Optional[Float[torch.Tensor, "batch pos d_vocab"]]:
         """Input must be a batch of tokens. Strings and lists of strings are not yet supported.

@@ -70,8 +70,9 @@ class Cat(HookedRootModule, PatchedMixin, SAEMixin):
         self,
         input_ids: Float[torch.Tensor, "batch seq"],
         attention_mask: Float[torch.Tensor, "batch seq"],
+        token_type_ids: Float[torch.Tensor, "batch seq"] = None,
     ):
-        model_output = self._model(input=input_ids, attention_mask=attention_mask, return_type="logits")
+        model_output = self._model(input=input_ids, attention_mask=attention_mask, token_type_ids=token_type_ids, return_type="logits")
         model_output = (
             F.log_softmax(model_output, dim=-1)[:, 0]
             if self.softmax_output
