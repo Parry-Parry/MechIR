@@ -44,7 +44,7 @@ class HookedEncoderForSequenceClassification(HookedEncoder):
         input: Int[torch.Tensor, "batch pos"],
         return_type: Literal["logits"],
         token_type_ids: Optional[Int[torch.Tensor, "batch pos"]] = None,
-        one_zero_attention_mask: Optional[Int[torch.Tensor, "batch pos"]] = None,
+        attention_mask: Optional[Int[torch.Tensor, "batch pos"]] = None,
     ) -> Float[torch.Tensor, "batch pos d_vocab"]: ...
 
     @overload
@@ -53,7 +53,7 @@ class HookedEncoderForSequenceClassification(HookedEncoder):
         input: Int[torch.Tensor, "batch pos"],
         return_type: Literal[None],
         token_type_ids: Optional[Int[torch.Tensor, "batch pos"]] = None,
-        one_zero_attention_mask: Optional[Int[torch.Tensor, "batch pos"]] = None,
+        attention_mask: Optional[Int[torch.Tensor, "batch pos"]] = None,
     ) -> Optional[Float[torch.Tensor, "batch pos d_vocab"]]: ...
 
     def forward(
@@ -61,7 +61,7 @@ class HookedEncoderForSequenceClassification(HookedEncoder):
         input: Int[torch.Tensor, "batch pos"],
         return_type: Optional[str] = "logits",
         token_type_ids: Optional[Int[torch.Tensor, "batch pos"]] = None,
-        one_zero_attention_mask: Optional[Int[torch.Tensor, "batch pos"]] = None,
+        attention_mask: Optional[Int[torch.Tensor, "batch pos"]] = None,
     ) -> Optional[Float[torch.Tensor, "batch pos d_vocab"]]:
         """Input must be a batch of tokens. Strings and lists of strings are not yet supported.
 
@@ -69,14 +69,14 @@ class HookedEncoderForSequenceClassification(HookedEncoder):
 
         token_type_ids Optional[torch.Tensor]: Binary ids indicating whether a token belongs to sequence A or B. For example, for two sentences: "[CLS] Sentence A [SEP] Sentence B [SEP]", token_type_ids would be [0, 0, ..., 0, 1, ..., 1, 1]. `0` represents tokens from Sentence A, `1` from Sentence B. If not provided, BERT assumes a single sequence input. Typically, shape is (batch_size, sequence_length).
 
-        one_zero_attention_mask: Optional[torch.Tensor]: A binary mask which indicates which tokens should be attended to (1) and which should be ignored (0). Primarily used for padding variable-length sentences in a batch. For instance, in a batch with sentences of differing lengths, shorter sentences are padded with 0s on the right. If not provided, the model assumes all tokens should be attended to.
+        attention_mask: Optional[torch.Tensor]: A binary mask which indicates which tokens should be attended to (1) and which should be ignored (0). Primarily used for padding variable-length sentences in a batch. For instance, in a batch with sentences of differing lengths, shorter sentences are padded with 0s on the right. If not provided, the model assumes all tokens should be attended to.
         """
 
         hidden = super().forward(
             input,
             token_type_ids=token_type_ids,
             return_type="embeddings",
-            one_zero_attention_mask=one_zero_attention_mask,
+            attention_mask=attention_mask,
         )
         if return_type == "embeddings":
             return hidden

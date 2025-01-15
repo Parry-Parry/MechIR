@@ -69,9 +69,9 @@ class Cat(HookedRootModule, PatchedMixin, SAEMixin):
     def forward(
         self,
         input_ids: Float[torch.Tensor, "batch seq"],
-        one_zero_attention_mask: Float[torch.Tensor, "batch seq"],
+        attention_mask: Float[torch.Tensor, "batch seq"],
     ):
-        model_output = self._model(input_ids, one_zero_attention_mask, return_type="logits")
+        model_output = self._model(input_ids, attention_mask, return_type="logits")
         model_output = (
             F.log_softmax(model_output, dim=-1)[:, 0]
             if self.softmax_output
@@ -170,11 +170,11 @@ class Cat(HookedRootModule, PatchedMixin, SAEMixin):
     def score(self, sequences: dict, cache=False):
         if cache:
             logits, cache = self.run_with_cache(
-                sequences["input_ids"], sequences["one_zero_attention_mask"]
+                sequences["input_ids"], sequences["attention_mask"]
             )
             return logits, cache
 
-        logits = self.forward(sequences["input_ids"], sequences["one_zero_attention_mask"])
+        logits = self.forward(sequences["input_ids"], sequences["attention_mask"])
         return logits, logits
 
     def patch(

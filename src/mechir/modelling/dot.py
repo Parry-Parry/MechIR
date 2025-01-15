@@ -68,9 +68,9 @@ class Dot(HookedRootModule, PatchedMixin, SAEMixin):
     def forward(
         self,
         input_ids: Float[torch.Tensor, "batch seq"],
-        one_zero_attention_mask: Float[torch.Tensor, "batch seq"],
+        attention_mask: Float[torch.Tensor, "batch seq"],
     ):
-        model_output = self._model(input_ids, one_zero_attention_mask, return_type="embeddings")
+        model_output = self._model(input_ids, attention_mask, return_type="embeddings")
         return self._pooling(model_output)
 
     def get_act_patch_block_every(
@@ -170,13 +170,13 @@ class Dot(HookedRootModule, PatchedMixin, SAEMixin):
 
     def score(self, queries: dict, documents: dict, reps_q=None, cache=False):
         if reps_q is None:
-            reps_q = self.forward(queries["input_ids"], queries["one_zero_attention_mask"])
+            reps_q = self.forward(queries["input_ids"], queries["attention_mask"])
         if cache:
             reps_d, cache_d = self.run_with_cache(
-                documents["input_ids"], documents["one_zero_attention_mask"]
+                documents["input_ids"], documents["attention_mask"]
             )
             return batched_dot_product(reps_q, reps_d), reps_q, reps_d, cache_d
-        reps_d = self.forward(documents["input_ids"], documents["one_zero_attention_mask"])
+        reps_d = self.forward(documents["input_ids"], documents["attention_mask"])
         return batched_dot_product(reps_q, reps_d), reps_q, reps_d
 
     def patch(
