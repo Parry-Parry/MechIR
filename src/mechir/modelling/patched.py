@@ -16,9 +16,9 @@ class PatchedMixin(ABC):
     @property
     def _patch_funcs(self):
         return {
-            'block_all' : self._get_act_patch_block_every,
-            'head_all' : self._get_act_patch_attn_head_out_all_pos,
-            'head_by_pos' : self._get_act_patch_attn_head_by_pos,
+            'block_all' : self.get_act_patch_block_every,
+            'head_all' : self.get_act_patch_attn_head_out_all_pos,
+            'head_by_pos' : self.get_act_patch_attn_head_by_pos,
         }
 
     def _patch_residual_component(
