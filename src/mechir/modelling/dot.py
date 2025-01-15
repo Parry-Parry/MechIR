@@ -138,7 +138,7 @@ class Dot(HookedRootModule, PatchedMixin, SAEMixin):
             corrupted_tokens=corrupted_tokens, clean_cache=clean_cache
         ):
             output = batched_dot_product(reps_q, output)
-            print(index.shape)
+            print(index)
             results[index] = patching_metric(output, scores, scores_p).mean()
 
         return results
