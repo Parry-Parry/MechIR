@@ -72,7 +72,7 @@ class HookedDistilBert(HookedRootModule):
     def forward(
         self,
         input: Int[torch.Tensor, "batch pos"],
-        return_type: Literal["logits"],
+        return_type: Literal["embeddings"],
         attention_mask: Optional[Int[torch.Tensor, "batch pos"]] = None,
     ) -> Float[torch.Tensor, "batch pos d_vocab"]: ...
 
@@ -87,7 +87,7 @@ class HookedDistilBert(HookedRootModule):
     def forward(
         self,
         input: Int[torch.Tensor, "batch pos"],
-        return_type: Optional[str] = "logits" or "embeddings",
+        return_type: Optional[str] = "embeddings",
         attention_mask: Optional[Int[torch.Tensor, "batch pos"]] = None,
     ) -> Optional[Float[torch.Tensor, "batch pos d_vocab"]]:
         """Input must be a batch of tokens. Strings and lists of strings are not yet supported.
@@ -417,7 +417,7 @@ class HookedDistilBertForSequenceClassification(HookedDistilBert):
     def forward(
         self,
         input: Int[torch.Tensor, "batch pos"],
-        return_type: Optional[str] = "logits" or "embeddings",
+        return_type: Optional[str] = "logits",
         attention_mask: Optional[Int[torch.Tensor, "batch pos"]] = None,
     ) -> Optional[Float[torch.Tensor, "batch pos d_vocab"]]:
         """Input must be a batch of tokens. Strings and lists of strings are not yet supported.

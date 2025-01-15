@@ -70,7 +70,7 @@ class Dot(HookedRootModule, PatchedMixin, SAEMixin):
         input_ids: Float[torch.Tensor, "batch seq"],
         attention_mask: Float[torch.Tensor, "batch seq"],
     ):
-        model_output = self._model(input_ids, attention_mask, return_type="embeddings")
+        model_output = self._model(input_ids=input_ids, attention_mask=attention_mask, return_type="embeddings")
         return self._pooling(model_output)
 
     def get_act_patch_block_every(
