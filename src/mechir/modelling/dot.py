@@ -134,7 +134,7 @@ class Dot(HookedRootModule, PatchedMixin, SAEMixin):
             dtype=torch.float32,
         )
 
-        for index, output in self._get_act_patch_block_every(
+        for index, output in self._get_act_patch_attn_head_out_all_pos(
             corrupted_tokens=corrupted_tokens, clean_cache=clean_cache
         ):
             output = batched_dot_product(reps_q, output)
