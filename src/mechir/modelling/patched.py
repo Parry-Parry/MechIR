@@ -114,7 +114,7 @@ class PatchedMixin(ABC):
                     patched_outputs = self.run_with_hooks(
                         corrupted_tokens["input_ids"],
                         attention_mask=corrupted_tokens["attention_mask"],
-                        fwd_hooks=[(utils.get_act_name(component, layer), hook_fn)],
+                        fwd_hooks=[('_model'+utils.get_act_name(component, layer), hook_fn)],
                     )
                     yield (component_idx, layer, position), patched_outputs
 
@@ -141,7 +141,7 @@ class PatchedMixin(ABC):
                 patched_outputs = self.run_with_hooks(
                     corrupted_tokens["input_ids"],
                     attention_mask=corrupted_tokens["attention_mask"],
-                    fwd_hooks=[(utils.get_act_name("z", layer), hook_fn)],
+                    fwd_hooks=[('_model'+utils.get_act_name("z", layer), hook_fn)],
                 )
                 yield (layer, head), patched_outputs
 
@@ -171,7 +171,7 @@ class PatchedMixin(ABC):
                     patched_outputs = self.run_with_hooks(
                         corrupted_tokens["input_ids"],
                         attention_mask=corrupted_tokens["attention_mask"],
-                        fwd_hooks=[(utils.get_act_name(component, layer), hook_fn)],
+                        fwd_hooks=[('_model'+utils.get_act_name(component, layer), hook_fn)],
                     )
                     yield (component_idx, i, position), patched_outputs
 
