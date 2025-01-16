@@ -38,4 +38,4 @@ class HiddenLinear(nn.Module):
     def forward(
         self, x: Float[torch.Tensor, "batch pos d_model"]
     ) -> Float[torch.Tensor, "batch pos d_model"]:
-        return batch_addmm(self.b, self.W, x)
+        return batch_addmm(self.b, self.W.T, x)
