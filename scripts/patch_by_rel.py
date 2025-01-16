@@ -92,7 +92,7 @@ def patch(
         lambda x: qrels[(str(x.qid), str(x.docno))], axis=1
     )
     global_outputs = []
-    for rel_grade in range(4):
+    for rel_grade in reversed(range(4)):
         rel_data = processed_frame[processed_frame.relevance == rel_grade]
         print(f"Rel Grade: {rel_grade}, Count: {len(rel_data)}")
 
