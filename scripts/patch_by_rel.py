@@ -121,7 +121,7 @@ def patch(
                 sequences = batch["sequences"]
                 perturbed_sequences = batch["perturbed_sequences"]
 
-                patch_head_out = model(
+                patch_head_out = model.patch(
                     sequences, perturbed_sequences, patch_type="head_all"
                 )
 
