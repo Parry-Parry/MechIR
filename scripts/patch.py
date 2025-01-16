@@ -93,14 +93,14 @@ def patch(
             documents = batch["documents"]
             perturbed_documents = batch["perturbed_documents"]
 
-            patch_head_out = model(
+            patch_head_out = model.patch(
                 queries, documents, perturbed_documents, patch_type="head_all"
             )
         else:
             sequences = batch["sequences"]
             perturbed_sequences = batch["perturbed_sequences"]
 
-            patch_head_out = model(
+            patch_head_out = model.patch(
                 sequences, perturbed_sequences, patch_type="head_all"
             )
 
