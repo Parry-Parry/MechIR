@@ -66,6 +66,8 @@ class Cat(HookedRootModule, PatchedMixin, SAEMixin):
         self.softmax_output = softmax_output
         self._return_cache = return_cache
 
+        self.setup()
+
     def forward(
         self,
         input_ids: Float[torch.Tensor, "batch seq"],
