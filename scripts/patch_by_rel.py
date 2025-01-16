@@ -58,8 +58,6 @@ def patch(
     perturbation_type: str = "TFC1",
     k: int = 1000,
 ):
-    print(REGISTERED_ARCHITECTURES)
-    print(REGISTERED_CONVERSIONS)
     if model_type == "bi":
         model, collator = load_bi(model_name_or_path)
     elif model_type == "cross":
