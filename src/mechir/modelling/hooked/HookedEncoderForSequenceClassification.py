@@ -6,15 +6,12 @@ because it has a significantly different architecture to e.g. GPT style transfor
 
 from __future__ import annotations
 
-import logging
-from typing import Dict, Optional, Tuple, Union, overload
-
+from typing import Optional
 import torch
 from jaxtyping import Float, Int
 from torch import nn
 from typing_extensions import Literal
 
-from transformer_lens.ActivationCache import ActivationCache
 from .HookedEncoder import HookedEncoder
 from .linear import ClassificationHead
 from . import loading_from_pretrained as loading
