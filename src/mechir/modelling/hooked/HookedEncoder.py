@@ -176,16 +176,14 @@ class HookedEncoder(HookedRootModule):
 
         return resid
 
-    @overload
     def forward(
         self,
         input: Int[torch.Tensor, "batch pos"],
-        return_type: Optional[str],
+        return_type: Optional[str] = 'embeddings',
         token_type_ids: Optional[Int[torch.Tensor, "batch pos"]] = None,
         attention_mask: Optional[Int[torch.Tensor, "batch pos"]] = None,
         start_at_layer: Optional[int] = None,
         stop_at_layer: Optional[int] = None,
-        tokens: Optional[Int[torch.Tensor, "batch pos"]] = None,
     ) -> Union[Float[torch.Tensor, "batch pos d_vocab"], None]:
         """Input must be a batch of tokens. Strings and lists of strings are not yet supported.
 

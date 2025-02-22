@@ -38,30 +38,14 @@ class HookedEncoderForSequenceClassification(HookedEncoder):
         self.classifier = ClassificationHead(cfg)
         self.setup()
 
-    @overload
     def forward(
         self,
         input: Int[torch.Tensor, "batch pos"],
-        return_type: Literal["logits"],
+        return_type: Optional[str] = 'embeddings',
         token_type_ids: Optional[Int[torch.Tensor, "batch pos"]] = None,
         attention_mask: Optional[Int[torch.Tensor, "batch pos"]] = None,
-    ) -> Float[torch.Tensor, "batch pos d_vocab"]: ...
-
-    @overload
-    def forward(
-        self,
-        input: Int[torch.Tensor, "batch pos"],
-        return_type: Literal[None],
-        token_type_ids: Optional[Int[torch.Tensor, "batch pos"]] = None,
-        attention_mask: Optional[Int[torch.Tensor, "batch pos"]] = None,
-    ) -> Optional[Float[torch.Tensor, "batch pos d_vocab"]]: ...
-
-    def forward(
-        self,
-        input: Int[torch.Tensor, "batch pos"],
-        return_type: Optional[str] = "logits",
-        token_type_ids: Optional[Int[torch.Tensor, "batch pos"]] = None,
-        attention_mask: Optional[Int[torch.Tensor, "batch pos"]] = None,
+        start_at_layer: Optional[int] = None,
+        stop_at_layer: Optional[int] = None,
     ) -> Optional[Float[torch.Tensor, "batch pos d_vocab"]]:
         """Input must be a batch of tokens. Strings and lists of strings are not yet supported.
 
@@ -75,108 +59,15 @@ class HookedEncoderForSequenceClassification(HookedEncoder):
         hidden = super().forward(
             input,
             token_type_ids=token_type_ids,
+            start_at_layer=start_at_layer,
+            stop_at_layer=stop_at_layer,
             return_type="embeddings",
             attention_mask=attention_mask,
         )
-        if return_type == "embeddings":
+        if return_type == "embeddings" or stop_at_layer is not None:
             return hidden
         logits = self.classifier(hidden[:, 0, :])
 
         if return_type is None:
             return None
         return logits
-
-    @overload
-    def run_with_cache(
-        self, *model_args, return_cache_object: Literal[True] = True, **kwargs
-    ) -> Tuple[Float[torch.Tensor, "batch n_labels"], ActivationCache]: ...
-
-    @overload
-    def run_with_cache(
-        self, *model_args, return_cache_object: Literal[False], **kwargs
-    ) -> Tuple[Float[torch.Tensor, "batch n_labels"], Dict[str, torch.Tensor]]: ...
-
-    def run_with_cache(
-        self,
-        *model_args,
-        return_cache_object: bool = True,
-        remove_batch_dim: bool = False,
-        **kwargs,
-    ) -> Tuple[
-        Float[torch.Tensor, "batch n_labels"],
-        Union[ActivationCache, Dict[str, torch.Tensor]],
-    ]:
-        """
-        Wrapper around run_with_cache in HookedRootModule. If return_cache_object is True, this will return an ActivationCache object, with a bunch of useful HookedTransformer specific methods, otherwise it will return a dictionary of activations as in HookedRootModule. This function was copied directly from HookedTransformer.
-        """
-        out, cache_dict = super().run_with_cache(
-            *model_args, remove_batch_dim=remove_batch_dim, **kwargs
-        )
-        if return_cache_object:
-            cache = ActivationCache(
-                cache_dict, self, has_batch_dim=not remove_batch_dim
-            )
-            return out, cache
-        else:
-            return out, cache_dict
-
-    @classmethod
-    def from_pretrained(
-        cls,
-        model_name: str,
-        checkpoint_index: Optional[int] = None,
-        checkpoint_value: Optional[int] = None,
-        hf_model=None,
-        device: Optional[str] = None,
-        tokenizer=None,
-        move_to_device=True,
-        dtype=torch.float32,
-        **from_pretrained_kwargs,
-    ) -> HookedEncoderForSequenceClassification:
-        """Loads in the pretrained weights from huggingface. Currently supports loading weight from HuggingFace BertForMaskedLM. Unlike HookedTransformer, this does not yet do any preprocessing on the model."""
-        logging.warning(
-            "Support for BERT in TransformerLens is currently experimental, until such a time when it has feature "
-            "parity with HookedTransformer and has been tested on real research tasks. Until then, backward "
-            "compatibility is not guaranteed. Please see the docs for information on the limitations of the current "
-            "implementation."
-            "\n"
-            "If using BERT for interpretability research, keep in mind that BERT has some significant architectural "
-            "differences to GPT. For example, LayerNorms are applied *after* the attention and MLP components, meaning "
-            "that the last LayerNorm in a block cannot be folded."
-        )
-
-        assert not (
-            from_pretrained_kwargs.get("load_in_8bit", False)
-            or from_pretrained_kwargs.get("load_in_4bit", False)
-        ), "Quantization not supported"
-
-        if "torch_dtype" in from_pretrained_kwargs:
-            dtype = from_pretrained_kwargs["torch_dtype"]
-
-        official_model_name = loading.get_official_model_name(model_name)
-
-        cfg = loading.get_pretrained_model_config(
-            official_model_name,
-            checkpoint_index=checkpoint_index,
-            checkpoint_value=checkpoint_value,
-            fold_ln=False,
-            device=device,
-            n_devices=1,
-            dtype=dtype,
-            **from_pretrained_kwargs,
-        )
-
-        state_dict = loading.get_pretrained_state_dict(
-            official_model_name, cfg, hf_model, dtype=dtype, **from_pretrained_kwargs
-        )
-
-        model = cls(cfg, tokenizer, move_to_device=False)
-
-        model.load_state_dict(state_dict, strict=False)
-
-        if move_to_device:
-            model.to(cfg.device)
-
-        print(f"Loaded pretrained model {model_name} into HookedTransformer")
-
-        return model
