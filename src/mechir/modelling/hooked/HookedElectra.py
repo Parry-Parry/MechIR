@@ -42,9 +42,6 @@ class HookedElectraForSequenceClassification(HookedEncoder):
     """
     This class implements a BERT-style encoder using the components in ./components.py, with HookPoints on every interesting activation. It inherits from HookedRootModule.
 
-    Limitations:
-    - The current MVP implementation supports only the masked language modelling (MLM) task. Next sentence prediction (NSP), causal language modelling, and other tasks are not yet supported.
-    - Also note that model does not include dropouts, which may lead to inconsistent results from training or fine-tuning.
 
     Like HookedTransformer, it can have a pretrained Transformer's weights loaded via `.from_pretrained`. There are a few features you might know from HookedTransformer which are not yet supported:
         - There is no preprocessing (e.g. LayerNorm folding) when loading a pretrained model
