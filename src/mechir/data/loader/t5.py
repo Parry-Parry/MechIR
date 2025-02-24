@@ -1,4 +1,4 @@
-from . import BaseCollator
+from .base import BaseCollator
 
 
 class MonoT5DataCollator(BaseCollator):

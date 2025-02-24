@@ -1,4 +1,4 @@
-from . import BaseCollator
+from .base import BaseCollator
 
 
 class DotDataCollator(BaseCollator):
