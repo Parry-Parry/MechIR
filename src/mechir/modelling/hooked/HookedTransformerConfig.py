@@ -246,6 +246,7 @@ class HookedTransformerConfig:
     output_logits_soft_cap: float = -1.0
     num_labels: int = 1
     use_token_type_ids: bool = True
+    use_mlp_head: bool = False
 
     def __post_init__(self):
         if self.n_heads == -1:

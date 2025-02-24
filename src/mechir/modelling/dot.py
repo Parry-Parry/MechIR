@@ -9,7 +9,6 @@ from transformer_lens.hook_points import HookedRootModule
 import transformer_lens.utils as utils
 from .patched import PatchedMixin
 from .sae import SAEMixin
-from .hooked.HookedDistilBert import HookedDistilBert
 from .hooked.HookedEncoder import HookedEncoder
 from .hooked.loading_from_pretrained import get_official_model_name
 from ..util import batched_dot_product, linear_rank_function
@@ -20,17 +19,6 @@ POOLING = {
     "cls": lambda x: x[:, 0, :],
     "mean": lambda x: x.mean(dim=1),
 }
-
-
-def get_hooked(architecture):
-    huggingface_token = os.environ.get("HF_TOKEN", None)
-    hf_config = AutoConfig.from_pretrained(
-        get_official_model_name(architecture), token=huggingface_token
-    )
-    architecture = hf_config.architectures[0]
-    if "distilbert" in architecture.lower():
-        return HookedDistilBert
-    return HookedEncoder
 
 
 class Dot(HookedRootModule, PatchedMixin, SAEMixin):
@@ -55,7 +43,7 @@ class Dot(HookedRootModule, PatchedMixin, SAEMixin):
         self.__hf_model = (
             AutoModel.from_pretrained(model_name_or_path).eval().to(self._device)
         )
-        self._model = get_hooked(model_name_or_path).from_pretrained(
+        self._model = HookedEncoder.from_pretrained(
             self.model_name_or_path, device=self._device, hf_model=self.__hf_model
         )
 

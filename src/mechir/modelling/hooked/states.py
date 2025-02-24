@@ -128,22 +128,20 @@ def BertModel_state_dict(hf_config):
     }
 
 
-@extend_transformer_lens_registry(
-    ["BertForSequenceClassification", "ElectraForSequenceClassification"]
-)
+@extend_transformer_lens_registry("BertForSequenceClassification")
 def BertForSequenceClassification_state_dict(hf_config):
     return {
-        "d_model": hf_config.hidden_size,
-        "d_head": hf_config.hidden_size // hf_config.num_attention_heads,
-        "n_heads": hf_config.num_attention_heads,
-        "d_mlp": hf_config.intermediate_size,
-        "n_layers": hf_config.num_hidden_layers,
-        "n_ctx": hf_config.max_position_embeddings,
-        "eps": hf_config.layer_norm_eps,
-        "d_vocab": hf_config.vocab_size,
-        "act_fn": "gelu",
-        "attention_dir": "bidirectional",
+        **BertModel_state_dict(hf_config),
         "num_labels": hf_config.num_labels,
+    }
+
+
+@extend_transformer_lens_registry("ElectraForSequenceClassification")
+def ElectraForSequenceClassification_state_dict(hf_config):
+    return {
+        **BertModel_state_dict(hf_config),
+        "num_labels": hf_config.num_labels,
+        "use_mlp_head": True
     }
 
 
@@ -161,7 +159,6 @@ def DistilBert_state_dict(hf_config):
         "act_fn": hf_config.activation,
         "attention_dir": "birectional",
         "use_token_type_ids": False,
-        # dropout, initializer_range, pad_token_id, qa_dropout, seq_classif_dropout, sinusoidal_pos_embds, tie_weights
     }
 
 

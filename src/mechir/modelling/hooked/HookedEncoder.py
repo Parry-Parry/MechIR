@@ -21,7 +21,6 @@ from . import loading_from_pretrained as loading
 from transformer_lens.ActivationCache import ActivationCache
 from transformer_lens.components import (
     BertBlock,
-    BertEmbed,
     BertMLMHead,
     Unembed,
     BertNSPHead,
@@ -32,6 +31,7 @@ from transformer_lens.hook_points import HookedRootModule, HookPoint
 from transformer_lens.utilities import devices
 
 from .HookedTransformerConfig import HookedTransformerConfig
+from .hooked_components import BertEmbed
 
 
 class HookedEncoder(HookedRootModule):

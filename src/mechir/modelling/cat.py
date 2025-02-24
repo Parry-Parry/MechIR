@@ -11,27 +11,10 @@ import torch.nn.functional as F
 from .patched import PatchedMixin
 from .sae import SAEMixin
 from .hooked.loading_from_pretrained import get_official_model_name
-from .hooked.HookedDistilBert import HookedDistilBertForSequenceClassification
 from ..util import linear_rank_function
-from ..modelling.hooked.HookedEncoderForSequenceClassification import (
-    HookedEncoderForSequenceClassification,
-)
-from ..modelling.hooked.HookedElectra import HookedElectraForSequenceClassification
+from ..modelling.hooked.HookedEncoderForSequenceClassification import HookedEncoderForSequenceClassification
 
 logger = logging.getLogger(__name__)
-
-
-def get_hooked(architecture):
-    huggingface_token = os.environ.get("HF_TOKEN", None)
-    hf_config = AutoConfig.from_pretrained(
-        get_official_model_name(architecture), token=huggingface_token
-    )
-    architecture = hf_config.architectures[0]
-    if "distilbert" in architecture.lower():
-        return HookedDistilBertForSequenceClassification
-    if "electra" in architecture.lower():
-        return HookedElectraForSequenceClassification
-    return HookedEncoderForSequenceClassification
 
 
 class Cat(HookedRootModule, PatchedMixin, SAEMixin):
@@ -61,7 +44,7 @@ class Cat(HookedRootModule, PatchedMixin, SAEMixin):
             .to(self._device)
         )
 
-        self._model = get_hooked(model_name_or_path).from_pretrained(
+        self._model = HookedEncoderForSequenceClassification.from_pretrained(
             self.model_name_or_path, device=self._device, hf_model=self.__hf_model
         )
 

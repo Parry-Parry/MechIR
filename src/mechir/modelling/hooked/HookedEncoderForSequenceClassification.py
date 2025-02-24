@@ -9,11 +9,9 @@ from __future__ import annotations
 from typing import Optional
 import torch
 from jaxtyping import Float, Int
-from torch import nn
-from typing_extensions import Literal
 
 from .HookedEncoder import HookedEncoder
-from .linear import ClassificationHead
+from .linear import ClassificationHead, MLPClassificationHead
 
 
 class HookedEncoderForSequenceClassification(HookedEncoder):
@@ -31,7 +29,7 @@ class HookedEncoderForSequenceClassification(HookedEncoder):
 
     def __init__(self, cfg, tokenizer=None, move_to_device=True, **kwargs):
         super().__init__(cfg, tokenizer, move_to_device, **kwargs)
-        self.classifier = ClassificationHead(cfg)
+        self.classifier = ClassificationHead(cfg) if not self.cfg.use_mlp_head else MLPClassificationHead(cfg)
         self.setup()
 
     def forward(
