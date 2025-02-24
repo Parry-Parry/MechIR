@@ -42,8 +42,6 @@ class DistilBertEmbed(nn.Module):
         word_embeddings_out = self.hook_embed(self.embed(input_ids))
         position_embeddings_out = self.hook_pos_embed(self.pos_embed(index_ids))
 
-        embeddings_out = (
-            word_embeddings_out + position_embeddings_out
-        )
+        embeddings_out = word_embeddings_out + position_embeddings_out
         layer_norm_out = self.ln(embeddings_out)
         return layer_norm_out

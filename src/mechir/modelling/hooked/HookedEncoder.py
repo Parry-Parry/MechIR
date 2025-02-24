@@ -19,7 +19,14 @@ from typing_extensions import Literal
 
 from . import loading_from_pretrained as loading
 from transformer_lens.ActivationCache import ActivationCache
-from transformer_lens.components import BertBlock, BertEmbed, BertMLMHead, Unembed, BertNSPHead, BertPooler
+from transformer_lens.components import (
+    BertBlock,
+    BertEmbed,
+    BertMLMHead,
+    Unembed,
+    BertNSPHead,
+    BertPooler,
+)
 from transformer_lens.FactoredMatrix import FactoredMatrix
 from transformer_lens.hook_points import HookedRootModule, HookPoint
 from transformer_lens.utilities import devices
@@ -48,7 +55,9 @@ class HookedEncoder(HookedRootModule):
             )
         self.cfg = cfg
 
-        assert self.cfg.n_devices == 1, "Multiple devices not supported for HookedEncoder"
+        assert (
+            self.cfg.n_devices == 1
+        ), "Multiple devices not supported for HookedEncoder"
         if tokenizer is not None:
             self.tokenizer = tokenizer
         elif self.cfg.tokenizer_name is not None:
@@ -62,19 +71,25 @@ class HookedEncoder(HookedRootModule):
 
         if self.cfg.d_vocab == -1:
             # If we have a tokenizer, vocab size can be inferred from it.
-            assert self.tokenizer is not None, "Must provide a tokenizer if d_vocab is not provided"
+            assert (
+                self.tokenizer is not None
+            ), "Must provide a tokenizer if d_vocab is not provided"
             self.cfg.d_vocab = max(self.tokenizer.vocab.values()) + 1
         if self.cfg.d_vocab_out == -1:
             self.cfg.d_vocab_out = self.cfg.d_vocab
 
         self.embed = BertEmbed(self.cfg)
-        self.blocks = nn.ModuleList([BertBlock(self.cfg) for _ in range(self.cfg.n_layers)])
+        self.blocks = nn.ModuleList(
+            [BertBlock(self.cfg) for _ in range(self.cfg.n_layers)]
+        )
         self.mlm_head = BertMLMHead(self.cfg)
         self.unembed = Unembed(self.cfg)
         self.nsp_head = BertNSPHead(self.cfg)
         self.pooler = BertPooler(self.cfg)
 
         self.hook_full_embed = HookPoint()
+
+        self.use_token_type_ids = self.cfg.use_token_type_ids
 
         if move_to_device:
             self.to(self.cfg.device)
@@ -116,7 +131,7 @@ class HookedEncoder(HookedRootModule):
 
         if move_to_device:
             tokens = tokens.to(self.cfg.device)
-            token_type_ids = encodings.token_type_ids.to(self.cfg.device)
+            token_type_ids = encodings.token_type_ids.to(self.cfg.device) if self.use_token_type_ids else None
             attention_mask = encodings.attention_mask.to(self.cfg.device)
 
         return tokens, token_type_ids, attention_mask
@@ -163,12 +178,14 @@ class HookedEncoder(HookedRootModule):
             else None
         )
         additive_attention_mask = (
-            torch.where(mask == 1, large_negative_number, 0) if mask is not None else None
+            torch.where(mask == 1, large_negative_number, 0)
+            if mask is not None
+            else None
         )
 
         if start_at_layer is None:
             start_at_layer = 0
-        
+
         idx_and_block = list(zip(range(self.cfg.n_layers), self.blocks))
 
         for _, block in idx_and_block[start_at_layer:stop_at_layer]:
@@ -179,7 +196,7 @@ class HookedEncoder(HookedRootModule):
     def forward(
         self,
         input: Int[torch.Tensor, "batch pos"],
-        return_type: Optional[str] = 'embeddings',
+        return_type: Optional[str] = "embeddings",
         token_type_ids: Optional[Int[torch.Tensor, "batch pos"]] = None,
         attention_mask: Optional[Int[torch.Tensor, "batch pos"]] = None,
         start_at_layer: Optional[int] = None,
@@ -193,18 +210,26 @@ class HookedEncoder(HookedRootModule):
 
         attention_mask: Optional[torch.Tensor]: A binary mask which indicates which tokens should be attended to (1) and which should be ignored (0). Primarily used for padding variable-length sentences in a batch. For instance, in a batch with sentences of differing lengths, shorter sentences are padded with 0s on the right. If not provided, the model assumes all tokens should be attended to.
         """
-        
+
         if start_at_layer is None:
             if isinstance(input, str) or isinstance(input, list):
-                assert self.tokenizer is not None, "Must provide a tokenizer if input is a string"
-                residual, token_type_ids_from_tokenizer, attention_mask = self.to_tokens(input)
+                assert (
+                    self.tokenizer is not None
+                ), "Must provide a tokenizer if input is a string"
+                residual, token_type_ids_from_tokenizer, attention_mask = (
+                    self.to_tokens(input)
+                )
 
             # If token_type_ids or attention mask are not provided, use the ones from the tokenizer
             token_type_ids = (
-                token_type_ids_from_tokenizer if token_type_ids is None else token_type_ids
+                token_type_ids_from_tokenizer
+                if token_type_ids is None
+                else token_type_ids
             )
             one_zero_attention_mask = (
-                attention_mask if one_zero_attention_mask is None else one_zero_attention_mask
+                attention_mask
+                if one_zero_attention_mask is None
+                else one_zero_attention_mask
             )
         else:
             assert type(input) is torch.Tensor
@@ -225,7 +250,7 @@ class HookedEncoder(HookedRootModule):
             one_zero_attention_mask=one_zero_attention_mask,
         )
 
-        if stop_at_layer is not None or return_type == 'embeddings':
+        if stop_at_layer is not None or return_type == "embeddings":
             return resid
 
         resid = self.mlm_head(resid)
@@ -233,14 +258,18 @@ class HookedEncoder(HookedRootModule):
 
         if return_type == "predictions":
             # Get predictions for masked tokens
-            logprobs = logits[tokens == self.tokenizer.mask_token_id].log_softmax(dim=-1)
+            logprobs = logits[tokens == self.tokenizer.mask_token_id].log_softmax(
+                dim=-1
+            )
             predictions = self.tokenizer.decode(logprobs.argmax(dim=-1))
 
             # If input was a list of strings, split predictions into a list
             if " " in predictions:
                 # Split along space
                 predictions = predictions.split(" ")
-                predictions = [f"Prediction {i}: {p}" for i, p in enumerate(predictions)]
+                predictions = [
+                    f"Prediction {i}: {p}" for i, p in enumerate(predictions)
+                ]
             return predictions
 
         elif return_type is None:
@@ -251,14 +280,18 @@ class HookedEncoder(HookedRootModule):
     @overload
     def run_with_cache(
         self, *model_args, return_cache_object: Literal[True] = True, **kwargs
-    ) -> Tuple[Float[torch.Tensor, "batch pos d_vocab"], ActivationCache,]:
-        ...
+    ) -> Tuple[
+        Float[torch.Tensor, "batch pos d_vocab"],
+        ActivationCache,
+    ]: ...
 
     @overload
     def run_with_cache(
         self, *model_args, return_cache_object: Literal[False], **kwargs
-    ) -> Tuple[Float[torch.Tensor, "batch pos d_vocab"], Dict[str, torch.Tensor],]:
-        ...
+    ) -> Tuple[
+        Float[torch.Tensor, "batch pos d_vocab"],
+        Dict[str, torch.Tensor],
+    ]: ...
 
     def run_with_cache(
         self,
@@ -277,7 +310,9 @@ class HookedEncoder(HookedRootModule):
             *model_args, remove_batch_dim=remove_batch_dim, **kwargs
         )
         if return_cache_object:
-            cache = ActivationCache(cache_dict, self, has_batch_dim=not remove_batch_dim)
+            cache = ActivationCache(
+                cache_dict, self, has_batch_dim=not remove_batch_dim
+            )
             return out, cache
         else:
             return out, cache_dict
@@ -400,62 +435,86 @@ class HookedEncoder(HookedRootModule):
     @property
     def W_K(self) -> Float[torch.Tensor, "n_layers n_heads d_model d_head"]:
         """Stacks the key weights across all layers"""
-        return torch.stack([cast(BertBlock, block).attn.W_K for block in self.blocks], dim=0)
+        return torch.stack(
+            [cast(BertBlock, block).attn.W_K for block in self.blocks], dim=0
+        )
 
     @property
     def W_Q(self) -> Float[torch.Tensor, "n_layers n_heads d_model d_head"]:
         """Stacks the query weights across all layers"""
-        return torch.stack([cast(BertBlock, block).attn.W_Q for block in self.blocks], dim=0)
+        return torch.stack(
+            [cast(BertBlock, block).attn.W_Q for block in self.blocks], dim=0
+        )
 
     @property
     def W_V(self) -> Float[torch.Tensor, "n_layers n_heads d_model d_head"]:
         """Stacks the value weights across all layers"""
-        return torch.stack([cast(BertBlock, block).attn.W_V for block in self.blocks], dim=0)
+        return torch.stack(
+            [cast(BertBlock, block).attn.W_V for block in self.blocks], dim=0
+        )
 
     @property
     def W_O(self) -> Float[torch.Tensor, "n_layers n_heads d_head d_model"]:
         """Stacks the attn output weights across all layers"""
-        return torch.stack([cast(BertBlock, block).attn.W_O for block in self.blocks], dim=0)
+        return torch.stack(
+            [cast(BertBlock, block).attn.W_O for block in self.blocks], dim=0
+        )
 
     @property
     def W_in(self) -> Float[torch.Tensor, "n_layers d_model d_mlp"]:
         """Stacks the MLP input weights across all layers"""
-        return torch.stack([cast(BertBlock, block).mlp.W_in for block in self.blocks], dim=0)
+        return torch.stack(
+            [cast(BertBlock, block).mlp.W_in for block in self.blocks], dim=0
+        )
 
     @property
     def W_out(self) -> Float[torch.Tensor, "n_layers d_mlp d_model"]:
         """Stacks the MLP output weights across all layers"""
-        return torch.stack([cast(BertBlock, block).mlp.W_out for block in self.blocks], dim=0)
+        return torch.stack(
+            [cast(BertBlock, block).mlp.W_out for block in self.blocks], dim=0
+        )
 
     @property
     def b_K(self) -> Float[torch.Tensor, "n_layers n_heads d_head"]:
         """Stacks the key biases across all layers"""
-        return torch.stack([cast(BertBlock, block).attn.b_K for block in self.blocks], dim=0)
+        return torch.stack(
+            [cast(BertBlock, block).attn.b_K for block in self.blocks], dim=0
+        )
 
     @property
     def b_Q(self) -> Float[torch.Tensor, "n_layers n_heads d_head"]:
         """Stacks the query biases across all layers"""
-        return torch.stack([cast(BertBlock, block).attn.b_Q for block in self.blocks], dim=0)
+        return torch.stack(
+            [cast(BertBlock, block).attn.b_Q for block in self.blocks], dim=0
+        )
 
     @property
     def b_V(self) -> Float[torch.Tensor, "n_layers n_heads d_head"]:
         """Stacks the value biases across all layers"""
-        return torch.stack([cast(BertBlock, block).attn.b_V for block in self.blocks], dim=0)
+        return torch.stack(
+            [cast(BertBlock, block).attn.b_V for block in self.blocks], dim=0
+        )
 
     @property
     def b_O(self) -> Float[torch.Tensor, "n_layers d_model"]:
         """Stacks the attn output biases across all layers"""
-        return torch.stack([cast(BertBlock, block).attn.b_O for block in self.blocks], dim=0)
+        return torch.stack(
+            [cast(BertBlock, block).attn.b_O for block in self.blocks], dim=0
+        )
 
     @property
     def b_in(self) -> Float[torch.Tensor, "n_layers d_mlp"]:
         """Stacks the MLP input biases across all layers"""
-        return torch.stack([cast(BertBlock, block).mlp.b_in for block in self.blocks], dim=0)
+        return torch.stack(
+            [cast(BertBlock, block).mlp.b_in for block in self.blocks], dim=0
+        )
 
     @property
     def b_out(self) -> Float[torch.Tensor, "n_layers d_model"]:
         """Stacks the MLP output biases across all layers"""
-        return torch.stack([cast(BertBlock, block).mlp.b_out for block in self.blocks], dim=0)
+        return torch.stack(
+            [cast(BertBlock, block).mlp.b_out for block in self.blocks], dim=0
+        )
 
     @property
     def QK(self) -> FactoredMatrix:  # [n_layers, n_heads, d_model, d_model]
@@ -470,4 +529,8 @@ class HookedEncoder(HookedRootModule):
 
     def all_head_labels(self) -> List[str]:
         """Returns a list of strings with the format "L{l}H{h}", where l is the layer index and h is the head index."""
-        return [f"L{l}H{h}" for l in range(self.cfg.n_layers) for h in range(self.cfg.n_heads)]
+        return [
+            f"L{l}H{h}"
+            for l in range(self.cfg.n_layers)
+            for h in range(self.cfg.n_heads)
+        ]

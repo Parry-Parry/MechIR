@@ -14,7 +14,6 @@ from typing_extensions import Literal
 
 from .HookedEncoder import HookedEncoder
 from .linear import ClassificationHead
-from . import loading_from_pretrained as loading
 
 
 class HookedEncoderForSequenceClassification(HookedEncoder):
@@ -38,7 +37,7 @@ class HookedEncoderForSequenceClassification(HookedEncoder):
     def forward(
         self,
         input: Int[torch.Tensor, "batch pos"],
-        return_type: Optional[str] = 'embeddings',
+        return_type: Optional[str] = "embeddings",
         token_type_ids: Optional[Int[torch.Tensor, "batch pos"]] = None,
         attention_mask: Optional[Int[torch.Tensor, "batch pos"]] = None,
         start_at_layer: Optional[int] = None,

@@ -56,7 +56,9 @@ class MonoT5(HookedRootModule, PatchedMixin, SAEMixin):
         input_ids: Float[torch.Tensor, "batch seq"],
         attention_mask: Float[torch.Tensor, "batch seq"],
     ):
-        model_output = self._model(input=input_ids, one_hot_attention_mask=attention_mask, return_type="logits")
+        model_output = self._model(
+            input=input_ids, one_hot_attention_mask=attention_mask, return_type="logits"
+        )
         model_output = (
             model_output[:, 0, (self.pos_token, self.neg_token)].softmax(dim=-1)[:, 0]
             if self.softmax_output

@@ -13,7 +13,9 @@ from .sae import SAEMixin
 from .hooked.loading_from_pretrained import get_official_model_name
 from .hooked.HookedDistilBert import HookedDistilBertForSequenceClassification
 from ..util import linear_rank_function
-from ..modelling.hooked.HookedEncoderForSequenceClassification import HookedEncoderForSequenceClassification
+from ..modelling.hooked.HookedEncoderForSequenceClassification import (
+    HookedEncoderForSequenceClassification,
+)
 from ..modelling.hooked.HookedElectra import HookedElectraForSequenceClassification
 
 logger = logging.getLogger(__name__)
@@ -74,7 +76,12 @@ class Cat(HookedRootModule, PatchedMixin, SAEMixin):
         attention_mask: Float[torch.Tensor, "batch seq"],
         token_type_ids: Float[torch.Tensor, "batch seq"] = None,
     ):
-        model_output = self._model(input=input_ids, attention_mask=attention_mask, token_type_ids=token_type_ids, return_type="logits")
+        model_output = self._model(
+            input=input_ids,
+            attention_mask=attention_mask,
+            token_type_ids=token_type_ids,
+            return_type="logits",
+        )
         model_output = (
             F.log_softmax(model_output, dim=-1)[:, 0]
             if self.softmax_output

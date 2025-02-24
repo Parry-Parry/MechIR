@@ -6,7 +6,6 @@ because it has a significantly different architecture to e.g. GPT style transfor
 
 from __future__ import annotations
 
-import logging
 from typing import Dict, List, Optional, Tuple, Union, cast, overload
 
 import torch
@@ -16,12 +15,11 @@ from torch import nn
 from transformers import AutoTokenizer
 from typing_extensions import Literal
 
-from transformer_lens import ActivationCache, FactoredMatrix, HookedTransformerConfig
+from transformer_lens import HookedTransformerConfig
 from transformer_lens.components import BertBlock, BertMLMHead, Unembed
-from transformer_lens.hook_points import HookedRootModule, HookPoint
-from transformer_lens.utilities import devices
-from . import loading_from_pretrained as loading
+from transformer_lens.hook_points import HookPoint
 from .hooked_components import DistilBertEmbed
+from .HookedEncoder import HookedEncoder
 
 
 class HookedDistilBert(HookedEncoder):

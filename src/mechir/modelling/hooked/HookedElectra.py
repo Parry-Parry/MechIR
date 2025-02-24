@@ -17,6 +17,7 @@ from .HookedEncoder import HookedEncoder
 from transformer_lens.hook_points import HookPoint
 from .linear import ClassificationHead, HiddenLinear
 
+
 class ElectraClassificationHead(nn.Module):
     """
     Transforms ELECTRA embeddings into logits. The purpose of this module is to predict masked tokens in a sentence.
@@ -47,6 +48,7 @@ class HookedElectraForSequenceClassification(HookedEncoder):
         - There is no preprocessing (e.g. LayerNorm folding) when loading a pretrained model
         - The model only accepts tokens as inputs, and not strings, or lists of strings
     """
+
     def __init__(self, cfg, tokenizer=None, move_to_device=True, **kwargs):
         super().__init__(cfg, tokenizer, move_to_device, **kwargs)
         self.classifier = ElectraClassificationHead(cfg)
@@ -55,7 +57,7 @@ class HookedElectraForSequenceClassification(HookedEncoder):
     def forward(
         self,
         input: Int[torch.Tensor, "batch pos"],
-        return_type: Optional[str] = 'embeddings',
+        return_type: Optional[str] = "embeddings",
         token_type_ids: Optional[Int[torch.Tensor, "batch pos"]] = None,
         attention_mask: Optional[Int[torch.Tensor, "batch pos"]] = None,
         start_at_layer: Optional[int] = None,
