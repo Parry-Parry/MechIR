@@ -85,3 +85,9 @@ def test_bi_equivelance():
     # check they are close
     for hgf, mechir, pair in zip(hgf_scores, mechir_scores, query_id_doc_id_pairs):
         assert abs(hgf - mechir) < 0.01, f"Pair {pair} is not close, {hgf} != {mechir}"
+
+
+test_electra_equivelance()
+test_bi_equivelance()
+
+print("All tests passed!")
