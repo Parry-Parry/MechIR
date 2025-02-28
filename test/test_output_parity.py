@@ -32,8 +32,8 @@ test_dataframe = pd.DataFrame([
     },
 ])
 
-CROSS_ENCODER_CHECKPOINT = ""
-BI_ENCODER_CHECKPOINT = ""
+CROSS_ENCODER_CHECKPOINT = "crystina-z/monoELECTRA_LCE_nneg31"
+BI_ENCODER_CHECKPOINT = "sebastian-hofstaetter/distilbert-dot-tas_b-b256-msmarco"
 
 
 def score_cat(model, df):
