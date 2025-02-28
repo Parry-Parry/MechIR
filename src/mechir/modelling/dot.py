@@ -171,7 +171,7 @@ class Dot(HookedRootModule, PatchedMixin, SAEMixin):
             )
             return batched_dot_product(reps_q, reps_d), reps_q, reps_d, cache_d
         reps_d = self.forward(documents["input_ids"], documents["attention_mask"])
-        return batched_dot_product(reps_q, reps_d), reps_q, reps_d
+        return batched_dot_product(reps_q, reps_d), reps_q, reps_d, None
 
     def patch(
         self,

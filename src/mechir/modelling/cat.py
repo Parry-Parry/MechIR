@@ -168,7 +168,7 @@ class Cat(HookedRootModule, PatchedMixin, SAEMixin):
             return logits, cache
 
         logits = self.forward(sequences["input_ids"], sequences["attention_mask"])
-        return logits, logits
+        return logits, None
 
     def patch(
         self,
