@@ -68,6 +68,9 @@ from .modelling import (
     MonoT5,
     PatchedModel
 )
-
+from .data import (
+    MechDataset,
+    MechIRDataset
+)
 from .modelling.hooked import conversion
 from .modelling.hooked import states
