@@ -216,24 +216,19 @@ class HookedEncoder(HookedRootModule):
                 assert (
                     self.tokenizer is not None
                 ), "Must provide a tokenizer if input is a string"
-                residual, token_type_ids_from_tokenizer, attention_mask = (
+                input, token_type_ids_from_tokenizer, attention_mask = (
                     self.to_tokens(input)
                 )
 
-            # If token_type_ids or attention mask are not provided, use the ones from the tokenizer
-            token_type_ids = (
-                token_type_ids_from_tokenizer
-                if token_type_ids is None
-                else token_type_ids
-            )
-            one_zero_attention_mask = (
-                attention_mask
-                if one_zero_attention_mask is None
-                else one_zero_attention_mask
-            )
+                # If token_type_ids or attention mask are not provided, use the ones from the tokenizer
+                token_type_ids = (
+                    token_type_ids_from_tokenizer
+                    if token_type_ids is None
+                    else token_type_ids
+                )
         else:
             assert type(input) is torch.Tensor
-            residual = input
+        residual = input
 
         if residual.device.type != self.cfg.device:
             residual = residual.to(self.cfg.device)
@@ -247,7 +242,7 @@ class HookedEncoder(HookedRootModule):
             token_type_ids=token_type_ids,
             start_at_layer=start_at_layer,
             stop_at_layer=stop_at_layer,
-            one_zero_attention_mask=one_zero_attention_mask,
+            one_zero_attention_mask=attention_mask,
         )
 
         if stop_at_layer is not None or return_type == "embeddings":
@@ -258,7 +253,7 @@ class HookedEncoder(HookedRootModule):
 
         if return_type == "predictions":
             # Get predictions for masked tokens
-            logprobs = logits[tokens == self.tokenizer.mask_token_id].log_softmax(
+            logprobs = logits[logits == self.tokenizer.mask_token_id].log_softmax(
                 dim=-1
             )
             predictions = self.tokenizer.decode(logprobs.argmax(dim=-1))

@@ -1,3 +1,5 @@
+import torch
+
 
 def pad(a: list, b: list, tok: str):
     assert type(a) == type(b) == list, "Both a and b must be lists"
@@ -27,7 +29,7 @@ class BaseCollator(object):
     q_max_length: int = 30
     d_max_length: int = 300
     special_token: int = "a"
-    perturb_type: str = "append"
+    perturb_type: str = None
     pre_perturbed: bool = False
 
     def __init__(
@@ -38,7 +40,7 @@ class BaseCollator(object):
         q_max_length=30,
         d_max_length=200,
         special_token="a",
-        perturb_type="append",
+        perturb_type=None,
         pre_perturbed=False,
     ) -> None:
         assert (
@@ -55,7 +57,7 @@ class BaseCollator(object):
         self.d_max_length = d_max_length
         self.special_token = special_token
         self.special_token_id = self.tokenizer.convert_tokens_to_ids(self.special_token)
-        self.perturb_type = perturb_type
+        self.perturb_type = perturb_type if perturb_type is not None else transformation_func.perturb_type
         self.pre_perturbed = pre_perturbed
 
     def get_data(self, batch):

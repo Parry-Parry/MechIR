@@ -18,7 +18,7 @@ from typing_extensions import Literal
 from transformer_lens import HookedTransformerConfig
 from transformer_lens.components import BertBlock, BertMLMHead, Unembed
 from transformer_lens.hook_points import HookPoint
-from .hooked_components import DistilBertEmbed
+from .hooked_components import BertEmbed
 from .HookedEncoder import HookedEncoder
 
 
@@ -51,7 +51,7 @@ class HookedDistilBert(HookedEncoder):
         if self.cfg.d_vocab_out == -1:
             self.cfg.d_vocab_out = self.cfg.d_vocab
 
-        self.embed = DistilBertEmbed(self.cfg)
+        self.embed = BertEmbed(self.cfg)
         self.blocks = nn.ModuleList(
             [BertBlock(self.cfg) for _ in range(self.cfg.n_layers)]
         )

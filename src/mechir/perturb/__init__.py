@@ -3,6 +3,7 @@
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 from ..util import is_ir_axioms_availible
+from functools import wraps
 from transformers.utils import _LazyModule, OptionalDependencyNotAvailable
 
 
@@ -28,17 +29,23 @@ class IdentityPerturbation(AbstractPerturbation):
         return document
 
 
-def perturbation(f):
-    """
-    An alternative decorator for subclassing AbstractPerturbation.
-    """
-    argcount = f.__code__.co_argcount
+def perturbation(f=None, *, perturb_type: str = "append"):
+    def decorator(func):
+        argcount = func.__code__.co_argcount
 
-    class CustomPerturbation(AbstractPerturbation):
-        def apply(self, document: str, query: str = None) -> str:
-            return f(document, query) if argcount > 1 else f(document)
+        class CustomPerturbation(AbstractPerturbation):
+            def __init__(self):
+                self.perturb_type = perturb_type
 
-    return CustomPerturbation()
+            def apply(self, document: str, query: str = None) -> str:
+                return func(document, query) if argcount > 1 else func(document)
+
+        return CustomPerturbation()
+
+    if f is None:
+        return decorator  # used as @perturbation(...)
+    else:
+        return decorator(f)  # used as @perturbation
 
 
 # Explicitly define what should be importable from this module

@@ -12,6 +12,7 @@ dependencies = [
   "sae_lens",
   "ir_datasets",
   "streamlit",
+  "seaborn"
 ]
 requires-python = ">=3.10"
 authors = [

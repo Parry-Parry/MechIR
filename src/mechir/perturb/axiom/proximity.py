@@ -20,7 +20,6 @@ class ProximityPerturbation(IndexPerturbation):
         stopwords: Whether or not to filter valid terms with a stopword list
         exact_match: Forces returned terms to be present in both texts
     """
-
     def __init__(
         self,
         index_location: Any | Path | str,
@@ -56,6 +55,13 @@ class ProximityPerturbation(IndexPerturbation):
         self.target = target
         self.num_additions = num_additions
         self.loc = loc
+
+        if self.loc == 'end':
+            self.perturb_type = "append"
+        elif self.loc == 'start':
+            self.perturb_type = "prepend"
+        else:
+            raise ValueError("loc must be either 'start' or 'end'")
 
     def _get_random_terms(self, text: str, terms: list) -> list:
         return random.choices(
