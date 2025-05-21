@@ -1,6 +1,8 @@
 # Description: This file contains the state dictionary for the models in the hooked library.
 import torch
-from .loading_from_pretrained import extend_transformer_lens_registry
+from mechir.modelling.hooked.loading_from_pretrained import (
+    extend_transformer_lens_registry,
+)
 
 
 @extend_transformer_lens_registry("GPTNeoForCausalLM")
@@ -85,31 +87,6 @@ def GPTJForCausalLM_state_dict(hf_config):
     }
 
 
-@extend_transformer_lens_registry("GPTNeoForCausalLM")
-def GPTNeoForCausalLM_state_dict(hf_config):
-    state = {
-        "d_model": hf_config.hidden_size,
-        "d_head": hf_config.hidden_size // hf_config.num_heads,
-        "n_heads": hf_config.num_heads,
-        "d_mlp": hf_config.hidden_size * 4,
-        "n_layers": hf_config.num_layers,
-        "n_ctx": hf_config.max_position_embeddings,
-        "eps": hf_config.layer_norm_epsilon,
-        "d_vocab": hf_config.vocab_size,
-        "act_fn": hf_config.hidden_act,
-        "use_attn_scale": False,
-        "use_local_attn": True,
-        "scale_attn_by_inverse_layer_idx": False,
-        "parallel_attn_mlp": True,
-        "positional_embedding_type": "rotary",
-        "rotary_adjacent_pairs": False,
-        "normalization_type": "LN",
-    }
-    rotary_pct = hf_config.rotary_pct
-    state["rotary_dim"] = round(rotary_pct * state["d_head"])
-    return state
-
-
 @extend_transformer_lens_registry(
     ["BertModel", "BertForMaskedLM", "ElectraForPreTraining"]
 )
@@ -141,7 +118,7 @@ def ElectraForSequenceClassification_state_dict(hf_config):
     return {
         **BertModel_state_dict(hf_config),
         "num_labels": hf_config.num_labels,
-        "use_mlp_head": True
+        "use_mlp_head": True,
     }
 
 

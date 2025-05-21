@@ -1,9 +1,8 @@
 from typing import Callable
 import logging
-import os
 import torch
 from jaxtyping import Float
-from transformers import AutoModelForSequenceClassification, AutoTokenizer, AutoConfig
+from transformers import AutoModelForSequenceClassification, AutoTokenizer
 from transformer_lens.ActivationCache import ActivationCache
 from transformer_lens.hook_points import HookedRootModule
 import transformer_lens.utils as utils
@@ -12,7 +11,7 @@ from .patched import PatchedMixin
 from .sae import SAEMixin
 from .hooked.loading_from_pretrained import get_official_model_name
 from ..util import linear_rank_function
-from ..modelling.hooked.HookedEncoderForSequenceClassification import HookedEncoderForSequenceClassification
+from .hooked.HookedEncoder import HookedEncoderForSequenceClassification
 
 logger = logging.getLogger(__name__)
 

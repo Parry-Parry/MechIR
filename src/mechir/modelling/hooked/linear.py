@@ -9,8 +9,10 @@ import torch.nn as nn
 from jaxtyping import Float
 from transformer_lens.utilities.addmm import batch_addmm
 from transformer_lens.hook_points import HookPoint
-from transformer_lens.factories.activation_function_factory import ActivationFunctionFactory
-from .HookedTransformerConfig import HookedTransformerConfig
+from transformer_lens.factories.activation_function_factory import (
+    ActivationFunctionFactory,
+)
+from mechir.modelling.hooked.HookedTransformerConfig import HookedTransformerConfig
 
 
 class ClassificationHead(nn.Module):

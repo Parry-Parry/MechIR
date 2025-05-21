@@ -21,6 +21,7 @@ class FrequencyPerturbation(IndexPerturbation):
         stopwords: Whether or not to filter valid terms with a stopword list
         exact_match: Forces returned terms to be present in both texts
     """
+
     perturb_type = "append"
 
     def __init__(
@@ -58,9 +59,9 @@ class FrequencyPerturbation(IndexPerturbation):
         self.num_additions = num_additions
         self.loc = loc
 
-        if self.loc == 'end':
+        if self.loc == "end":
             self.perturb_type = "append"
-        elif self.loc == 'start':
+        elif self.loc == "start":
             self.perturb_type = "prepend"
         else:
             raise ValueError("loc must be either 'start' or 'end'")

@@ -57,7 +57,11 @@ class BaseCollator(object):
         self.d_max_length = d_max_length
         self.special_token = special_token
         self.special_token_id = self.tokenizer.convert_tokens_to_ids(self.special_token)
-        self.perturb_type = perturb_type if perturb_type is not None else transformation_func.perturb_type
+        self.perturb_type = (
+            perturb_type
+            if perturb_type is not None
+            else transformation_func.perturb_type
+        )
         self.pre_perturbed = pre_perturbed
 
     def get_data(self, batch):
@@ -223,5 +227,6 @@ def pad_tokenized(
     }
 
     return finalized_tokenized_a_batch, finalized_tokenized_b_batch
+
 
 __all__ = ["BaseCollator", "pad_tokenized", "pad"]

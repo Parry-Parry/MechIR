@@ -23,12 +23,16 @@ class BertEmbed(nn.Module):
         self.cfg = HookedTransformerConfig.unwrap(cfg)
         self.embed = Embed(self.cfg)
         self.pos_embed = PosEmbed(self.cfg)
-        self.token_type_embed = TokenTypeEmbed(self.cfg) if self.cfg.use_token_type_ids else nn.Identity()
+        self.token_type_embed = (
+            TokenTypeEmbed(self.cfg) if self.cfg.use_token_type_ids else nn.Identity()
+        )
         self.ln = LayerNorm(self.cfg)
 
         self.hook_embed = HookPoint()
         self.hook_pos_embed = HookPoint()
-        self.hook_token_type_embed = HookPoint() if self.cfg.use_token_type_ids else nn.Identity()
+        self.hook_token_type_embed = (
+            HookPoint() if self.cfg.use_token_type_ids else nn.Identity()
+        )
 
     def forward(
         self,
@@ -36,13 +40,19 @@ class BertEmbed(nn.Module):
         token_type_ids: Optional[Int[torch.Tensor, "batch pos"]] = None,
     ) -> Float[torch.Tensor, "batch pos d_model"]:
         base_index_id = torch.arange(input_ids.shape[1], device=input_ids.device)
-        index_ids = einops.repeat(base_index_id, "pos -> batch pos", batch=input_ids.shape[0])
+        index_ids = einops.repeat(
+            base_index_id, "pos -> batch pos", batch=input_ids.shape[0]
+        )
 
         word_embeddings_out = self.hook_embed(self.embed(input_ids))
         position_embeddings_out = self.hook_pos_embed(self.pos_embed(index_ids))
-        token_type_embeddings_out = self.hook_token_type_embed(
-            self.token_type_embed(token_type_ids)
-        ) if self.cfg.use_token_type_ids else torch.zeros_like(word_embeddings_out)
-        embeddings_out = word_embeddings_out + position_embeddings_out + token_type_embeddings_out
+        token_type_embeddings_out = (
+            self.hook_token_type_embed(self.token_type_embed(token_type_ids))
+            if self.cfg.use_token_type_ids
+            else torch.zeros_like(word_embeddings_out)
+        )
+        embeddings_out = (
+            word_embeddings_out + position_embeddings_out + token_type_embeddings_out
+        )
         layer_norm_out = self.ln(embeddings_out)
         return layer_norm_out

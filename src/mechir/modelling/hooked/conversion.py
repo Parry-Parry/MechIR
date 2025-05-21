@@ -1,7 +1,9 @@
 import einops
 from functools import partial
-from .loading_from_pretrained import register_with_transformer_lens
-from .HookedTransformerConfig import HookedTransformerConfig
+from mechir.modelling.hooked.loading_from_pretrained import (
+    register_with_transformer_lens,
+)
+from mechir.modelling.hooked.HookedTransformerConfig import HookedTransformerConfig
 
 
 def convert_distilbert_weights(
@@ -150,7 +152,7 @@ def convert_bert_based_weights(
                 state_dict["classifier.W"] = classification_head.weight
                 state_dict["classifier.b"] = classification_head.bias
         else:
-            if not "electra" in model_name:
+            if "electra" not in model_name:
                 mlm_head = bert.cls.predictions
                 state_dict["mlm_head.W"] = mlm_head.transform.dense.weight
                 state_dict["mlm_head.b"] = mlm_head.transform.dense.bias
