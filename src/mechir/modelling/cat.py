@@ -23,7 +23,7 @@ class Cat(HookedRootModule, PatchedMixin, SAEMixin):
         model_name_or_path: str,
         num_labels: int = 2,
         tokenizer=None,
-        special_token: str = "X",
+        special_token: str = "a",
         softmax_output: bool = False,
         return_cache: bool = False,
     ) -> None:

@@ -3,7 +3,7 @@ import logging
 import os
 import torch
 from jaxtyping import Float
-from transformers import AutoModel, AutoTokenizer, AutoConfig
+from transformers import AutoModel, AutoTokenizer
 from transformer_lens.ActivationCache import ActivationCache
 from transformer_lens.hook_points import HookedRootModule
 import transformer_lens.utils as utils
@@ -27,7 +27,7 @@ class Dot(HookedRootModule, PatchedMixin, SAEMixin):
         model_name_or_path: str,
         pooling_type: str = "cls",
         tokenizer=None,
-        special_token: str = "X",
+        special_token: str = "a",
         return_cache: bool = False,
     ) -> None:
         super().__init__()
