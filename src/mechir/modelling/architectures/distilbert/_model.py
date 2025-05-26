@@ -17,9 +17,9 @@ from typing_extensions import Literal
 
 from transformer_lens.components import BertBlock, BertMLMHead, Unembed
 from transformer_lens.hook_points import HookPoint
-from mechir.modelling.hooked.components import BertEmbed
-from mechir.modelling.hooked.linear import MLPClassificationHead
-from mechir.modelling.architectures.base import HookedEncoder
+from mechir.modelling.architectures.base.components import BertEmbed
+from mechir.modelling.architectures.base.linear import MLPClassificationHead
+from mechir.modelling.architectures.base._model import HookedEncoder
 from mechir.modelling.hooked.config import HookedTransformerConfig
 
 

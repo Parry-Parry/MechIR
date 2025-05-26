@@ -13,8 +13,8 @@ import torch
 from jaxtyping import Float, Int
 from torch import nn
 from transformer_lens.hook_points import HookPoint
-from mechir.modelling.hooked.linear import ClassificationHead, HiddenLinear
-from mechir.modelling.architectures.base import HookedEncoder
+from mechir.modelling.architectures.base.linear import ClassificationHead, HiddenLinear
+from mechir.modelling.architectures.base._model import HookedEncoder
 from mechir.modelling.hooked.config import HookedTransformerConfig
 
 
