@@ -7,10 +7,10 @@ from transformer_lens import HookedEncoderDecoder
 from transformer_lens.ActivationCache import ActivationCache
 from transformer_lens.hook_points import HookedRootModule
 import transformer_lens.utils as utils
-from .patched import PatchedMixin
-from .sae import SAEMixin
-from ..util import linear_rank_function
-from .hooked.loading_from_pretrained import get_official_model_name
+from mechir.modelling.patched import PatchedMixin
+from mechir.modelling.sae import SAEMixin
+from mechir.modelling.hooked.loading_from_pretrained import get_official_model_name
+from mechir.util import linear_rank_function
 
 logger = logging.getLogger(__name__)
 
@@ -56,7 +56,9 @@ class MonoT5(HookedRootModule, PatchedMixin, SAEMixin):
         input_ids: Float[torch.Tensor, "batch seq"],
         attention_mask: Float[torch.Tensor, "batch seq"],
     ):
-        model_output = self._model(input=input_ids, one_hot_attention_mask=attention_mask, return_type="logits")
+        model_output = self._model(
+            input=input_ids, one_hot_attention_mask=attention_mask, return_type="logits"
+        )
         model_output = (
             model_output[:, 0, (self.pos_token, self.neg_token)].softmax(dim=-1)[:, 0]
             if self.softmax_output
@@ -166,7 +168,7 @@ class MonoT5(HookedRootModule, PatchedMixin, SAEMixin):
             return logits, cache
 
         logits = self.forward(sequences["input_ids"], sequences["attention_mask"])
-        return logits
+        return logits, None
 
     def patch(
         self,

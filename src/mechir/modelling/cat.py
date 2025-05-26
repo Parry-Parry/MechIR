@@ -1,35 +1,19 @@
-from typing import Callable
+from typing import Callable, Dict, Tuple, Union
 import logging
-import os
 import torch
 from jaxtyping import Float
-from transformers import AutoModelForSequenceClassification, AutoTokenizer, AutoConfig
+from transformers import AutoModelForSequenceClassification, AutoTokenizer
 from transformer_lens.ActivationCache import ActivationCache
 from transformer_lens.hook_points import HookedRootModule
 import transformer_lens.utils as utils
 import torch.nn.functional as F
-from .patched import PatchedMixin
-from .sae import SAEMixin
-from .hooked.loading_from_pretrained import get_official_model_name
-from .hooked.HookedDistilBert import HookedDistilBertForSequenceClassification
-from ..util import linear_rank_function
-from ..modelling.hooked.HookedEncoderForSequenceClassification import HookedEncoderForSequenceClassification
-from ..modelling.hooked.HookedElectra import HookedElectraForSequenceClassification
+from mechir.modelling.patched import PatchedMixin
+from mechir.modelling.sae import SAEMixin
+from mechir.modelling.hooked.loading_from_pretrained import get_official_model_name
+from mechir.util import linear_rank_function
+from mechir.modelling.architectures import HookedEncoderForSequenceClassification
 
 logger = logging.getLogger(__name__)
-
-
-def get_hooked(architecture):
-    huggingface_token = os.environ.get("HF_TOKEN", None)
-    hf_config = AutoConfig.from_pretrained(
-        get_official_model_name(architecture), token=huggingface_token
-    )
-    architecture = hf_config.architectures[0]
-    if "distilbert" in architecture.lower():
-        return HookedDistilBertForSequenceClassification
-    if "electra" in architecture.lower():
-        return HookedElectraForSequenceClassification
-    return HookedEncoderForSequenceClassification
 
 
 class Cat(HookedRootModule, PatchedMixin, SAEMixin):
@@ -38,7 +22,7 @@ class Cat(HookedRootModule, PatchedMixin, SAEMixin):
         model_name_or_path: str,
         num_labels: int = 2,
         tokenizer=None,
-        special_token: str = "X",
+        special_token: str = "a",
         softmax_output: bool = False,
         return_cache: bool = False,
     ) -> None:
@@ -59,7 +43,7 @@ class Cat(HookedRootModule, PatchedMixin, SAEMixin):
             .to(self._device)
         )
 
-        self._model = get_hooked(model_name_or_path).from_pretrained(
+        self._model = HookedEncoderForSequenceClassification.from_pretrained(
             self.model_name_or_path, device=self._device, hf_model=self.__hf_model
         )
 
@@ -74,7 +58,12 @@ class Cat(HookedRootModule, PatchedMixin, SAEMixin):
         attention_mask: Float[torch.Tensor, "batch seq"],
         token_type_ids: Float[torch.Tensor, "batch seq"] = None,
     ):
-        model_output = self._model(input=input_ids, attention_mask=attention_mask, token_type_ids=token_type_ids, return_type="logits")
+        model_output = self._model(
+            input=input_ids,
+            attention_mask=attention_mask,
+            token_type_ids=token_type_ids,
+            return_type="logits",
+        )
         model_output = (
             F.log_softmax(model_output, dim=-1)[:, 0]
             if self.softmax_output
@@ -169,16 +158,42 @@ class Cat(HookedRootModule, PatchedMixin, SAEMixin):
             results[index] = patching_metric(output, scores, scores_p).mean()
 
         return results
+    
+    def run_with_cache(
+        self,
+        *model_args,
+        return_cache_object: bool = True,
+        cache_as_dict: bool = False,
+        remove_batch_dim: bool = False,
+        **kwargs,
+    ) -> Tuple[
+        Float[torch.Tensor, "batch pos d_vocab"],
+        Union[ActivationCache, Dict[str, torch.Tensor]],
+    ]:
+        """
+        Wrapper around run_with_cache in HookedRootModule. If return_cache_object is True, this will return an ActivationCache object, with a bunch of useful HookedTransformer specific methods, otherwise it will return a dictionary of activations as in HookedRootModule. This function was copied directly from HookedTransformer.
+        """
+        out, cache_dict = super().run_with_cache(
+            *model_args, remove_batch_dim=remove_batch_dim, **kwargs
+        )
+        if return_cache_object:
+            if not cache_as_dict:
+                cache = ActivationCache(
+                    cache_dict, self, has_batch_dim=not remove_batch_dim
+                )
+            return out, cache
+        else:
+            return out, None
 
-    def score(self, sequences: dict, cache=False):
+    def score(self, sequences: dict, cache=False, cache_as_dict=False):
         if cache:
             logits, cache = self.run_with_cache(
-                sequences["input_ids"], sequences["attention_mask"]
+                sequences["input_ids"], sequences["attention_mask"], cache_as_dict=cache_as_dict
             )
             return logits, cache
 
         logits = self.forward(sequences["input_ids"], sequences["attention_mask"])
-        return logits, logits
+        return logits, None
 
     def patch(
         self,
@@ -205,4 +220,4 @@ class Cat(HookedRootModule, PatchedMixin, SAEMixin):
         patched_output = self._patch_funcs[patch_type](**patching_kwargs)
         if self._return_cache:
             return patched_output, cache
-        return patched_output
+        return patched_output, None

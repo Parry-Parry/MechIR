@@ -8,7 +8,11 @@ import torch
 import torch.nn as nn
 from jaxtyping import Float
 from transformer_lens.utilities.addmm import batch_addmm
-from .HookedTransformerConfig import HookedTransformerConfig
+from transformer_lens.hook_points import HookPoint
+from transformer_lens.factories.activation_function_factory import (
+    ActivationFunctionFactory,
+)
+from mechir.modelling.hooked.config import HookedTransformerConfig
 
 
 class ClassificationHead(nn.Module):
@@ -39,3 +43,24 @@ class HiddenLinear(nn.Module):
         self, x: Float[torch.Tensor, "batch pos d_model"]
     ) -> Float[torch.Tensor, "batch pos d_model"]:
         return batch_addmm(self.b, self.W.T, x)
+
+
+class MLPClassificationHead(nn.Module):
+    """
+    Transforms ELECTRA embeddings into logits. The purpose of this module is to predict masked tokens in a sentence.
+    """
+
+    def __init__(self, cfg: Union[Dict, HookedTransformerConfig]):
+        super().__init__()
+        self.cfg = HookedTransformerConfig.unwrap(cfg)
+        self.dense = HiddenLinear(cfg)
+        self.out_proj = ClassificationHead(cfg)
+        self.activation = ActivationFunctionFactory.pick_activation_function(self.cfg)
+
+        self.hook_pre = HookPoint()  # [batch, pos, d_mlp]
+        self.hook_post = HookPoint()  # [batch, pos, d_mlp]
+
+    def forward(self, resid: Float[torch.Tensor, "batch d_model"]) -> torch.Tensor:
+        pre_act = self.hook_pre(self.dense(resid))
+        post_act = self.hook_post(self.activation(pre_act))
+        return self.out_proj(post_act)

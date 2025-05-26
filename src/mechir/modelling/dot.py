@@ -1,18 +1,17 @@
-from typing import Callable
+from typing import Callable, Dict, Tuple, Union
 import logging
 import os
 import torch
 from jaxtyping import Float
-from transformers import AutoModel, AutoTokenizer, AutoConfig
+from transformers import AutoModel, AutoTokenizer
 from transformer_lens.ActivationCache import ActivationCache
 from transformer_lens.hook_points import HookedRootModule
 import transformer_lens.utils as utils
-from .patched import PatchedMixin
-from .sae import SAEMixin
-from .hooked.HookedDistilBert import HookedDistilBert
-from .hooked.HookedEncoder import HookedEncoder
-from .hooked.loading_from_pretrained import get_official_model_name
-from ..util import batched_dot_product, linear_rank_function
+from mechir.modelling.patched import PatchedMixin
+from mechir.modelling.sae import SAEMixin
+from mechir.modelling.hooked.loading_from_pretrained import get_official_model_name
+from mechir.util import batched_dot_product, linear_rank_function
+from mechir.modelling.architectures import HookedEncoder
 
 logger = logging.getLogger(__name__)
 
@@ -22,24 +21,13 @@ POOLING = {
 }
 
 
-def get_hooked(architecture):
-    huggingface_token = os.environ.get("HF_TOKEN", None)
-    hf_config = AutoConfig.from_pretrained(
-        get_official_model_name(architecture), token=huggingface_token
-    )
-    architecture = hf_config.architectures[0]
-    if "distilbert" in architecture.lower():
-        return HookedDistilBert
-    return HookedEncoder
-
-
 class Dot(HookedRootModule, PatchedMixin, SAEMixin):
     def __init__(
         self,
         model_name_or_path: str,
         pooling_type: str = "cls",
         tokenizer=None,
-        special_token: str = "X",
+        special_token: str = "a",
         return_cache: bool = False,
     ) -> None:
         super().__init__()
@@ -55,7 +43,7 @@ class Dot(HookedRootModule, PatchedMixin, SAEMixin):
         self.__hf_model = (
             AutoModel.from_pretrained(model_name_or_path).eval().to(self._device)
         )
-        self._model = get_hooked(model_name_or_path).from_pretrained(
+        self._model = HookedEncoder.from_pretrained(
             self.model_name_or_path, device=self._device, hf_model=self.__hf_model
         )
 
@@ -71,7 +59,12 @@ class Dot(HookedRootModule, PatchedMixin, SAEMixin):
         attention_mask: Float[torch.Tensor, "batch seq"],
         token_type_ids: Float[torch.Tensor, "batch seq"] = None,
     ):
-        model_output = self._model(input=input_ids, attention_mask=attention_mask, token_type_ids=token_type_ids, return_type="embeddings")
+        model_output = self._model(
+            input=input_ids,
+            attention_mask=attention_mask,
+            token_type_ids=token_type_ids,
+            return_type="embeddings",
+        )
         return self._pooling(model_output)
 
     def get_act_patch_block_every(
@@ -168,17 +161,43 @@ class Dot(HookedRootModule, PatchedMixin, SAEMixin):
             results[index] = patching_metric(output, scores, scores_p).mean()
 
         return results
+    
+    def run_with_cache(
+        self,
+        *model_args,
+        return_cache_object: bool = True,
+        cache_as_dict: bool = False,
+        remove_batch_dim: bool = False,
+        **kwargs,
+    ) -> Tuple[
+        Float[torch.Tensor, "batch pos d_vocab"],
+        Union[ActivationCache, Dict[str, torch.Tensor]],
+    ]:
+        """
+        Wrapper around run_with_cache in HookedRootModule. If return_cache_object is True, this will return an ActivationCache object, with a bunch of useful HookedTransformer specific methods, otherwise it will return a dictionary of activations as in HookedRootModule. This function was copied directly from HookedTransformer.
+        """
+        out, cache_dict = super().run_with_cache(
+            *model_args, remove_batch_dim=remove_batch_dim, **kwargs
+        )
+        if return_cache_object:
+            if not cache_as_dict:
+                cache = ActivationCache(
+                    cache_dict, self, has_batch_dim=not remove_batch_dim
+                )
+            return out, cache
+        else:
+            return out, None
 
-    def score(self, queries: dict, documents: dict, reps_q=None, cache=False):
+    def score(self, queries: dict, documents: dict, reps_q=None, cache=False, cache_as_dict=False):
         if reps_q is None:
             reps_q = self.forward(queries["input_ids"], queries["attention_mask"])
         if cache:
             reps_d, cache_d = self.run_with_cache(
-                documents["input_ids"], documents["attention_mask"]
+                documents["input_ids"], documents["attention_mask"], cache_as_dict=cache_as_dict
             )
             return batched_dot_product(reps_q, reps_d), reps_q, reps_d, cache_d
         reps_d = self.forward(documents["input_ids"], documents["attention_mask"])
-        return batched_dot_product(reps_q, reps_d), reps_q, reps_d
+        return batched_dot_product(reps_q, reps_d), reps_q, reps_d, None
 
     def patch(
         self,
@@ -192,7 +211,7 @@ class Dot(HookedRootModule, PatchedMixin, SAEMixin):
         assert (
             patch_type in self._patch_funcs
         ), f"Patch type {patch_type} not recognized. Choose from {self._patch_funcs.keys()}"
-        scores, reps_q, _ = self.score(queries, documents)
+        scores, reps_q, _, _ = self.score(queries, documents)
         scores_p, _, _, cache_d = self.score(
             queries, documents_p, cache=True, reps_q=reps_q
         )
@@ -210,4 +229,4 @@ class Dot(HookedRootModule, PatchedMixin, SAEMixin):
         patched_output = self._patch_funcs[patch_type](**patching_kwargs)
         if self._return_cache:
             return patched_output, cache_d
-        return patched_output  # PatchingOutput(output, scores, scores_p)
+        return patched_output, None  # PatchingOutput(output, scores, scores_p)

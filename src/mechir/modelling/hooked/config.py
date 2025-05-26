@@ -180,6 +180,7 @@ class HookedTransformerConfig:
             in Gemma-2 (see attn_scores_soft_cap for details). Defaults to -1.0, which means not
             set.
         num_labels (int): The number of labels for the classification task. Defaults to 1.
+        use_token_type_ids (bool): Whether to use token type ids. Defaults to True.
     """
 
     n_layers: int
@@ -244,6 +245,8 @@ class HookedTransformerConfig:
     attn_scores_soft_cap: float = -1.0
     output_logits_soft_cap: float = -1.0
     num_labels: int = 1
+    use_token_type_ids: bool = True
+    use_mlp_head: bool = False
 
     def __post_init__(self):
         if self.n_heads == -1:

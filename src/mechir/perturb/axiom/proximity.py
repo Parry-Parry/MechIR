@@ -57,6 +57,13 @@ class ProximityPerturbation(IndexPerturbation):
         self.num_additions = num_additions
         self.loc = loc
 
+        if self.loc == "end":
+            self.perturb_type = "append"
+        elif self.loc == "start":
+            self.perturb_type = "prepend"
+        else:
+            raise ValueError("loc must be either 'start' or 'end'")
+
     def _get_random_terms(self, text: str, terms: list) -> list:
         return random.choices(
             list(self.get_freq_text(text, terms).keys()), k=self.num_additions
