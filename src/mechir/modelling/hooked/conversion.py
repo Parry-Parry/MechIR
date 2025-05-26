@@ -4,7 +4,6 @@ from mechir.modelling.hooked.loading_from_pretrained import (
     register_with_transformer_lens,
 )
 from mechir.modelling.hooked.config import HookedTransformerConfig
-from mechir.modelling.hooked.loading_from_pretrained import REGISTERED_ARCHITECTURES, REGISTERED_CONVERSIONS
 
 
 def convert_distilbert_weights(
@@ -62,12 +61,13 @@ def convert_distilbert_weights(
 
         if not raw:
             if sequence_classification:
-                pre_classification_head = distilbert.pre_classifier
-                classification_head = distilbert.classifier
-                state_dict["classifier.mlp.W"] = classification_head.weight
-                state_dict["classifier.mlp.b"] = classification_head.bias
-                state_dict["classifier.out_proj.W"] = pre_classification_head.weight
-                state_dict["classifier.out_proj.b"] = pre_classification_head.bias
+                if hasattr(distilbert, "pre_classifier") and hasattr(distilbert, "classifier"):
+                    pre_classification_head = distilbert.pre_classifier
+                    classification_head = distilbert.classifier
+                    state_dict["classifier.mlp.W"] = classification_head.weight
+                    state_dict["classifier.mlp.b"] = classification_head.bias
+                    state_dict["classifier.out_proj.W"] = pre_classification_head.weight
+                    state_dict["classifier.out_proj.b"] = pre_classification_head.bias
 
     return state_dict
 
@@ -229,4 +229,3 @@ register_with_transformer_lens(
     "ElectraForSequenceClassification",
     function_type="conversion",
 )
-
