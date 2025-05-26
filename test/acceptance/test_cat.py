@@ -39,12 +39,12 @@ def test_patch_methods_shapes(cat_model, tokenizer, patch_type):
     # call patch
     if patch_type == "head_by_pos":
         layer_head_list = [(0, 0)]
-        out = cat_model.patch(
+        out, _ = cat_model.patch(
             seqs, seqs_p, patch_type=patch_type, layer_head_list=layer_head_list
         )
         assert out.shape[0] == 2  # components
     else:
-        out = cat_model.patch(seqs, seqs_p, patch_type=patch_type)
+        out, _ = cat_model.patch(seqs, seqs_p, patch_type=patch_type)
         assert out.ndim >= 2
 
 

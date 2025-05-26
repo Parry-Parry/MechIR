@@ -6,7 +6,7 @@ because it has a significantly different architecture to e.g. GPT style transfor
 
 from __future__ import annotations
 
-from typing import Dict, List, Optional, Tuple, Union, cast, overload
+from typing import Dict, Optional, overload
 
 import torch
 from einops import repeat
@@ -15,11 +15,11 @@ from torch import nn
 from transformers import AutoTokenizer
 from typing_extensions import Literal
 
-from transformer_lens import HookedTransformerConfig
 from transformer_lens.components import BertBlock, BertMLMHead, Unembed
 from transformer_lens.hook_points import HookPoint
-from .hooked_components import BertEmbed
-from .HookedEncoder import HookedEncoder
+from mechir.modelling.hooked.components import BertEmbed
+from mechir.modelling.architectures.base import HookedEncoder
+from mechir.modelling.hooked.config import HookedTransformerConfig
 
 
 class HookedDistilBert(HookedEncoder):
@@ -147,3 +147,5 @@ class HookedDistilBertForSequenceClassification(HookedDistilBert):
 
         logits = self.classifier(resid[:, 0, :])
         return logits
+
+__all__ = ["HookedDistilBert", "HookedDistilBertForSequenceClassification"]

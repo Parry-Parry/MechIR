@@ -1,4 +1,4 @@
-from typing import Callable
+from typing import Callable, Dict, Tuple, Union
 import logging
 import torch
 from jaxtyping import Float
@@ -7,11 +7,11 @@ from transformer_lens.ActivationCache import ActivationCache
 from transformer_lens.hook_points import HookedRootModule
 import transformer_lens.utils as utils
 import torch.nn.functional as F
-from .patched import PatchedMixin
-from .sae import SAEMixin
-from .hooked.loading_from_pretrained import get_official_model_name
-from ..util import linear_rank_function
-from .hooked.HookedEncoder import HookedEncoderForSequenceClassification
+from mechir.modelling.patched import PatchedMixin
+from mechir.modelling.sae import SAEMixin
+from mechir.modelling.hooked.loading_from_pretrained import get_official_model_name
+from mechir.util import linear_rank_function
+from mechir.modelling.architectures import HookedEncoderForSequenceClassification
 
 logger = logging.getLogger(__name__)
 
@@ -158,11 +158,37 @@ class Cat(HookedRootModule, PatchedMixin, SAEMixin):
             results[index] = patching_metric(output, scores, scores_p).mean()
 
         return results
+    
+    def run_with_cache(
+        self,
+        *model_args,
+        return_cache_object: bool = True,
+        cache_as_dict: bool = False,
+        remove_batch_dim: bool = False,
+        **kwargs,
+    ) -> Tuple[
+        Float[torch.Tensor, "batch pos d_vocab"],
+        Union[ActivationCache, Dict[str, torch.Tensor]],
+    ]:
+        """
+        Wrapper around run_with_cache in HookedRootModule. If return_cache_object is True, this will return an ActivationCache object, with a bunch of useful HookedTransformer specific methods, otherwise it will return a dictionary of activations as in HookedRootModule. This function was copied directly from HookedTransformer.
+        """
+        out, cache_dict = super().run_with_cache(
+            *model_args, remove_batch_dim=remove_batch_dim, **kwargs
+        )
+        if return_cache_object:
+            if not cache_as_dict:
+                cache = ActivationCache(
+                    cache_dict, self, has_batch_dim=not remove_batch_dim
+                )
+            return out, cache
+        else:
+            return out, None
 
-    def score(self, sequences: dict, cache=False):
+    def score(self, sequences: dict, cache=False, cache_as_dict=False):
         if cache:
             logits, cache = self.run_with_cache(
-                sequences["input_ids"], sequences["attention_mask"]
+                sequences["input_ids"], sequences["attention_mask"], cache_as_dict=cache_as_dict
             )
             return logits, cache
 
@@ -194,4 +220,4 @@ class Cat(HookedRootModule, PatchedMixin, SAEMixin):
         patched_output = self._patch_funcs[patch_type](**patching_kwargs)
         if self._return_cache:
             return patched_output, cache
-        return patched_output
+        return patched_output, None

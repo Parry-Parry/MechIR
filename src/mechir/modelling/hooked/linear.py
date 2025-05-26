@@ -12,7 +12,7 @@ from transformer_lens.hook_points import HookPoint
 from transformer_lens.factories.activation_function_factory import (
     ActivationFunctionFactory,
 )
-from mechir.modelling.hooked.HookedTransformerConfig import HookedTransformerConfig
+from mechir.modelling.hooked.config import HookedTransformerConfig
 
 
 class ClassificationHead(nn.Module):

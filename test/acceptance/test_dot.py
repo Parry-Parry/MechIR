@@ -48,10 +48,10 @@ def test_patch_methods_shapes(dot_model, tokenizer, patch_type):
     d = q
     d_p = q
     if patch_type == "head_by_pos":
-        out = dot_model.patch(
+        out, _ = dot_model.patch(
             q, d, d_p, patch_type=patch_type, layer_head_list=[(0, 0)]
         )
         assert out.shape[0] == 2
     else:
-        out = dot_model.patch(q, d, d_p, patch_type=patch_type)
+        out, _ = dot_model.patch(q, d, d_p, patch_type=patch_type)
         assert out.dim() >= 2

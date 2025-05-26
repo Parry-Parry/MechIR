@@ -22,7 +22,7 @@ from transformers import (
 )
 
 import transformer_lens.utils as utils
-from mechir.modelling.hooked.HookedTransformerConfig import HookedTransformerConfig
+from mechir.modelling.hooked.config import HookedTransformerConfig
 from mechir import config
 from transformer_lens.pretrained.weight_conversions import (
     convert_bloom_weights,

@@ -3,13 +3,14 @@ from functools import partial
 from mechir.modelling.hooked.loading_from_pretrained import (
     register_with_transformer_lens,
 )
-from mechir.modelling.hooked.HookedTransformerConfig import HookedTransformerConfig
+from mechir.modelling.hooked.config import HookedTransformerConfig
+from mechir.modelling.hooked.loading_from_pretrained import REGISTERED_ARCHITECTURES, REGISTERED_CONVERSIONS
 
 
 def convert_distilbert_weights(
     distilbert, cfg: HookedTransformerConfig, sequence_classification=False, raw=False
 ):
-    embeddings = distilbert.embeddings
+    embeddings = distilbert.embeddings if not raw else distilbert.embeddings
     state_dict = {
         "embed.embed.W_E": embeddings.word_embeddings.weight,
         "embed.pos_embed.W_pos": embeddings.position_embeddings.weight,
@@ -19,7 +20,7 @@ def convert_distilbert_weights(
     }
 
     for l in range(cfg.n_layers):
-        block = distilbert.transformer.layer[l]
+        block = distilbert.transformer.layer[l] if not raw else distilbert.transformer.layer[l]
         state_dict[f"blocks.{l}.attn.W_Q"] = einops.rearrange(
             block.attention.q_lin.weight, "(i h) m -> i m h", i=cfg.n_heads
         )
@@ -87,7 +88,11 @@ def convert_bert_based_weights(
     raw=False,
     model_name: str = "bert",
 ):
-    embeddings = getattr(bert, model_name).embeddings if not raw else bert.embeddings
+    if not hasattr(bert, "embeddings"):
+        bert = getattr(bert, model_name)
+        embeddings = bert.embeddings
+    else:
+        embeddings = bert.embeddings
     state_dict = {
         "embed.embed.W_E": embeddings.word_embeddings.weight,
         "embed.pos_embed.W_pos": embeddings.position_embeddings.weight,
@@ -96,9 +101,14 @@ def convert_bert_based_weights(
         "embed.ln.b": embeddings.LayerNorm.bias,
     }
 
+    if not hasattr(bert, "encoder"):
+        encoder = getattr(bert, model_name).encoder
+    else:
+        encoder = bert.encoder
+
     for l in range(cfg.n_layers):
         block = (
-            getattr(bert, model_name).encoder.layer[l]
+            encoder.layer[l]
             if not raw
             else bert.encoder.layer[l]
         )
@@ -153,83 +163,14 @@ def convert_bert_based_weights(
                 state_dict["classifier.b"] = classification_head.bias
         else:
             if "electra" not in model_name:
-                mlm_head = bert.cls.predictions
-                state_dict["mlm_head.W"] = mlm_head.transform.dense.weight
-                state_dict["mlm_head.b"] = mlm_head.transform.dense.bias
-                state_dict["mlm_head.ln.w"] = mlm_head.transform.LayerNorm.weight
-                state_dict["mlm_head.ln.b"] = mlm_head.transform.LayerNorm.bias
-                # "unembed.W_U": mlm_head.decoder.weight.T,
-                state_dict["unembed.b_U"] = mlm_head.bias
-    # Note: BERT uses tied embeddings
-    state_dict["unembed.W_U"] = embeddings.word_embeddings.weight.T
-
-    return state_dict
-
-
-def convert_bert_weights(
-    bert, cfg: HookedTransformerConfig, sequence_classification=False, raw=False
-):
-    print(dir(bert))
-    embeddings = bert.bert.embeddings if not raw else bert.embeddings
-    state_dict = {
-        "embed.embed.W_E": embeddings.word_embeddings.weight,
-        "embed.pos_embed.W_pos": embeddings.position_embeddings.weight,
-        "embed.token_type_embed.W_token_type": embeddings.token_type_embeddings.weight,
-        "embed.ln.w": embeddings.LayerNorm.weight,
-        "embed.ln.b": embeddings.LayerNorm.bias,
-    }
-
-    for l in range(cfg.n_layers):
-        block = bert.bert.encoder.layer[l] if not raw else bert.encoder.layer[l]
-        state_dict[f"blocks.{l}.attn.W_Q"] = einops.rearrange(
-            block.attention.self.query.weight, "(i h) m -> i m h", i=cfg.n_heads
-        )
-        state_dict[f"blocks.{l}.attn.b_Q"] = einops.rearrange(
-            block.attention.self.query.bias, "(i h) -> i h", i=cfg.n_heads
-        )
-        state_dict[f"blocks.{l}.attn.W_K"] = einops.rearrange(
-            block.attention.self.key.weight, "(i h) m -> i m h", i=cfg.n_heads
-        )
-        state_dict[f"blocks.{l}.attn.b_K"] = einops.rearrange(
-            block.attention.self.key.bias, "(i h) -> i h", i=cfg.n_heads
-        )
-        state_dict[f"blocks.{l}.attn.W_V"] = einops.rearrange(
-            block.attention.self.value.weight, "(i h) m -> i m h", i=cfg.n_heads
-        )
-        state_dict[f"blocks.{l}.attn.b_V"] = einops.rearrange(
-            block.attention.self.value.bias, "(i h) -> i h", i=cfg.n_heads
-        )
-        state_dict[f"blocks.{l}.attn.W_O"] = einops.rearrange(
-            block.attention.output.dense.weight,
-            "m (i h) -> i h m",
-            i=cfg.n_heads,
-        )
-        state_dict[f"blocks.{l}.attn.b_O"] = block.attention.output.dense.bias
-        state_dict[f"blocks.{l}.ln1.w"] = block.attention.output.LayerNorm.weight
-        state_dict[f"blocks.{l}.ln1.b"] = block.attention.output.LayerNorm.bias
-        state_dict[f"blocks.{l}.mlp.W_in"] = einops.rearrange(
-            block.intermediate.dense.weight, "mlp model -> model mlp"
-        )
-        state_dict[f"blocks.{l}.mlp.b_in"] = block.intermediate.dense.bias
-        state_dict[f"blocks.{l}.mlp.W_out"] = einops.rearrange(
-            block.output.dense.weight, "model mlp -> mlp model"
-        )
-        state_dict[f"blocks.{l}.mlp.b_out"] = block.output.dense.bias
-        state_dict[f"blocks.{l}.ln2.w"] = block.output.LayerNorm.weight
-        state_dict[f"blocks.{l}.ln2.b"] = block.output.LayerNorm.bias
-    if not raw:
-        if sequence_classification:
-            classification_head = bert.classifier
-            state_dict["classifier.W"] = classification_head.weight
-            state_dict["classifier.b"] = classification_head.bias
-        else:
-            mlm_head = bert.cls.predictions
-            state_dict["mlm_head.W"] = mlm_head.transform.dense.weight
-            state_dict["mlm_head.b"] = mlm_head.transform.dense.bias
-            state_dict["mlm_head.ln.w"] = mlm_head.transform.LayerNorm.weight
-            state_dict["mlm_head.ln.b"] = mlm_head.transform.LayerNorm.bias
-            # "unembed.W_U": mlm_head.decoder.weight.T,
-            state_dict["unembed.b_U"] = mlm_head.bias
+                if hasattr(bert, "cls"):
+                    mlm_head = bert.cls.predictions
+                    state_dict["mlm_head.W"] = mlm_head.transform.dense.weight
+                    state_dict["mlm_head.b"] = mlm_head.transform.dense.bias
+                    state_dict["mlm_head.ln.w"] = mlm_head.transform.LayerNorm.weight
+                    state_dict["mlm_head.ln.b"] = mlm_head.transform.LayerNorm.bias
+                    # "unembed.W_U": mlm_head.decoder.weight.T,
+                    state_dict["unembed.b_U"] = mlm_head.bias
     # Note: BERT uses tied embeddings
     state_dict["unembed.W_U"] = embeddings.word_embeddings.weight.T
 
@@ -237,18 +178,28 @@ def convert_bert_weights(
 
 
 register_with_transformer_lens(
-    partial(convert_bert_weights, raw=True),
-    ["BertModel", "BertForMaskedLM"],
+    partial(convert_bert_based_weights, model_name='encoder', raw=True),
+    ["BertModel"],
     function_type="conversion",
 )
 register_with_transformer_lens(
-    partial(convert_bert_weights, sequence_classification=True),
+    partial(convert_bert_based_weights, model_name='bert', raw=False),
+    ["BERTForPreTraining", "BertForMaskedLM"],
+    function_type="conversion",
+)
+register_with_transformer_lens(
+    partial(convert_bert_based_weights, sequence_classification=True),
     "BertForSequenceClassification",
     function_type="conversion",
 )
 register_with_transformer_lens(
+    partial(convert_bert_based_weights, model_name="roberta", raw=False),
+    ["RobertaForMaskedLM", "RobertaForPreTraining"],
+    function_type="conversion",
+)
+register_with_transformer_lens(
     partial(convert_bert_based_weights, model_name="roberta", raw=True),
-    ["RobertaModel", "RobertaForMaskedLM"],
+    ["RobertaModel"],
     function_type="conversion",
 )
 register_with_transformer_lens(
@@ -256,6 +207,11 @@ register_with_transformer_lens(
         convert_bert_based_weights, sequence_classification=True, model_name="roberta"
     ),
     "RobertaForSequenceClassification",
+    function_type="conversion",
+)
+register_with_transformer_lens(
+    partial(convert_bert_based_weights, model_name="electra", raw=False),
+    ["ElectraModelForPreTraining"],
     function_type="conversion",
 )
 register_with_transformer_lens(
@@ -270,3 +226,4 @@ register_with_transformer_lens(
     "ElectraForSequenceClassification",
     function_type="conversion",
 )
+

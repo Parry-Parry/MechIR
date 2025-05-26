@@ -1,6 +1,6 @@
-"""Hooked Encoder.
+"""Hooked ELECTRA.
 
-Contains a BERT style model. This is separate from :class:`transformer_lens.HookedTransformer`
+Contains a ELECTRA style model. This is separate from :class:`transformer_lens.HookedTransformer`
 because it has a significantly different architecture to e.g. GPT style transformers.
 """
 
@@ -12,10 +12,10 @@ from typing import Dict, Optional, Union
 import torch
 from jaxtyping import Float, Int
 from torch import nn
-from .HookedTransformerConfig import HookedTransformerConfig
-from .HookedEncoder import HookedEncoder
 from transformer_lens.hook_points import HookPoint
-from .linear import ClassificationHead, HiddenLinear
+from mechir.modelling.hooked.linear import ClassificationHead, HiddenLinear
+from mechir.modelling.architectures.base import HookedEncoder
+from mechir.modelling.hooked.config import HookedTransformerConfig
 
 
 class ElectraClassificationHead(nn.Module):
@@ -38,10 +38,11 @@ class ElectraClassificationHead(nn.Module):
         post_act = self.hook_post(self.activation(pre_act))
         return self.out_proj(post_act)
 
+HookedElectra = HookedEncoder
 
 class HookedElectraForSequenceClassification(HookedEncoder):
     """
-    This class implements a BERT-style encoder using the components in ./components.py, with HookPoints on every interesting activation. It inherits from HookedRootModule.
+    This class implements a ELECTRA-style encoder using the components in ./components.py, with HookPoints on every interesting activation. It inherits from HookedRootModule.
 
 
     Like HookedTransformer, it can have a pretrained Transformer's weights loaded via `.from_pretrained`. There are a few features you might know from HookedTransformer which are not yet supported:
@@ -87,3 +88,6 @@ class HookedElectraForSequenceClassification(HookedEncoder):
         if return_type is None:
             return None
         return logits
+
+
+__all__ = ["HookedElectra", "HookedElectraForSequenceClassification"]

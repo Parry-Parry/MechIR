@@ -30,8 +30,8 @@ from transformer_lens.FactoredMatrix import FactoredMatrix
 from transformer_lens.hook_points import HookedRootModule, HookPoint
 from transformer_lens.utilities import devices
 
-from mechir.modelling.hooked.HookedTransformerConfig import HookedTransformerConfig
-from mechir.modelling.hooked.hooked_components import BertEmbed
+from mechir.modelling.hooked.config import HookedTransformerConfig
+from mechir.modelling.hooked.components import BertEmbed
 from mechir.modelling.hooked.linear import ClassificationHead, MLPClassificationHead
 
 
@@ -297,6 +297,7 @@ class HookedEncoder(HookedRootModule):
         self,
         *model_args,
         return_cache_object: bool = True,
+        cache_as_dict: bool = False,
         remove_batch_dim: bool = False,
         **kwargs,
     ) -> Tuple[
@@ -310,12 +311,13 @@ class HookedEncoder(HookedRootModule):
             *model_args, remove_batch_dim=remove_batch_dim, **kwargs
         )
         if return_cache_object:
-            cache = ActivationCache(
-                cache_dict, self, has_batch_dim=not remove_batch_dim
-            )
+            if not cache_as_dict:
+                cache = ActivationCache(
+                    cache_dict, self, has_batch_dim=not remove_batch_dim
+                )
             return out, cache
         else:
-            return out, cache_dict
+            return out, None
 
     def to(  # type: ignore
         self,

@@ -7,10 +7,10 @@ from transformer_lens import HookedEncoderDecoder
 from transformer_lens.ActivationCache import ActivationCache
 from transformer_lens.hook_points import HookedRootModule
 import transformer_lens.utils as utils
-from .patched import PatchedMixin
-from .sae import SAEMixin
-from ..util import linear_rank_function
-from .hooked.loading_from_pretrained import get_official_model_name
+from mechir.modelling.patched import PatchedMixin
+from mechir.modelling.sae import SAEMixin
+from mechir.modelling.hooked.loading_from_pretrained import get_official_model_name
+from mechir.util import linear_rank_function
 
 logger = logging.getLogger(__name__)
 
