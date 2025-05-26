@@ -67,7 +67,7 @@ We can then apply this perturbation efficiently using our dataset and a torch da
 from torch.utils.data import DataLoader
 from mechir.data import DotDataCollator
 
-collate_fn = DotDataCollator(model.tokenizer, transformation_fun=my_perturbation)
+collate_fn = DotDataCollator(model.tokenizer, transformation_func=my_perturbation)
 dataloader = DataLoader(dataset, collate_fn=collate_fn, batch_size=8)
 ```
 
