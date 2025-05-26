@@ -2,6 +2,11 @@
 
 ## An IR Library for Mechanistic Interpretability
 
+This library exists to make encoders first-class citizens in Mechanistic Interpretability, particularly with a focus on Information Retrieval and representation learning. We presented this work as a demo at ECIR 2025: https://arxiv.org/pdf/2501.10165
+
+We have done our best to support many of the features present in [transformer_lens](https://github.com/TransformerLensOrg/TransformerLens/tree/main). Additionally, we provide extensive functionality for activation patching (more details in our demo!). We are in the process of producing SAEs for different common IR models!.
+
+
 Heavily inspired by the paper **Axiomatic Causal Interventions for Reverse Engineering Relevance Computation in Neural Retrieval Models** by Catherine Chen, Jack Merullo, and Carsten Eickhoff (Brown University, University of Tübingen), their original code can be found [here](https://github.com/catherineschen/axiomatic-ir-interventions/tree/main)
 
 ## Demonstration
@@ -89,4 +94,29 @@ We can then easily visualise the attention heads which activate strongly for our
 from mechir.plotting import plot_components
 
 plot_components(patch_output)
+```
+
+## Citation
+If you use our work in research please let us know! We will showcase the work in this repository to encourage more encoder interpretability. Please use the following citation if you find our work useful!
+```
+@inproceedings{mechir:2025,
+  author       = {Andrew Parry and
+                  Catherine Chen and
+                  Carsten Eickhoff and
+                  Sean MacAvaney},
+  title        = {MechIR: {A} Mechanistic Interpretability Framework for Information
+                  Retrieval},
+  booktitle    = {Advances in Information Retrieval - 47th European Conference on Information
+                  Retrieval, {ECIR} 2025, Lucca, Italy, April 6-10, 2025, Proceedings,
+                  Part {V}},
+  series       = {Lecture Notes in Computer Science},
+  volume       = {15576},
+  pages        = {89--95},
+  publisher    = {Springer},
+  year         = {2025},
+  url          = {https://doi.org/10.1007/978-3-031-88720-8\_16},
+  doi          = {10.1007/978-3-031-88720-8\_16},
+  biburl       = {https://dblp.org/rec/conf/ecir/ParryCEM25.bib},
+  bibsource    = {dblp computer science bibliography, https://dblp.org}
+}
 ```
