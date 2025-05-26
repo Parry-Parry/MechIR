@@ -18,53 +18,12 @@ from typing_extensions import Literal
 from transformer_lens.components import BertBlock, BertMLMHead, Unembed
 from transformer_lens.hook_points import HookPoint
 from mechir.modelling.hooked.components import BertEmbed
+from mechir.modelling.hooked.linear import MLPClassificationHead
 from mechir.modelling.architectures.base import HookedEncoder
 from mechir.modelling.hooked.config import HookedTransformerConfig
 
 
-class HookedDistilBert(HookedEncoder):
-    def __init__(self, cfg, tokenizer=None, move_to_device=True, **kwargs):
-        if isinstance(cfg, Dict):
-            cfg = HookedTransformerConfig(**cfg)
-        elif isinstance(cfg, str):
-            raise ValueError(
-                "Please pass in a config dictionary or HookedTransformerConfig object. If you want to load a pretrained model, use HookedEncoder.from_pretrained() instead."
-            )
-        self.cfg = cfg
-
-        assert (
-            self.cfg.n_devices == 1
-        ), "Multiple devices not supported for HookedEncoder"
-        if tokenizer is not None:
-            self.tokenizer = tokenizer
-        elif self.cfg.tokenizer_name is not None:
-            self.tokenizer = AutoTokenizer.from_pretrained(self.cfg.tokenizer_name)
-        else:
-            self.tokenizer = None
-
-        if self.cfg.d_vocab == -1:
-            # If we have a tokenizer, vocab size can be inferred from it.
-            assert (
-                self.tokenizer is not None
-            ), "Must provide a tokenizer if d_vocab is not provided"
-            self.cfg.d_vocab = max(self.tokenizer.vocab.values()) + 1
-        if self.cfg.d_vocab_out == -1:
-            self.cfg.d_vocab_out = self.cfg.d_vocab
-
-        self.embed = BertEmbed(self.cfg)
-        self.blocks = nn.ModuleList(
-            [BertBlock(self.cfg) for _ in range(self.cfg.n_layers)]
-        )
-        self.mlm_head = BertMLMHead(cfg)
-        self.unembed = Unembed(self.cfg)
-
-        self.hook_full_embed = HookPoint()
-
-        if move_to_device:
-            self.to(self.cfg.device)
-
-        self.setup()
-
+HookedDistilBert = HookedEncoder
 
 class HookedDistilBertForSequenceClassification(HookedDistilBert):
     """
@@ -81,8 +40,7 @@ class HookedDistilBertForSequenceClassification(HookedDistilBert):
 
     def __init__(self, cfg, tokenizer=None, move_to_device=True, **kwargs):
         super().__init__(cfg, tokenizer, move_to_device=move_to_device, **kwargs)
-        self.mlp = nn.Linear(cfg.d_model, cfg.d_model)
-        self.out_proj = nn.Linear(cfg.d_model, cfg.n_labels)
+        self.classifier = MLPClassificationHead(self.cfg)
         self.setup()
 
     @overload

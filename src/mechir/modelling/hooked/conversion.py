@@ -64,8 +64,8 @@ def convert_distilbert_weights(
                 if hasattr(distilbert, "pre_classifier") and hasattr(distilbert, "classifier"):
                     pre_classification_head = distilbert.pre_classifier
                     classification_head = distilbert.classifier
-                    state_dict["classifier.mlp.W"] = classification_head.weight
-                    state_dict["classifier.mlp.b"] = classification_head.bias
+                    state_dict["classifier.dense.W"] = classification_head.weight
+                    state_dict["classifier.dense.b"] = classification_head.bias
                     state_dict["classifier.out_proj.W"] = pre_classification_head.weight
                     state_dict["classifier.out_proj.b"] = pre_classification_head.bias
 

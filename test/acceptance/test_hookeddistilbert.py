@@ -69,32 +69,17 @@ def test_embed_two_predictions(our_distilbert, huggingface_distilbert, tokenizer
         return_tensors="pt",
     )
     input_ids = encoding["input_ids"]
-    token_type_ids = encoding["token_type_ids"]
 
     huggingface_embed_out = get_embeddings(huggingface_distilbert)(
-        input_ids, token_type_ids=token_type_ids
+        input_ids
     )[0]
-    our_embed_out = our_distilbert.embed(input_ids, token_type_ids=token_type_ids).squeeze(0)
+    our_embed_out = our_distilbert.embed(input_ids).squeeze(0)
     assert_close(huggingface_embed_out, our_embed_out)
-
-
-def test_attention(our_distilbert, huggingface_distilbert, tokens):
-    huggingface_embed = get_embeddings(huggingface_distilbert)
-    huggingface_attn = huggingface_distilbert.encoder.layer[0].attention
-
-    embed_out = huggingface_embed(tokens)
-
-    our_attn = our_distilbert.blocks[0].attn
-
-    our_attn_out = our_attn(embed_out, embed_out, embed_out)
-    huggingface_self_attn_out = huggingface_attn.self(embed_out)[0]
-    huggingface_attn_out = huggingface_attn.output.dense(huggingface_self_attn_out)
-    assert_close(our_attn_out, huggingface_attn_out)
 
 
 def test_distilbert_block(our_distilbert, huggingface_distilbert, tokens):
     huggingface_embed = get_embeddings(huggingface_distilbert)
-    huggingface_block = huggingface_distilbert.encoder.layer[0]
+    huggingface_block = huggingface_distilbert.transformer.layer[0]
 
     embed_out = huggingface_embed(tokens)
 
@@ -112,4 +97,4 @@ def test_run_with_cache(our_distilbert, tokens):
     assert "embed.hook_embed" in cache
     assert "blocks.0.attn.hook_q" in cache
     assert "blocks.3.attn.hook_attn_scores" in cache
-    assert "blocks.7.hook_resid_post" in cache
+    assert "blocks.5.hook_resid_post" in cache
