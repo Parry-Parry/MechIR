@@ -4,7 +4,7 @@ package_name = 'mechir'
 
 setup(
     name=package_name,  # The name of your package
-    version='0.0.2',  # Your package version
+    version='0.0.4',  # Your package version
     packages=find_packages(where='src'),  # Look for packages in the 'src' directory
     package_dir={'': 'src'},  # Map the package name to the 'src' directory
     author='Anon A. Mous',
