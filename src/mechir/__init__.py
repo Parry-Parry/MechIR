@@ -6,7 +6,7 @@ class MechirConfig:
 
     _instance = None
     _config = {
-        "ignore-official": False,  # default value
+        "ignore-official": True,  # default value
         # Add other default config options here
     }
 

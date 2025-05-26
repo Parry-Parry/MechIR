@@ -62,9 +62,12 @@ def convert_distilbert_weights(
 
         if not raw:
             if sequence_classification:
-                classification_head = distilbert.pre_classifier
-                state_dict["classifier.W"] = classification_head.weight
-                state_dict["classifier.b"] = classification_head.bias
+                pre_classification_head = distilbert.pre_classifier
+                classification_head = distilbert.classifier
+                state_dict["classifier.mlp.W"] = classification_head.weight
+                state_dict["classifier.mlp.b"] = classification_head.bias
+                state_dict["classifier.out_proj.W"] = pre_classification_head.weight
+                state_dict["classifier.out_proj.b"] = pre_classification_head.bias
 
     return state_dict
 
@@ -211,7 +214,7 @@ register_with_transformer_lens(
 )
 register_with_transformer_lens(
     partial(convert_bert_based_weights, model_name="electra", raw=False),
-    ["ElectraModelForPreTraining"],
+    "ElectraForPreTraining",
     function_type="conversion",
 )
 register_with_transformer_lens(

@@ -81,7 +81,8 @@ class HookedDistilBertForSequenceClassification(HookedDistilBert):
 
     def __init__(self, cfg, tokenizer=None, move_to_device=True, **kwargs):
         super().__init__(cfg, tokenizer, move_to_device=move_to_device, **kwargs)
-        self.classifier = nn.Linear(cfg.d_model, cfg.n_labels)
+        self.mlp = nn.Linear(cfg.d_model, cfg.d_model)
+        self.out_proj = nn.Linear(cfg.d_model, cfg.n_labels)
         self.setup()
 
     @overload
@@ -145,7 +146,9 @@ class HookedDistilBertForSequenceClassification(HookedDistilBert):
         if return_type is None:
             return
 
-        logits = self.classifier(resid[:, 0, :])
+        logits = self.mlp(resid[:, 0, :])
+        logits = self.out_proj(logits)
         return logits
+
 
 __all__ = ["HookedDistilBert", "HookedDistilBertForSequenceClassification"]
