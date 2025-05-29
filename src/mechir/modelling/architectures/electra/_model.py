@@ -40,6 +40,7 @@ class ElectraClassificationHead(nn.Module):
 
 HookedElectra = HookedEncoder
 
+
 class HookedElectraForSequenceClassification(HookedEncoder):
     """
     This class implements a ELECTRA-style encoder using the components in ./components.py, with HookPoints on every interesting activation. It inherits from HookedRootModule.

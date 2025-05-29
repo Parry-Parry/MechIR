@@ -1,4 +1,4 @@
-from .base. import HookedEncoder, HookedEncoderForSequenceClassification
+from .base import HookedEncoder, HookedEncoderForSequenceClassification
 from .distilbert import HookedDistilBert, HookedDistilBertForSequenceClassification
 from .electra import HookedElectra, HookedElectraForSequenceClassification
 

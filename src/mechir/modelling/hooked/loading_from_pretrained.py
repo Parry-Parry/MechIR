@@ -257,6 +257,7 @@ def convert_hf_model_config(model_name: str, **kwargs):
             **kwargs,
         )
         architecture = hf_config.architectures[0]
+        print(f"Using architecture {architecture} for {official_model_name}")
 
     if official_model_name.startswith(
         ("llama-7b", "meta-llama/Llama-2-7b")
