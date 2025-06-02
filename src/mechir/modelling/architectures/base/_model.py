@@ -130,15 +130,17 @@ class HookedEncoder(HookedRootModule):
         )
 
         tokens = encodings.input_ids
+        token_type_ids = encodings.token_type_ids if self.use_token_type_ids else None
+        attention_mask = encodings.attention_mask if self.cfg.use_attention_mask else None
 
         if move_to_device:
             tokens = tokens.to(self.cfg.device)
             token_type_ids = (
-                encodings.token_type_ids.to(self.cfg.device)
+                token_type_ids.to(self.cfg.device)
                 if self.use_token_type_ids
                 else None
             )
-            attention_mask = encodings.attention_mask.to(self.cfg.device)
+            attention_mask = attention_mask.to(self.cfg.device)
 
         return tokens, token_type_ids, attention_mask
 
