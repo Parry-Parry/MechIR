@@ -45,6 +45,7 @@ class HookedEncoder(HookedRootModule):
     Like HookedTransformer, it can have a pretrained Transformer's weights loaded via `.from_pretrained`. There are a few features you might know from HookedTransformer which are not yet supported:
         - There is no preprocessing (e.g. LayerNorm folding) when loading a pretrained model
     """
+    _hf_class = AutoModel
 
     def __init__(self, cfg, tokenizer=None, move_to_device=True, **kwargs):
         super().__init__()
@@ -383,7 +384,12 @@ class HookedEncoder(HookedRootModule):
             dtype=dtype,
             **from_pretrained_kwargs,
         )
-
+        if hf_model is None:
+            hf_model = cls._hf_class.from_pretrained(
+                official_model_name,
+                torch_dtype=dtype,
+                **from_pretrained_kwargs,
+            )
         state_dict = loading.get_pretrained_state_dict(
             official_model_name, cfg, hf_model, dtype=dtype, **from_pretrained_kwargs
         )
