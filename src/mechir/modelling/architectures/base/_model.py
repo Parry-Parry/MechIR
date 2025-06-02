@@ -14,7 +14,7 @@ import torch
 from einops import repeat
 from jaxtyping import Float, Int
 from torch import nn
-from transformers import AutoTokenizer
+from transformers import AutoTokenizer, AutoModel
 from typing_extensions import Literal
 
 from mechir.modelling.hooked import loading_from_pretrained as loading
