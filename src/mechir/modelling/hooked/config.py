@@ -15,11 +15,11 @@ from typing import Any, Dict, List, Optional, Union
 import numpy as np
 import torch
 
-from transformer_lens import utils, HookedTransformerConfig as baseHookedTransformerConfig
+from transformer_lens import utils, HookedTransformerConfig as _HookedTransformerConfig
 
 
 @dataclass
-class HookedTransformerConfig(baseHookedTransformerConfig):
+class HookedTransformerConfig(_HookedTransformerConfig):
     """
     Configuration class to store the configuration of a HookedTransformer model.
 
