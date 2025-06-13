@@ -15,12 +15,11 @@ from typing import Any, Dict, List, Optional, Union
 import numpy as np
 import torch
 
-from transformer_lens import utils
-from transformer_lens.utilities.activation_functions import SUPPORTED_ACTIVATIONS
+from transformer_lens import utils, HookedTransformerConfig as baseHookedTransformerConfig
 
 
 @dataclass
-class HookedTransformerConfig:
+class HookedTransformerConfig(baseHookedTransformerConfig):
     """
     Configuration class to store the configuration of a HookedTransformer model.
 
@@ -182,68 +181,6 @@ class HookedTransformerConfig:
         num_labels (int): The number of labels for the classification task. Defaults to 1.
         use_token_type_ids (bool): Whether to use token type ids. Defaults to True.
     """
-
-    n_layers: int
-    d_model: int
-    n_ctx: int
-    d_head: int
-    model_name: str = "custom"
-    n_heads: int = -1
-    d_mlp: Optional[int] = None
-    act_fn: Optional[str] = None
-    d_vocab: int = -1
-    eps: float = 1e-5
-    use_attn_result: bool = False
-    use_attn_scale: bool = True
-    attn_scale: float = -1.0
-    use_split_qkv_input: bool = False
-    use_hook_mlp_in: bool = False
-    use_attn_in: bool = False
-    use_local_attn: bool = False
-    original_architecture: Optional[str] = None
-    from_checkpoint: bool = False
-    checkpoint_index: Optional[int] = None
-    checkpoint_label_type: Optional[str] = None
-    checkpoint_value: Optional[int] = None
-    tokenizer_name: Optional[str] = None
-    window_size: Optional[int] = None
-    attn_types: Optional[List] = None
-    init_mode: str = "gpt2"
-    normalization_type: Optional[str] = "LN"
-    device: Optional[str] = None
-    n_devices: int = 1
-    attention_dir: str = "causal"
-    attn_only: bool = False
-    seed: Optional[int] = None
-    initializer_range: float = -1.0
-    init_weights: bool = True
-    scale_attn_by_inverse_layer_idx: bool = False
-    positional_embedding_type: str = "standard"
-    final_rms: bool = False
-    d_vocab_out: int = -1
-    parallel_attn_mlp: bool = False
-    rotary_dim: Optional[int] = None
-    n_params: Optional[int] = None
-    use_hook_tokens: bool = False
-    gated_mlp: bool = False
-    default_prepend_bos: bool = True
-    dtype: torch.dtype = torch.float32
-    tokenizer_prepends_bos: Optional[bool] = None
-    n_key_value_heads: Optional[int] = None
-    post_embedding_ln: bool = False
-    rotary_base: int = 10000
-    trust_remote_code: bool = False
-    rotary_adjacent_pairs: bool = False
-    load_in_4bit: bool = False
-    num_experts: Optional[int] = None
-    experts_per_token: Optional[int] = None
-    relative_attention_max_distance: Optional[int] = None
-    relative_attention_num_buckets: Optional[int] = None
-    decoder_start_token_id: Optional[int] = None
-    tie_word_embeddings: bool = False
-    use_normalization_before_and_after: bool = False
-    attn_scores_soft_cap: float = -1.0
-    output_logits_soft_cap: float = -1.0
     num_labels: int = 1
     use_token_type_ids: bool = True
     use_mlp_head: bool = False
