@@ -10,13 +10,13 @@ import logging
 import pprint
 import random
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, Union
 
 import numpy as np
 import torch
 
 from transformer_lens import utils, HookedTransformerConfig as _HookedTransformerConfig
-
+from transformer_lens.utilities.activation_functions import SUPPORTED_ACTIVATIONS
 
 @dataclass
 class HookedTransformerConfig(_HookedTransformerConfig):
