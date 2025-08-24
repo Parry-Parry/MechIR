@@ -104,7 +104,7 @@ class HookedEncoder(HookedRootModule):
         move_to_device: bool = True,
         truncate: bool = True,
     ) -> Tuple[
-        Int[torch.Tensor, "batch pos"],
+        Int[torch.Tensor, "batch pos"],  # noqa: F722
         Int[torch.Tensor, "batch pos"],
         Int[torch.Tensor, "batch pos"],
     ]:
@@ -471,7 +471,7 @@ class HookedEncoder(HookedRootModule):
         )
 
     @property
-    def W_in(self) -> Float[torch.Tensor, "n_layers d_model d_mlp"]:
+    def W_in(self) -> Float[torch.Tensor, "n_layers d_model d_mlp"]:  # noqa: F722
         """Stacks the MLP input weights across all layers"""
         return torch.stack(
             [cast(BertBlock, block).mlp.W_in for block in self.blocks], dim=0
