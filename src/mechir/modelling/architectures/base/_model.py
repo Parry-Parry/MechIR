@@ -17,7 +17,6 @@ from torch import nn
 from transformers import AutoTokenizer, AutoModel
 from typing_extensions import Literal
 
-from mechir.modelling.hooked import loading_from_pretrained as loading
 from transformer_lens.ActivationCache import ActivationCache
 from transformer_lens.components import (
     BertBlock,
@@ -354,6 +353,7 @@ class HookedEncoder(HookedRootModule):
         dtype=torch.float32,
         **from_pretrained_kwargs,
     ) -> HookedEncoder:
+        from mechir.modelling.hooked import loading_from_pretrained as loading
         """Loads in the pretrained weights from huggingface. Currently supports loading weight from HuggingFace BertForMaskedLM. Unlike HookedTransformer, this does not yet do any preprocessing on the model."""
         logging.warning(
             "Support for BERT in TransformerLens is currently experimental, until such a time when it has feature "
