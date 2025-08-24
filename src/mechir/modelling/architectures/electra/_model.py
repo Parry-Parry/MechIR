@@ -6,7 +6,6 @@ because it has a significantly different architecture to e.g. GPT style transfor
 
 from __future__ import annotations
 
-import logging
 from typing import Dict, Optional, Union
 
 from transformers import ElectraModel, ElectraForSequenceClassification
