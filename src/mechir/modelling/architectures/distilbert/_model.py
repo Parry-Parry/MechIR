@@ -12,20 +12,22 @@ import torch
 from einops import repeat
 from jaxtyping import Float, Int
 from torch import nn
-from transformers import AutoTokenizer
+from transformers import AutoTokenizer, DistilBertModel, DistilBertForSequenceClassification
 from typing_extensions import Literal
 
 from transformer_lens.components import BertBlock, BertMLMHead, Unembed
 from transformer_lens.hook_points import HookPoint
-from mechir.modelling.hooked.components import BertEmbed
-from mechir.modelling.hooked.linear import MLPClassificationHead
-from mechir.modelling.architectures.base import HookedEncoder
+from mechir.modelling.architectures.base.components import BertEmbed
+from mechir.modelling.architectures.base.linear import MLPClassificationHead
+from mechir.modelling.architectures.base._model import HookedEncoder
 from mechir.modelling.hooked.config import HookedTransformerConfig
 
 
-HookedDistilBert = HookedEncoder
+class HookedDistilBert(HookedEncoder):
+    _hf_class = DistilBertModel
 
 class HookedDistilBertForSequenceClassification(HookedDistilBert):
+    _hf_class = DistilBertForSequenceClassification
     """
     This class implements a BERT-style encoder for sequence classification using the components in ./components.py, with HookPoints on every interesting activation. It inherits from HookedDistilBert.
 

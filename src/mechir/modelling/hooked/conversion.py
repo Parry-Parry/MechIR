@@ -92,10 +92,11 @@ def convert_bert_based_weights(
     model_name: str = "bert",
 ):
     if not hasattr(bert, "embeddings"):
-        bert = getattr(bert, model_name)
-        embeddings = bert.embeddings
+        encoder = getattr(bert, model_name)
+        embeddings = encoder.embeddings
     else:
         embeddings = bert.embeddings
+        encoder = bert
     state_dict = {
         "embed.embed.W_E": embeddings.word_embeddings.weight,
         "embed.pos_embed.W_pos": embeddings.position_embeddings.weight,

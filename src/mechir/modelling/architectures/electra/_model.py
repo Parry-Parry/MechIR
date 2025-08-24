@@ -9,12 +9,13 @@ from __future__ import annotations
 import logging
 from typing import Dict, Optional, Union
 
+from transformers import ElectraModel, ElectraForSequenceClassification
 import torch
 from jaxtyping import Float, Int
 from torch import nn
 from transformer_lens.hook_points import HookPoint
-from mechir.modelling.hooked.linear import ClassificationHead, HiddenLinear
-from mechir.modelling.architectures.base import HookedEncoder
+from mechir.modelling.architectures.base.linear import ClassificationHead, HiddenLinear
+from mechir.modelling.architectures.base._model import HookedEncoder
 from mechir.modelling.hooked.config import HookedTransformerConfig
 
 
@@ -38,7 +39,10 @@ class ElectraClassificationHead(nn.Module):
         post_act = self.hook_post(self.activation(pre_act))
         return self.out_proj(post_act)
 
-HookedElectra = HookedEncoder
+
+class HookedElectra(HookedEncoder):
+    _hf_class = ElectraModel
+
 
 class HookedElectraForSequenceClassification(HookedEncoder):
     """
@@ -49,6 +53,7 @@ class HookedElectraForSequenceClassification(HookedEncoder):
         - There is no preprocessing (e.g. LayerNorm folding) when loading a pretrained model
         - The model only accepts tokens as inputs, and not strings, or lists of strings
     """
+    _hf_class = ElectraForSequenceClassification
 
     def __init__(self, cfg, tokenizer=None, move_to_device=True, **kwargs):
         super().__init__(cfg, tokenizer, move_to_device, **kwargs)

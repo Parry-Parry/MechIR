@@ -14,7 +14,7 @@ import torch
 from einops import repeat
 from jaxtyping import Float, Int
 from torch import nn
-from transformers import AutoTokenizer
+from transformers import AutoTokenizer, AutoModel
 from typing_extensions import Literal
 
 from mechir.modelling.hooked import loading_from_pretrained as loading
@@ -31,8 +31,8 @@ from transformer_lens.hook_points import HookedRootModule, HookPoint
 from transformer_lens.utilities import devices
 
 from mechir.modelling.hooked.config import HookedTransformerConfig
-from mechir.modelling.hooked.components import BertEmbed
-from mechir.modelling.hooked.linear import ClassificationHead, MLPClassificationHead
+from mechir.modelling.architectures.base.components import BertEmbed
+from mechir.modelling.architectures.base.linear import ClassificationHead, MLPClassificationHead
 
 
 class HookedEncoder(HookedRootModule):
@@ -45,6 +45,7 @@ class HookedEncoder(HookedRootModule):
     Like HookedTransformer, it can have a pretrained Transformer's weights loaded via `.from_pretrained`. There are a few features you might know from HookedTransformer which are not yet supported:
         - There is no preprocessing (e.g. LayerNorm folding) when loading a pretrained model
     """
+    _hf_class = AutoModel
 
     def __init__(self, cfg, tokenizer=None, move_to_device=True, **kwargs):
         super().__init__()
@@ -103,7 +104,7 @@ class HookedEncoder(HookedRootModule):
         move_to_device: bool = True,
         truncate: bool = True,
     ) -> Tuple[
-        Int[torch.Tensor, "batch pos"],
+        Int[torch.Tensor, "batch pos"],  # noqa: F722
         Int[torch.Tensor, "batch pos"],
         Int[torch.Tensor, "batch pos"],
     ]:
@@ -129,15 +130,17 @@ class HookedEncoder(HookedRootModule):
         )
 
         tokens = encodings.input_ids
+        token_type_ids = encodings.token_type_ids if self.use_token_type_ids else None
+        attention_mask = encodings.attention_mask
 
         if move_to_device:
             tokens = tokens.to(self.cfg.device)
             token_type_ids = (
-                encodings.token_type_ids.to(self.cfg.device)
+                token_type_ids.to(self.cfg.device)
                 if self.use_token_type_ids
                 else None
             )
-            attention_mask = encodings.attention_mask.to(self.cfg.device)
+            attention_mask = attention_mask.to(self.cfg.device)
 
         return tokens, token_type_ids, attention_mask
 
@@ -383,7 +386,12 @@ class HookedEncoder(HookedRootModule):
             dtype=dtype,
             **from_pretrained_kwargs,
         )
-
+        if hf_model is None:
+            hf_model = cls._hf_class.from_pretrained(
+                official_model_name,
+                torch_dtype=dtype,
+                **from_pretrained_kwargs,
+            )
         state_dict = loading.get_pretrained_state_dict(
             official_model_name, cfg, hf_model, dtype=dtype, **from_pretrained_kwargs
         )
@@ -463,7 +471,7 @@ class HookedEncoder(HookedRootModule):
         )
 
     @property
-    def W_in(self) -> Float[torch.Tensor, "n_layers d_model d_mlp"]:
+    def W_in(self) -> Float[torch.Tensor, "n_layers d_model d_mlp"]:  # noqa: F722
         """Stacks the MLP input weights across all layers"""
         return torch.stack(
             [cast(BertBlock, block).mlp.W_in for block in self.blocks], dim=0

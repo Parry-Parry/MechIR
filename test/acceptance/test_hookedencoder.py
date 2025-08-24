@@ -5,7 +5,7 @@ import torch
 import torch.nn.functional as F
 from jaxtyping import Float
 from torch.testing import assert_close
-from transformers import AutoTokenizer, AutoModel, BertForPreTraining
+from transformers import AutoTokenizer, BertForPreTraining
 
 from mechir.modelling.architectures import HookedEncoder
 
