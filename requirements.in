@@ -1,0 +1,9 @@
+
+transformers==4.41.1
+torch==2.3.0
+jaxtyping==0.2.25
+pytest==8.2.1
+flake8==7.0.0
+black==24.4.2
+numpy==1.26.4
+# Add other dependencies as needed

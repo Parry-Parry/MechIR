@@ -19,7 +19,11 @@ def convert_distilbert_weights(
     }
 
     for l in range(cfg.n_layers):
-        block = distilbert.transformer.layer[l] if not raw else distilbert.transformer.layer[l]
+        block = (
+            distilbert.transformer.layer[l]
+            if not raw
+            else distilbert.transformer.layer[l]
+        )
         state_dict[f"blocks.{l}.attn.W_Q"] = einops.rearrange(
             block.attention.q_lin.weight, "(i h) m -> i m h", i=cfg.n_heads
         )
@@ -61,7 +65,9 @@ def convert_distilbert_weights(
 
         if not raw:
             if sequence_classification:
-                if hasattr(distilbert, "pre_classifier") and hasattr(distilbert, "classifier"):
+                if hasattr(distilbert, "pre_classifier") and hasattr(
+                    distilbert, "classifier"
+                ):
                     pre_classification_head = distilbert.pre_classifier
                     classification_head = distilbert.classifier
                     state_dict["classifier.dense.W"] = classification_head.weight
@@ -111,11 +117,7 @@ def convert_bert_based_weights(
         encoder = bert.encoder
 
     for l in range(cfg.n_layers):
-        block = (
-            encoder.layer[l]
-            if not raw
-            else bert.encoder.layer[l]
-        )
+        block = encoder.layer[l] if not raw else bert.encoder.layer[l]
         state_dict[f"blocks.{l}.attn.W_Q"] = einops.rearrange(
             block.attention.self.query.weight, "(i h) m -> i m h", i=cfg.n_heads
         )
@@ -182,12 +184,12 @@ def convert_bert_based_weights(
 
 
 register_with_transformer_lens(
-    partial(convert_bert_based_weights, model_name='encoder', raw=True),
+    partial(convert_bert_based_weights, model_name="encoder", raw=True),
     ["BertModel"],
     function_type="conversion",
 )
 register_with_transformer_lens(
-    partial(convert_bert_based_weights, model_name='bert', raw=False),
+    partial(convert_bert_based_weights, model_name="bert", raw=False),
     ["BERTForPreTraining", "BertForMaskedLM"],
     function_type="conversion",
 )

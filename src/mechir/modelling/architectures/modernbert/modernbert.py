@@ -32,7 +32,10 @@ from transformer_lens.utilities import devices
 
 from mechir.modelling.hooked.config import HookedTransformerConfig
 from mechir.modelling.architectures.base.components import BertEmbed
-from mechir.modelling.architectures.base.linear import ClassificationHead, MLPClassificationHead
+from mechir.modelling.architectures.base.linear import (
+    ClassificationHead,
+    MLPClassificationHead,
+)
 
 
 class HookedEncoder(HookedRootModule):

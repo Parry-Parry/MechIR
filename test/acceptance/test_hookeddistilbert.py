@@ -11,15 +11,19 @@ from mechir.modelling.architectures import HookedDistilBert
 
 MODEL_NAME = "distilbert-base-uncased-finetuned-sst-2-english"
 
+
 def get_embeddings(model):
     try:
         return model.distilbert.embeddings
     except AttributeError:
         return model.embeddings
 
+
 @pytest.fixture(scope="module")
 def our_distilbert():
-    return HookedDistilBert.from_pretrained(MODEL_NAME, device="cpu", hf_model=DistilBertModel.from_pretrained(MODEL_NAME))
+    return HookedDistilBert.from_pretrained(
+        MODEL_NAME, device="cpu", hf_model=DistilBertModel.from_pretrained(MODEL_NAME)
+    )
 
 
 @pytest.fixture(scope="module")
@@ -50,7 +54,9 @@ def test_full_model(our_distilbert, huggingface_distilbert, tokenizer):
         input_ids, attention_mask=attention_mask, output_hidden_states=True
     ).hidden_states[-1]
     our_distilbert_logits = our_distilbert(input_ids, attention_mask=attention_mask)
-    assert_close(huggingface_distilbert_logits, our_distilbert_logits, rtol=1.3e-6, atol=4e-5)
+    assert_close(
+        huggingface_distilbert_logits, our_distilbert_logits, rtol=1.3e-6, atol=4e-5
+    )
 
 
 def test_embed_one_prediction(our_distilbert, huggingface_distilbert, tokens):
@@ -70,9 +76,7 @@ def test_embed_two_predictions(our_distilbert, huggingface_distilbert, tokenizer
     )
     input_ids = encoding["input_ids"]
 
-    huggingface_embed_out = get_embeddings(huggingface_distilbert)(
-        input_ids
-    )[0]
+    huggingface_embed_out = get_embeddings(huggingface_distilbert)(input_ids)[0]
     our_embed_out = our_distilbert.embed(input_ids).squeeze(0)
     assert_close(huggingface_embed_out, our_embed_out)
 

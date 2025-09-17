@@ -31,7 +31,10 @@ from transformer_lens.utilities import devices
 
 from mechir.modelling.hooked.config import HookedTransformerConfig
 from mechir.modelling.architectures.base.components import BertEmbed
-from mechir.modelling.architectures.base.linear import ClassificationHead, MLPClassificationHead
+from mechir.modelling.architectures.base.linear import (
+    ClassificationHead,
+    MLPClassificationHead,
+)
 
 
 class HookedEncoder(HookedRootModule):
@@ -44,6 +47,7 @@ class HookedEncoder(HookedRootModule):
     Like HookedTransformer, it can have a pretrained Transformer's weights loaded via `.from_pretrained`. There are a few features you might know from HookedTransformer which are not yet supported:
         - There is no preprocessing (e.g. LayerNorm folding) when loading a pretrained model
     """
+
     _hf_class = AutoModel
 
     def __init__(self, cfg, tokenizer=None, move_to_device=True, **kwargs):
@@ -135,9 +139,7 @@ class HookedEncoder(HookedRootModule):
         if move_to_device:
             tokens = tokens.to(self.cfg.device)
             token_type_ids = (
-                token_type_ids.to(self.cfg.device)
-                if self.use_token_type_ids
-                else None
+                token_type_ids.to(self.cfg.device) if self.use_token_type_ids else None
             )
             attention_mask = attention_mask.to(self.cfg.device)
 
@@ -354,6 +356,7 @@ class HookedEncoder(HookedRootModule):
         **from_pretrained_kwargs,
     ) -> HookedEncoder:
         from mechir.modelling.hooked import loading_from_pretrained as loading
+
         """Loads in the pretrained weights from huggingface. Currently supports loading weight from HuggingFace BertForMaskedLM. Unlike HookedTransformer, this does not yet do any preprocessing on the model."""
         logging.warning(
             "Support for BERT in TransformerLens is currently experimental, until such a time when it has feature "

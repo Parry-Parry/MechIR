@@ -158,7 +158,7 @@ class Cat(HookedRootModule, PatchedMixin, SAEMixin):
             results[index] = patching_metric(output, scores, scores_p).mean()
 
         return results
-    
+
     def run_with_cache(
         self,
         *model_args,
@@ -188,7 +188,9 @@ class Cat(HookedRootModule, PatchedMixin, SAEMixin):
     def score(self, sequences: dict, cache=False, cache_as_dict=False):
         if cache:
             logits, cache = self.run_with_cache(
-                sequences["input_ids"], sequences["attention_mask"], cache_as_dict=cache_as_dict
+                sequences["input_ids"],
+                sequences["attention_mask"],
+                cache_as_dict=cache_as_dict,
             )
             return logits, cache
 

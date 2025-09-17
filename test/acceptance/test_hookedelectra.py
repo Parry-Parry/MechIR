@@ -11,15 +11,19 @@ from mechir.modelling.architectures import HookedEncoder
 
 MODEL_NAME = "google/electra-base-discriminator"
 
+
 def get_embeddings(model):
     try:
         return model.electra.embeddings
     except AttributeError:
         return model.embeddings
 
+
 @pytest.fixture(scope="module")
 def our_electra():
-    return HookedEncoder.from_pretrained(MODEL_NAME, device="cpu", hf_model=ElectraModel.from_pretrained(MODEL_NAME))
+    return HookedEncoder.from_pretrained(
+        MODEL_NAME, device="cpu", hf_model=ElectraModel.from_pretrained(MODEL_NAME)
+    )
 
 
 @pytest.fixture(scope="module")
@@ -74,7 +78,9 @@ def test_embed_two_predictions(our_electra, huggingface_electra, tokenizer):
     huggingface_embed_out = get_embeddings(huggingface_electra)(
         input_ids, token_type_ids=token_type_ids
     )[0]
-    our_embed_out = our_electra.embed(input_ids, token_type_ids=token_type_ids).squeeze(0)
+    our_embed_out = our_electra.embed(input_ids, token_type_ids=token_type_ids).squeeze(
+        0
+    )
     assert_close(huggingface_embed_out, our_embed_out)
 
 

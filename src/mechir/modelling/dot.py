@@ -161,7 +161,7 @@ class Dot(HookedRootModule, PatchedMixin, SAEMixin):
             results[index] = patching_metric(output, scores, scores_p).mean()
 
         return results
-    
+
     def run_with_cache(
         self,
         *model_args,
@@ -188,12 +188,21 @@ class Dot(HookedRootModule, PatchedMixin, SAEMixin):
         else:
             return out, None
 
-    def score(self, queries: dict, documents: dict, reps_q=None, cache=False, cache_as_dict=False):
+    def score(
+        self,
+        queries: dict,
+        documents: dict,
+        reps_q=None,
+        cache=False,
+        cache_as_dict=False,
+    ):
         if reps_q is None:
             reps_q = self.forward(queries["input_ids"], queries["attention_mask"])
         if cache:
             reps_d, cache_d = self.run_with_cache(
-                documents["input_ids"], documents["attention_mask"], cache_as_dict=cache_as_dict
+                documents["input_ids"],
+                documents["attention_mask"],
+                cache_as_dict=cache_as_dict,
             )
             return batched_dot_product(reps_q, reps_d), reps_q, reps_d, cache_d
         reps_d = self.forward(documents["input_ids"], documents["attention_mask"])

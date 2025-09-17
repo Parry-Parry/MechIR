@@ -18,6 +18,7 @@ import torch
 from transformer_lens import utils, HookedTransformerConfig as _HookedTransformerConfig
 from transformer_lens.utilities.activation_functions import SUPPORTED_ACTIVATIONS
 
+
 @dataclass
 class HookedTransformerConfig(_HookedTransformerConfig):
     """
@@ -181,6 +182,7 @@ class HookedTransformerConfig(_HookedTransformerConfig):
         num_labels (int): The number of labels for the classification task. Defaults to 1.
         use_token_type_ids (bool): Whether to use token type ids. Defaults to True.
     """
+
     num_labels: int = 1
     use_token_type_ids: bool = True
     use_mlp_head: bool = False

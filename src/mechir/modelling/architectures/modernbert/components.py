@@ -8,16 +8,16 @@ from transformer_lens.components.abstract_attention import AbstractAttention
 from mechir.modelling.hooked.config import HookedTransformerConfig
 
 
-
 class ModernBertRotaryEmbedding(nn.Module):
     def __init__(self, cfg: Union[Dict, HookedTransformerConfig]):
         super().__init__()
         config = HookedTransformerConfig.unwrap(cfg)
 
-
         # BC: "rope_type" was originally "type"
         if hasattr(config, "rope_scaling") and config.rope_scaling is not None:
-            self.rope_type = config.rope_scaling.get("rope_type", config.rope_scaling.get("type"))
+            self.rope_type = config.rope_scaling.get(
+                "rope_type", config.rope_scaling.get("type")
+            )
         else:
             self.rope_type = "default"
         self.max_seq_len_cached = config.max_position_embeddings
@@ -25,19 +25,32 @@ class ModernBertRotaryEmbedding(nn.Module):
 
         self.config = config
         self.rope_init_fn = ROPE_INIT_FUNCTIONS[self.rope_type]
-        inv_freq, self.attention_scaling = self.rope_init_fn(None, device, dim=dim, base=base)
+        inv_freq, self.attention_scaling = self.rope_init_fn(
+            None, device, dim=dim, base=base
+        )
         self.register_buffer("inv_freq", inv_freq, persistent=False)
         self.original_inv_freq = self.inv_freq
 
     @torch.no_grad()
     @dynamic_rope_update  # power user: used with advanced RoPE types (e.g. dynamic rope)
     def forward(self, x, position_ids):
-        inv_freq_expanded = self.inv_freq[None, :, None].float().expand(position_ids.shape[0], -1, 1).to(x.device)
+        inv_freq_expanded = (
+            self.inv_freq[None, :, None]
+            .float()
+            .expand(position_ids.shape[0], -1, 1)
+            .to(x.device)
+        )
         position_ids_expanded = position_ids[:, None, :].float()
 
-        device_type = x.device.type if isinstance(x.device.type, str) and x.device.type != "mps" else "cpu"
+        device_type = (
+            x.device.type
+            if isinstance(x.device.type, str) and x.device.type != "mps"
+            else "cpu"
+        )
         with torch.autocast(device_type=device_type, enabled=False):  # Force float32
-            freqs = (inv_freq_expanded.float() @ position_ids_expanded.float()).transpose(1, 2)
+            freqs = (
+                inv_freq_expanded.float() @ position_ids_expanded.float()
+            ).transpose(1, 2)
             emb = torch.cat((freqs, freqs), dim=-1)
             cos = emb.cos() * self.attention_scaling
             sin = emb.sin() * self.attention_scaling
@@ -77,7 +90,6 @@ def apply_rotary_pos_emb(q, k, cos, sin, position_ids=None, unsqueeze_dim=1):
     q_embed = (q * cos) + (rotate_half(q) * sin)
     k_embed = (k * cos) + (rotate_half(k) * sin)
     return q_embed, k_embed
-
 
 
 def sdpa_attention_forward(
@@ -132,10 +144,15 @@ class ModernBertAttention(nn.Module):
         self.num_heads = config.num_attention_heads
         self.head_dim = config.hidden_size // config.num_attention_heads
         self.all_head_size = self.head_dim * self.num_heads
-        self.Wqkv = nn.Linear(config.hidden_size, 3 * self.all_head_size, bias=config.attention_bias)
+        self.Wqkv = nn.Linear(
+            config.hidden_size, 3 * self.all_head_size, bias=config.attention_bias
+        )
 
         if layer_id % config.global_attn_every_n_layers != 0:
-            self.local_attention = (config.local_attention // 2, config.local_attention // 2)
+            self.local_attention = (
+                config.local_attention // 2,
+                config.local_attention // 2,
+            )
         else:
             self.local_attention = (-1, -1)
 
@@ -146,11 +163,18 @@ class ModernBertAttention(nn.Module):
                 rope_theta = config.local_rope_theta
             max_position_embeddings = config.local_attention
 
-        
-        self.rotary_emb = ModernBertRotaryEmbedding(config=config, dim=self.head_dim, base=rope_theta)
+        self.rotary_emb = ModernBertRotaryEmbedding(
+            config=config, dim=self.head_dim, base=rope_theta
+        )
 
-        self.Wo = nn.Linear(config.hidden_size, config.hidden_size, bias=config.attention_bias)
-        self.out_drop = nn.Dropout(config.attention_dropout) if config.attention_dropout > 0.0 else nn.Identity()
+        self.Wo = nn.Linear(
+            config.hidden_size, config.hidden_size, bias=config.attention_bias
+        )
+        self.out_drop = (
+            nn.Dropout(config.attention_dropout)
+            if config.attention_dropout > 0.0
+            else nn.Identity()
+        )
         self.pruned_heads = set()
 
     def forward(
@@ -181,7 +205,8 @@ class ModernBertAttention(nn.Module):
         hidden_states = self.out_drop(self.Wo(hidden_states))
 
         return (hidden_states,) + attn_outputs[1:]  # add attentions if outputted
-    
+
+
 class ModernBertAttention(nn.Module):
     def __init__(
         self,
@@ -205,8 +230,12 @@ class ModernBertAttention(nn.Module):
 
         if self.cfg.load_in_4bit:
             nq = int((self.cfg.d_model * self.cfg.d_head * self.cfg.n_heads) / 2)
-            self.W_Q = Params4bit(torch.empty(nq, 1, dtype=torch.uint8), requires_grad=False)
-            self.W_O = Params4bit(torch.empty(nq, 1, dtype=torch.uint8), requires_grad=False)
+            self.W_Q = Params4bit(
+                torch.empty(nq, 1, dtype=torch.uint8), requires_grad=False
+            )
+            self.W_O = Params4bit(
+                torch.empty(nq, 1, dtype=torch.uint8), requires_grad=False
+            )
         else:
             self.W_Q = nn.Parameter(
                 torch.empty(
@@ -245,7 +274,9 @@ class ModernBertAttention(nn.Module):
             # For local, this is banded, query - window_size < key <= query
             if not isinstance(self.cfg.window_size, int):
                 raise ValueError("Window size must be an integer for local attention")
-            self.register_buffer("mask", torch.triu(causal_mask, 1 - self.cfg.window_size))
+            self.register_buffer(
+                "mask", torch.triu(causal_mask, 1 - self.cfg.window_size)
+            )
         else:
             raise ValueError(f"Invalid attention type: {self.attn_type}")
 
@@ -275,7 +306,9 @@ class ModernBertAttention(nn.Module):
         self.hook_rot_k = HookPoint()
         self.hook_rot_q = HookPoint()
         if self.cfg.rotary_dim is None:  # keep mypy happy
-            raise ValueError("Rotary dim must be provided for rotary positional embeddings")
+            raise ValueError(
+                "Rotary dim must be provided for rotary positional embeddings"
+            )
         sin, cos = self.calculate_sin_cos_rotary(
             self.cfg.rotary_dim,
             self.cfg.n_ctx,
@@ -327,7 +360,9 @@ class ModernBertAttention(nn.Module):
             Float[torch.Tensor, "batch kv_pos kv_head_index d_model"],
         ],
         past_kv_cache_entry: Optional[HookedTransformerKeyValueCacheEntry] = None,
-        additive_attention_mask: Optional[Float[torch.Tensor, "batch 1 1 kv_pos"]] = None,
+        additive_attention_mask: Optional[
+            Float[torch.Tensor, "batch 1 1 kv_pos"]
+        ] = None,
         attention_mask: Optional[Int[torch.Tensor, "batch offset_pos"]] = None,
         position_bias: Optional[Float[torch.Tensor, "1 head_index pos kv_pos"]] = None,
     ) -> Float[torch.Tensor, "batch pos d_model"]:
@@ -364,7 +399,9 @@ class ModernBertAttention(nn.Module):
 
         if position_bias is None:
             if self.has_relative_attention_bias:
-                raise ValueError("Positional bias is required for relative_positional_bias")
+                raise ValueError(
+                    "Positional bias is required for relative_positional_bias"
+                )
             else:
                 position_bias = torch.zeros(
                     1,
@@ -395,7 +432,9 @@ class ModernBertAttention(nn.Module):
                 # call bitsandbytes method to dequantize and multiply
                 out = (
                     bnb.matmul_4bit(
-                        z.reshape(z.shape[0], z.shape[1], self.cfg.d_head * self.cfg.n_heads),
+                        z.reshape(
+                            z.shape[0], z.shape[1], self.cfg.d_head * self.cfg.n_heads
+                        ),
                         self.W_O.t(),
                         # bias=self.W_O.t(),
                         bias=None,
@@ -414,7 +453,9 @@ class ModernBertAttention(nn.Module):
                     z = z.to(self.b_O.device)
 
                 out = F.linear(
-                    z.reshape(z.shape[0], z.shape[1], self.cfg.d_head * self.cfg.n_heads),
+                    z.reshape(
+                        z.shape[0], z.shape[1], self.cfg.d_head * self.cfg.n_heads
+                    ),
                     w,
                     self.b_O,
                 )
@@ -424,7 +465,9 @@ class ModernBertAttention(nn.Module):
             if self.cfg.load_in_4bit:
                 result = self.hook_result(
                     bnb.matmul_4bit(
-                        z.reshape(z.shape[0], z.shape[1], self.cfg.d_head * self.cfg.n_heads),
+                        z.reshape(
+                            z.shape[0], z.shape[1], self.cfg.d_head * self.cfg.n_heads
+                        ),
                         self.W_O.t(),
                         bias=None,
                         quant_state=self.W_O.quant_state,
@@ -443,9 +486,13 @@ class ModernBertAttention(nn.Module):
                 # Multiply the z tensor by the W_O tensor, summing over the d_head dimension
                 unhooked_result = (z * w).sum(-2)
 
-                result = self.hook_result(unhooked_result)  # [batch, pos, head_index, d_model]
+                result = self.hook_result(
+                    unhooked_result
+                )  # [batch, pos, head_index, d_model]
             out = (
-                einops.reduce(result, "batch position index model->batch position model", "sum")
+                einops.reduce(
+                    result, "batch position index model->batch position model", "sum"
+                )
                 + self.b_O
             )  # [batch, pos, d_model]
         return out
@@ -494,7 +541,9 @@ class ModernBertAttention(nn.Module):
             q = self.hook_q(attn_fn(query_input, self.W_Q, self.b_Q))
         if self.cfg.load_in_4bit:
             if not isinstance(self.W_K, Params4bit):
-                raise ValueError("W_K must be a Params4bit object if load_in_4bit is True")
+                raise ValueError(
+                    "W_K must be a Params4bit object if load_in_4bit is True"
+                )
             k = self.hook_k(
                 # call bitsandbytes method to dequantize and multiply
                 bnb.matmul_4bit(
@@ -512,7 +561,9 @@ class ModernBertAttention(nn.Module):
 
         if self.cfg.load_in_4bit:
             if not isinstance(self.W_V, Params4bit):
-                raise ValueError("W_V must be a Params4bit object if load_in_4bit is True")
+                raise ValueError(
+                    "W_V must be a Params4bit object if load_in_4bit is True"
+                )
             v = self.hook_v(
                 # call bitsandbytes method to dequantize and multiply
                 bnb.matmul_4bit(
@@ -573,7 +624,9 @@ class ModernBertAttention(nn.Module):
 
     def apply_causal_mask(
         self,
-        attn_scores: Float[torch.Tensor, "batch head_index pos pos_plus_past_kv_pos_offset"],
+        attn_scores: Float[
+            torch.Tensor, "batch head_index pos pos_plus_past_kv_pos_offset"
+        ],
         past_kv_pos_offset: int = 0,
         attention_mask: Optional[Int[torch.Tensor, "batch offset_pos"]] = None,
     ):
@@ -589,7 +642,9 @@ class ModernBertAttention(nn.Module):
             )
 
         # Index back to front to ensure local attention works
-        final_mask = self.mask[None, None, -query_ctx_length:, -key_ctx_length:]  # [1, 1, pos, pos]
+        final_mask = self.mask[
+            None, None, -query_ctx_length:, -key_ctx_length:
+        ]  # [1, 1, pos, pos]
         if attention_mask is not None:
             # Apply a causal mask to the attention scores considering the padding
 
@@ -601,7 +656,9 @@ class ModernBertAttention(nn.Module):
             final_mask = final_mask.to(attention_mask.device)
 
             # Element-wise multiplication of the final mask and the attention mask and cast to boolean
-            final_mask = (final_mask * attention_mask).bool()  # [batch, head, pos, offset_pos]
+            final_mask = (
+                final_mask * attention_mask
+            ).bool()  # [batch, head, pos, offset_pos]
 
         attn_scores = attn_scores.to(final_mask.device)
         return torch.where(final_mask, attn_scores, self.IGNORE)
@@ -612,7 +669,9 @@ class ModernBertAttention(nn.Module):
         n_ctx: int,
         base: int = 10000,
         dtype: torch.dtype = torch.float32,
-    ) -> Tuple[Float[torch.Tensor, "n_ctx rotary_dim"], Float[torch.Tensor, "n_ctx rotary_dim"]]:
+    ) -> Tuple[
+        Float[torch.Tensor, "n_ctx rotary_dim"], Float[torch.Tensor, "n_ctx rotary_dim"]
+    ]:
         """
         Calculate the sine and cosine waves to use in a rotary embedding. See https://blog.eleuther.ai/rotary-embeddings/ for details
 
@@ -627,7 +686,11 @@ class ModernBertAttention(nn.Module):
         # Implementation copied from https://github.com/huggingface/transformers/blob/v4.46.0/src/transformers/modeling_rope_utils.py#L310
         if self.cfg.use_NTK_by_parts_rope:
             inv_freq = 1.0 / (
-                base ** (torch.arange(0, rotary_dim, 2, dtype=torch.int64).float() / rotary_dim)
+                base
+                ** (
+                    torch.arange(0, rotary_dim, 2, dtype=torch.int64).float()
+                    / rotary_dim
+                )
             )
             factor = self.cfg.NTK_by_parts_factor
             low_freq_factor = self.cfg.NTK_by_parts_low_freq_factor
@@ -638,15 +701,21 @@ class ModernBertAttention(nn.Module):
             high_freq_wavelen = old_context_len / high_freq_factor
 
             wavelen = 2 * math.pi / inv_freq
-            inv_freq_llama = torch.where(wavelen > low_freq_wavelen, inv_freq / factor, inv_freq)
+            inv_freq_llama = torch.where(
+                wavelen > low_freq_wavelen, inv_freq / factor, inv_freq
+            )
             smooth_factor = (old_context_len / wavelen - low_freq_factor) / (
                 high_freq_factor - low_freq_factor
             )
             smoothed_inv_freq = (
                 1 - smooth_factor
             ) * inv_freq_llama / factor + smooth_factor * inv_freq_llama
-            is_medium_freq = ~(wavelen < high_freq_wavelen) * ~(wavelen > low_freq_wavelen)
-            inv_freq_llama = torch.where(is_medium_freq, smoothed_inv_freq, inv_freq_llama)
+            is_medium_freq = ~(wavelen < high_freq_wavelen) * ~(
+                wavelen > low_freq_wavelen
+            )
+            inv_freq_llama = torch.where(
+                is_medium_freq, smoothed_inv_freq, inv_freq_llama
+            )
             freq = 1 / inv_freq_llama
         else:
             freq = base ** (dim / (rotary_dim / 2))
@@ -704,13 +773,16 @@ class ModernBertAttention(nn.Module):
             ]
             x_rotated = x_rot * rotary_cos + x_flip * rotary_sin
         else:
-            offset_position_ids = get_offset_position_ids(past_kv_pos_offset, attention_mask)
+            offset_position_ids = get_offset_position_ids(
+                past_kv_pos_offset, attention_mask
+            )
             offset_position_ids = offset_position_ids.to(self.rotary_cos.device)
             mask_rotary_cos = self.rotary_cos[offset_position_ids, None, :]
             mask_rotary_sin = self.rotary_sin[offset_position_ids, None, :]
             x_rotated = x_rot * mask_rotary_cos + x_flip * mask_rotary_sin
 
         return torch.cat([x_rotated, x_pass], dim=-1)
+
 
 class ModenBertBlock(nn.Module):
     """
@@ -722,7 +794,9 @@ class ModenBertBlock(nn.Module):
         self.cfg = cfg
 
         self.attn = ModernBertAttention(cfg, layer_id=layer_id)
-        self.ln1 = LayerNorm(cfg) if layer_id != 0 else nn.Identity()  # No LayerNorm on the first layer
+        self.ln1 = (
+            LayerNorm(cfg) if layer_id != 0 else nn.Identity()
+        )  # No LayerNorm on the first layer
         self.mlp = MLPFactory.create_mlp(self.cfg)
         self.ln2 = LayerNorm(cfg)
 
@@ -743,7 +817,9 @@ class ModenBertBlock(nn.Module):
         self,
         resid_pre: Float[torch.Tensor, "batch pos d_model"],
         past_kv_cache_entry: Optional[HookedTransformerKeyValueCacheEntry] = None,
-        additive_attention_mask: Optional[Float[torch.Tensor, "batch 1 1 kv_pos"]] = None,
+        additive_attention_mask: Optional[
+            Float[torch.Tensor, "batch 1 1 kv_pos"]
+        ] = None,
         attention_mask: Optional[Int[torch.Tensor, "batch offset_pos"]] = None,
         position_bias: Optional[Float[torch.Tensor, "1 head_index pos kv_pos"]] = None,
     ) -> Float[torch.Tensor, "batch pos d_model"]:
@@ -755,9 +831,15 @@ class ModenBertBlock(nn.Module):
 
         if self.cfg.use_split_qkv_input:
             n_heads = self.cfg.n_heads
-            query_input = self.hook_q_input(repeat_along_head_dimension(query_input, n_heads))
-            key_input = self.hook_k_input(repeat_along_head_dimension(key_input, n_heads))
-            value_input = self.hook_v_input(repeat_along_head_dimension(value_input, n_heads))
+            query_input = self.hook_q_input(
+                repeat_along_head_dimension(query_input, n_heads)
+            )
+            key_input = self.hook_k_input(
+                repeat_along_head_dimension(key_input, n_heads)
+            )
+            value_input = self.hook_v_input(
+                repeat_along_head_dimension(value_input, n_heads)
+            )
 
         attn_out = self.hook_attn_out(
             self.attn(
@@ -769,7 +851,11 @@ class ModenBertBlock(nn.Module):
         )
         resid_mid = self.hook_resid_mid(resid_pre + attn_out)
 
-        mlp_in = resid_mid if not self.cfg.use_hook_mlp_in else self.hook_mlp_in(resid_mid.clone())
+        mlp_in = (
+            resid_mid
+            if not self.cfg.use_hook_mlp_in
+            else self.hook_mlp_in(resid_mid.clone())
+        )
         normalized_resid_mid = self.ln1(mlp_in)
         mlp_out = self.hook_mlp_out(self.mlp(normalized_resid_mid))
         resid_post = self.hook_resid_post(normalized_resid_mid + mlp_out)

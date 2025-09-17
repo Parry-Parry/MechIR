@@ -52,6 +52,7 @@ class HookedElectraForSequenceClassification(HookedEncoder):
         - There is no preprocessing (e.g. LayerNorm folding) when loading a pretrained model
         - The model only accepts tokens as inputs, and not strings, or lists of strings
     """
+
     _hf_class = ElectraForSequenceClassification
 
     def __init__(self, cfg, tokenizer=None, move_to_device=True, **kwargs):

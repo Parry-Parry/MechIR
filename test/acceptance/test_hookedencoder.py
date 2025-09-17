@@ -11,15 +11,21 @@ from mechir.modelling.architectures import HookedEncoder
 
 MODEL_NAME = "bert-base-cased"
 
+
 def get_embeddings(model):
     try:
         return model.bert.embeddings
     except AttributeError:
         return model.embeddings
 
+
 @pytest.fixture(scope="module")
 def our_bert():
-    return HookedEncoder.from_pretrained(MODEL_NAME, device="cpu", hf_model=BertForPreTraining.from_pretrained(MODEL_NAME))
+    return HookedEncoder.from_pretrained(
+        MODEL_NAME,
+        device="cpu",
+        hf_model=BertForPreTraining.from_pretrained(MODEL_NAME),
+    )
 
 
 @pytest.fixture(scope="module")
@@ -137,7 +143,11 @@ def test_from_pretrained_revision():
 @pytest.mark.parametrize("dtype", [torch.bfloat16, torch.float16])
 def test_half_precision(dtype):
     """Check the 16 bits loading and inferences."""
-    model = HookedEncoder.from_pretrained(MODEL_NAME, torch_dtype=dtype, hf_model=BertForPreTraining.from_pretrained(MODEL_NAME))
+    model = HookedEncoder.from_pretrained(
+        MODEL_NAME,
+        torch_dtype=dtype,
+        hf_model=BertForPreTraining.from_pretrained(MODEL_NAME),
+    )
     assert model.W_K.dtype == dtype
 
     _ = model(model.tokenizer("Hello, world", return_tensors="pt")["input_ids"])

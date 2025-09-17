@@ -12,7 +12,11 @@ import torch
 from einops import repeat
 from jaxtyping import Float, Int
 from torch import nn
-from transformers import AutoTokenizer, DistilBertModel, DistilBertForSequenceClassification
+from transformers import (
+    AutoTokenizer,
+    DistilBertModel,
+    DistilBertForSequenceClassification,
+)
 from typing_extensions import Literal
 
 from transformer_lens.components import BertBlock, BertMLMHead, Unembed
@@ -25,6 +29,7 @@ from mechir.modelling.hooked.config import HookedTransformerConfig
 
 class HookedDistilBert(HookedEncoder):
     _hf_class = DistilBertModel
+
 
 class HookedDistilBertForSequenceClassification(HookedDistilBert):
     _hf_class = DistilBertForSequenceClassification
