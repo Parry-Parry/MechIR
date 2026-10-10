@@ -14,6 +14,11 @@ from typing import Callable, Dict, List, Optional, Sequence
 import torch
 import transformer_lens.utils as utils
 
+from mechir.pipeline.ablation import (
+    causal_groundedness,
+    document_necessity,
+    document_sufficiency,
+)
 from mechir.pipeline.boundary import HardPermutation, PermutationOp, Selection
 from mechir.pipeline.context import Context, ContextBuilder
 from mechir.pipeline.metrics import answer_logprob, attention_to_documents
@@ -257,6 +262,54 @@ class Pipeline:
             )
 
         return rows
+
+    def causal_report(
+        self,
+        query: str,
+        documents: Sequence[str],
+        answer: str,
+        layer: Optional[int] = None,
+    ) -> dict:
+        """Ranker score, reader attention and causal effect, per document.
+
+        The attention and causal columns routinely disagree, and the causal
+        ones are the defensible basis for a faithfulness claim. On a
+        four-document example with pythia-70m, attention ranked a wholly
+        irrelevant distractor first while its leave-one-out effect was
+        *negative* -- removing it improved the answer. Reporting both makes
+        that visible instead of inviting attention to be read as
+        explanation.
+
+        Returns
+        -------
+        dict
+            ``groundedness`` holds the all-documents ablation, and
+            ``documents`` one row per rank with ``necessity`` (leave-one-out)
+            and ``sufficiency`` (keep-one-only) in nats.
+        """
+        scores = self.rank(query, documents)
+        selection = self.boundary.select(scores)
+        context = self.context_builder.build(
+            query, documents, selection.order, answer=answer, device=self._device
+        )
+
+        overall = causal_groundedness(self.reader, context)
+        necessity = document_necessity(self.reader, context)
+        sufficiency = document_sufficiency(self.reader, context)
+        attention = attention_to_documents(self.reader, context, layer=layer)
+
+        rows = [
+            {
+                "rank": rank,
+                "candidate": candidate,
+                "ranker_score": float(scores[candidate]),
+                "reader_attention": attention[rank],
+                "necessity": necessity[rank],
+                "sufficiency": sufficiency[rank],
+            }
+            for rank, candidate in enumerate(selection.order)
+        ]
+        return {"groundedness": overall, "documents": rows}
 
     # -- cross-boundary patching -----------------------------------------
 

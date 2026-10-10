@@ -11,6 +11,12 @@ from .boundary import (
     shuffle,
     swap,
 )
+from .ablation import (
+    ablated_metric,
+    causal_groundedness,
+    document_necessity,
+    document_sufficiency,
+)
 from .context import Context, ContextBuilder, DocumentSpan
 from .metrics import answer_logprob, attention_to_documents, groundedness
 from .pipeline import Pipeline, PipelineRun
@@ -33,4 +39,8 @@ __all__ = [
     "answer_logprob",
     "attention_to_documents",
     "groundedness",
+    "ablated_metric",
+    "causal_groundedness",
+    "document_necessity",
+    "document_sufficiency",
 ]
