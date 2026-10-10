@@ -954,3 +954,11 @@ def get_basic_config(model_name: str, **kwargs) -> Config:
 ### HARDCODED REGISTRATION OF MODELS ###
 add_official_model("sebastian-hofstaetter/distilbert-dot-tas_b-b256-msmarco")
 add_official_model("crystina-z/monoELECTRA_LCE_nneg31")
+# MonoT5 checkpoints. Without these, TransformerLens rejects the name in its
+# own `from_pretrained` and MonoT5 cannot be constructed at all. These are
+# standard T5 architectures, so they use the existing T5 conversion path.
+add_official_model("castorini/monot5-small-msmarco-10k")
+add_official_model("castorini/monot5-small-msmarco-100k")
+add_official_model("castorini/monot5-base-msmarco")
+add_official_model("castorini/monot5-base-msmarco-10k")
+add_official_model("castorini/monot5-large-msmarco")
