@@ -1,7 +1,27 @@
+"""Embedding steering via the top singular direction.
+
+TODO: this module is not exported from ``mechir.modelling`` and has never
+been executed. Importing it now works, but three defects remain before it
+can be wired up:
+
+  * ``EmbeddingSteer.increase`` returns ``x * -self.scale`` while
+    ``decrease`` returns ``x * self.scale``, so the two modes are negated
+    with respect to their names.
+  * ``__post_init__`` is defined on a plain class, not a dataclass, so it is
+    never called and ``self.U_0`` is never assigned. ``forward`` therefore
+    raises ``AttributeError``.
+  * ``forward`` mutates ``self.U_0`` in place and returns ``None``.
+
+Fixing these needs a decision about the intended steering semantics, so they
+are left documented rather than guessed at.
+"""
+
 import torch
 from torch import nn
 from dataclasses import dataclass
 from typing import Optional, List
+
+from transformer_lens.hook_points import HookedRootModule
 
 
 @dataclass

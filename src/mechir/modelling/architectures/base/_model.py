@@ -418,7 +418,10 @@ class HookedEncoder(HookedRootModule):
         return self.unembed.W_U
 
     @property
-    def b_U(self) -> Float[torch.Tensor, "d_vocab"]:
+    # noqa below: flake8 reads a single-token jaxtyping shape as a forward
+    # reference and reports F821. Multi-token shapes land as F722 instead,
+    # which is ignored globally.
+    def b_U(self) -> Float[torch.Tensor, "d_vocab"]:  # noqa: F821
         """
         Convenience to get the unembedding bias
         """
