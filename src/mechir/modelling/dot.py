@@ -37,7 +37,6 @@ class Dot(HookedRootModule, PatchedMixin, SAEMixin):
             else tokenizer
         )
         self.special_token = special_token
-        torch.set_grad_enabled(False)
         self._device = utils.get_device()
         self.model_name_or_path = get_official_model_name(model_name_or_path)
         self.__hf_model = (
@@ -188,6 +187,7 @@ class Dot(HookedRootModule, PatchedMixin, SAEMixin):
         else:
             return out, None
 
+    @torch.no_grad()
     def score(
         self,
         queries: dict,
@@ -208,6 +208,7 @@ class Dot(HookedRootModule, PatchedMixin, SAEMixin):
         reps_d = self.forward(documents["input_ids"], documents["attention_mask"])
         return batched_dot_product(reps_q, reps_d), reps_q, reps_d, None
 
+    @torch.no_grad()
     def patch(
         self,
         queries: dict,

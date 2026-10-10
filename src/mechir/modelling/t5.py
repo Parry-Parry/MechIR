@@ -34,7 +34,6 @@ class MonoT5(HookedRootModule, PatchedMixin, SAEMixin):
         self.pos_token = self.tokenizer.encode(pos_token, return_tensors="pt")[0]
         self.neg_token = self.tokenizer.encode(neg_token, return_tensors="pt")[0]
 
-        torch.set_grad_enabled(False)
         self._device = utils.get_device()
         self.model_name_or_path = get_official_model_name(model_name_or_path)
         self.__hf_model = (
@@ -160,6 +159,7 @@ class MonoT5(HookedRootModule, PatchedMixin, SAEMixin):
 
         return results
 
+    @torch.no_grad()
     def score(self, sequences: dict, cache=False):
         if cache:
             logits, cache = self.run_with_cache(
@@ -170,6 +170,7 @@ class MonoT5(HookedRootModule, PatchedMixin, SAEMixin):
         logits = self.forward(sequences["input_ids"], sequences["attention_mask"])
         return logits, None
 
+    @torch.no_grad()
     def patch(
         self,
         sequences: dict,
