@@ -1,18 +1,31 @@
 [build-system]
-requires = ["setuptools", "wheel"]
+requires = ["setuptools>=77", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "mechir"
 version = "0.0.4"
 dependencies = [
+  # Upper bound is load-bearing: TransformerLens 4.0 removed
+  # `loading_from_pretrained`, `pretrained.weight_conversions` and
+  # `HookedEncoder`, all of which mechir imports. See docs/upgrading.md.
+  "transformer_lens>=2.15,<3",
+  "sae_lens>=6",
   "torch",
   "transformers",
-  "transformer_lens",
-  "sae_lens",
   "ir_datasets",
+  # TransformerLens 2.x caps numpy<2; pyarrow>=21 requires numpy>=2 at
+  # runtime without declaring it, so both need bounding or `import mechir`
+  # dies with "pyarrow requires NumPy 2.0 or newer".
+  "numpy>=1.26,<2",
+  "datasets<4",
+  "pyarrow<21",
+  # Imported unconditionally but previously undeclared.
+  "jaxtyping",
+  "pandas",
+  "plotly",
   "streamlit",
-  "seaborn"
+  "seaborn",
 ]
 requires-python = ">=3.10"
 authors = [
@@ -24,11 +37,11 @@ maintainers = [
 ]
 description = "A package for mechanistic interpretability in Neural IR"
 readme = "README.md"
-license = {file = "LICENSE"}
+license = "Apache-2.0"
+license-files = ["LICENSE"]
 keywords = ["pytorch", "transformers", "ranking", "information retrieval"]
 classifiers = [
     "Programming Language :: Python",
-    "License :: OSI Approved :: Apache Software License",
     "Operating System :: OS Independent",
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
@@ -36,11 +49,27 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
 ]
 
+[project.optional-dependencies]
+# Guarded behind util.is_pyterrier_availible / is_ir_axioms_availible, so
+# only needed for the index-backed axiomatic perturbations.
+axiomatic = [
+  "python-terrier",
+  "ir_axioms",
+]
+dev = [
+  "pytest",
+  "flake8",
+  "black",
+]
+
 [project.urls]
 Repository = "https://github.com/Parry-Parry/MechIR.git"
 
-[tool.flake8]
-max-line-length = 127
-max-complexity = 10
-disable-noqa = false
-ignore = ["E9", "F63", "F7", "F82", "F722"]
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+mechir = ["perturb/data/stopwords.txt"]
