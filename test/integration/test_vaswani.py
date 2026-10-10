@@ -13,6 +13,7 @@ most individual pairs. Measured separation at the time of writing:
     TAS-B                 mean_rel=+95.06  mean_rand=+89.23  wins 11/12
     MiniLM cross-encoder  mean_rel=-4.38   mean_rand=-10.45  wins 12/12
     MonoT5-small          mean_rel=-9.30   mean_rand=-11.08  wins  9/12
+    Qwen3-Reranker-0.6B   mean_rel=-0.61   mean_rand=-3.11   wins  7/8
 
 No nDCG targets: they would be meaningless on this collection for these
 models and would bake in a misleading baseline.
@@ -137,9 +138,8 @@ def test_bi_encoder_separates_relevant_from_random(bi_encoder, collection):
 def test_bi_encoder_score_is_stable_across_padding(bi_encoder, collection):
     """Padding length must not change the ranking.
 
-    Note this holds for CLS pooling; mean pooling currently averages over
-    padding positions and would fail, which is the bug flagged in
-    backbones._pool_mean.
+    Holds for both pooling modes now that mean pooling masks padding;
+    test_pooling.py checks the invariance directly for each.
     """
     short = score_bi_encoder(bi_encoder, collection["positive"], doc_length=180)
     long = score_bi_encoder(bi_encoder, collection["positive"], doc_length=220)

@@ -103,11 +103,22 @@ def _pool_cls(x: torch.Tensor, mask: Optional[torch.Tensor] = None) -> torch.Ten
 
 
 def _pool_mean(x: torch.Tensor, mask: Optional[torch.Tensor] = None) -> torch.Tensor:
-    # TODO: this averages over padding positions as well, which is wrong for
-    # padded batches -- masked mean is what encoder bi-encoders such as TAS-B
-    # actually use. Left as-is here so existing results are reproducible;
-    # changing it alters every mean-pooled score and wants its own change.
-    return x.mean(dim=1)
+    """Mean over non-padding positions.
+
+    Averaging over padding, as this previously did, makes the score depend
+    on how far the batch happened to be padded: the same document scores
+    differently at ``max_length=180`` and ``max_length=220``. Masking is
+    also what the encoder bi-encoders this wraps -- TAS-B and friends --
+    actually do, so the unmasked version did not reproduce the source model.
+
+    The mask is optional only so that unpadded single sequences still work;
+    omitting it when the batch *is* padded reintroduces the bug.
+    """
+    if mask is None:
+        return x.mean(dim=1)
+
+    mask = mask.unsqueeze(-1).to(x.dtype)
+    return (x * mask).sum(dim=1) / mask.sum(dim=1).clamp(min=1.0)
 
 
 def _pool_last(x: torch.Tensor, mask: Optional[torch.Tensor] = None) -> torch.Tensor:
