@@ -599,7 +599,16 @@ class HookedEncoderForSequenceClassification(HookedEncoder):
         )
         if return_type == "embeddings" or stop_at_layer is not None:
             return hidden
-        logits = self.classifier(hidden[:, 0, :])
+
+        if self.cfg.use_mlp_head:
+            # ELECTRA-style: the head carries its own dense + activation, so
+            # it consumes raw CLS.
+            logits = self.classifier(hidden[:, 0, :])
+        else:
+            # BERT-style: the classifier sits on the pooled output,
+            # tanh(dense(CLS)). Skipping the pooler silently produces scores
+            # that do not match the source model.
+            logits = self.classifier(self.pooler(hidden))
 
         if return_type is None:
             return None

@@ -46,6 +46,24 @@ class Cat(HookedRootModule, PatchedMixin, SAEMixin):
             self.model_name_or_path, device=self._device, hf_model=self.__hf_model
         )
 
+        # A checkpoint that is not already a sequence-classification model gets
+        # a randomly initialised head from AutoModelForSequenceClassification,
+        # and the config path that carries num_labels is never taken -- so the
+        # head comes out width-1 and log_softmax over it is identically zero.
+        # That made every patch output NaN, silently, which is how this went
+        # unnoticed. Warn rather than raise, since a bare encoder is still
+        # useful for testing the plumbing.
+        architectures = getattr(self.__hf_model.config, "architectures", None) or []
+        if not any("SequenceClassification" in a for a in architectures):
+            logger.warning(
+                "%s declares architectures=%s, not a *ForSequenceClassification "
+                "model. Its classification head is randomly initialised and "
+                "scores are not meaningful. Use a trained cross-encoder, e.g. "
+                "cross-encoder/ms-marco-MiniLM-L-6-v2.",
+                self.model_name_or_path,
+                architectures,
+            )
+
         self.softmax_output = softmax_output
         self._return_cache = return_cache
 
@@ -186,15 +204,21 @@ class Cat(HookedRootModule, PatchedMixin, SAEMixin):
 
     @torch.no_grad()
     def score(self, sequences: dict, cache=False, cache_as_dict=False):
+        # token_type_ids marks the query/document split. Dropping it silently
+        # changes the score of every cross-encoder, so pass it when present.
+        token_type_ids = sequences.get("token_type_ids")
         if cache:
             logits, cache = self.run_with_cache(
                 sequences["input_ids"],
                 sequences["attention_mask"],
+                token_type_ids,
                 cache_as_dict=cache_as_dict,
             )
             return logits, cache
 
-        logits = self.forward(sequences["input_ids"], sequences["attention_mask"])
+        logits = self.forward(
+            sequences["input_ids"], sequences["attention_mask"], token_type_ids
+        )
         return logits, None
 
     @torch.no_grad()

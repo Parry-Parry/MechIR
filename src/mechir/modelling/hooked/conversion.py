@@ -165,8 +165,28 @@ def convert_bert_based_weights(
                 )
                 state_dict["classifier.out_proj.b"] = classification_head.out_proj.bias
             else:
-                state_dict["classifier.W"] = classification_head.weight
+                # ClassificationHead allocates W as (d_model, num_labels), but
+                # nn.Linear stores it as (num_labels, d_model). Without this
+                # transpose, loading any real cross-encoder fails outright:
+                #   size mismatch for classifier.W: copying a param with shape
+                #   [1, 384] ... the shape in current model is [384, 1]
+                state_dict["classifier.W"] = einops.rearrange(
+                    classification_head.weight, "labels model -> model labels"
+                )
                 state_dict["classifier.b"] = classification_head.bias
+
+                # BertForSequenceClassification reads the classifier off the
+                # *pooled* output -- tanh(dense(CLS)) -- not raw CLS. The
+                # pooler was instantiated but its weights were never
+                # converted, so scores did not match HuggingFace.
+                pooler = getattr(encoder, "pooler", None) or getattr(
+                    getattr(bert, model_name, bert), "pooler", None
+                )
+                if pooler is not None:
+                    state_dict["pooler.W"] = einops.rearrange(
+                        pooler.dense.weight, "out model -> model out"
+                    )
+                    state_dict["pooler.b"] = pooler.dense.bias
         else:
             if "electra" not in model_name:
                 if hasattr(bert, "cls"):
