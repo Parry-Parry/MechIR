@@ -16,6 +16,8 @@ from .ablation import (
     causal_groundedness,
     document_necessity,
     document_sufficiency,
+    resample_metric,
+    resample_necessity,
 )
 from .context import Context, ContextBuilder, DocumentSpan
 from .metrics import answer_logprob, attention_to_documents, groundedness
@@ -43,4 +45,6 @@ __all__ = [
     "causal_groundedness",
     "document_necessity",
     "document_sufficiency",
+    "resample_metric",
+    "resample_necessity",
 ]

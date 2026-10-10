@@ -79,6 +79,14 @@ class ContextBuilder:
     def _encode(self, text: str) -> List[int]:
         return self.tokenizer.encode(text, add_special_tokens=False)
 
+    def document_token_length(self, text: str) -> int:
+        """Token count ``text`` will occupy, after this builder's truncation.
+
+        Exposed so a resample ablation can length-match a replacement and
+        avoid shifting the documents that follow it.
+        """
+        return len(self._encode(self._truncate(text)))
+
     def _truncate(self, text: str) -> str:
         if self.max_document_tokens is None:
             return text

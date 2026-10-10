@@ -18,6 +18,7 @@ from mechir.pipeline.ablation import (
     causal_groundedness,
     document_necessity,
     document_sufficiency,
+    resample_necessity,
 )
 from mechir.pipeline.boundary import HardPermutation, PermutationOp, Selection
 from mechir.pipeline.context import Context, ContextBuilder
@@ -297,6 +298,15 @@ class Pipeline:
         necessity = document_necessity(self.reader, context)
         sufficiency = document_sufficiency(self.reader, context)
         attention = attention_to_documents(self.reader, context, layer=layer)
+        resampled = resample_necessity(
+            self.reader,
+            self.context_builder,
+            query,
+            documents,
+            selection.order,
+            answer,
+            device=self._device,
+        )
 
         rows = [
             {
@@ -306,6 +316,8 @@ class Pipeline:
                 "reader_attention": attention[rank],
                 "necessity": necessity[rank],
                 "sufficiency": sufficiency[rank],
+                "resample_effect": resampled[rank]["effect"],
+                "resample_length_delta": resampled[rank]["length_delta"],
             }
             for rank, candidate in enumerate(selection.order)
         ]
