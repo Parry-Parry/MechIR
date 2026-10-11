@@ -962,3 +962,8 @@ add_official_model("castorini/monot5-small-msmarco-100k")
 add_official_model("castorini/monot5-base-msmarco")
 add_official_model("castorini/monot5-base-msmarco-10k")
 add_official_model("castorini/monot5-large-msmarco")
+# BERT-family cross-encoders for Cat.
+add_official_model("cross-encoder/ms-marco-MiniLM-L-6-v2")
+add_official_model("cross-encoder/ms-marco-MiniLM-L-12-v2")
+add_official_model("cross-encoder/ms-marco-TinyBERT-L-2-v2")
+add_official_model("naver/trecdl22-crossencoder-electra")

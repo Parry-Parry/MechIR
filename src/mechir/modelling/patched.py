@@ -13,6 +13,18 @@ class PatchedMixin(ABC):
         self._model = None
         self._device = None
 
+    def _extra_forward_kwargs(self, batch: dict) -> dict:
+        """Forward kwargs beyond input_ids/attention_mask, when the batch has them.
+
+        `token_type_ids` carries the query/document split for cross-encoders;
+        dropping it during patching scores a different input than `score` did.
+        Encoder-decoder batches have no token types, so this stays empty there.
+        """
+        token_type_ids = batch.get("token_type_ids")
+        if token_type_ids is None:
+            return {}
+        return {"token_type_ids": token_type_ids}
+
     @property
     def _patch_funcs(self):
         return {
@@ -114,6 +126,7 @@ class PatchedMixin(ABC):
                     patched_outputs = self.run_with_hooks(
                         corrupted_tokens["input_ids"],
                         attention_mask=corrupted_tokens["attention_mask"],
+                        **self._extra_forward_kwargs(corrupted_tokens),
                         fwd_hooks=[
                             ("_model." + utils.get_act_name(component, layer), hook_fn)
                         ],
@@ -143,6 +156,7 @@ class PatchedMixin(ABC):
                 patched_outputs = self.run_with_hooks(
                     corrupted_tokens["input_ids"],
                     attention_mask=corrupted_tokens["attention_mask"],
+                    **self._extra_forward_kwargs(corrupted_tokens),
                     fwd_hooks=[("_model." + utils.get_act_name("z", layer), hook_fn)],
                 )
                 yield (layer, head), patched_outputs
@@ -173,6 +187,7 @@ class PatchedMixin(ABC):
                     patched_outputs = self.run_with_hooks(
                         corrupted_tokens["input_ids"],
                         attention_mask=corrupted_tokens["attention_mask"],
+                        **self._extra_forward_kwargs(corrupted_tokens),
                         fwd_hooks=[
                             ("_model." + utils.get_act_name(component, layer), hook_fn)
                         ],
