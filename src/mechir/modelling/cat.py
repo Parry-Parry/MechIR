@@ -34,7 +34,6 @@ class Cat(HookedRootModule, PatchedMixin, SAEMixin):
             else tokenizer
         )
         self.special_token = special_token
-        torch.set_grad_enabled(False)
         self._device = utils.get_device()
         self.model_name_or_path = get_official_model_name(model_name_or_path)
         self.__hf_model = (
@@ -185,6 +184,7 @@ class Cat(HookedRootModule, PatchedMixin, SAEMixin):
         else:
             return out, None
 
+    @torch.no_grad()
     def score(self, sequences: dict, cache=False, cache_as_dict=False):
         if cache:
             logits, cache = self.run_with_cache(
@@ -197,6 +197,7 @@ class Cat(HookedRootModule, PatchedMixin, SAEMixin):
         logits = self.forward(sequences["input_ids"], sequences["attention_mask"])
         return logits, None
 
+    @torch.no_grad()
     def patch(
         self,
         sequences: dict,
