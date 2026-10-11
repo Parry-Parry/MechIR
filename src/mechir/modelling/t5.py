@@ -29,13 +29,16 @@ class MonoT5(HookedRootModule, PatchedMixin, SAEMixin):
         softmax_output: bool = False,
         return_cache: bool = False,
     ) -> None:
+        super().__init__()
+        self.model_name_or_path = get_official_model_name(model_name_or_path)
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_name_or_path)
         self.special_token = special_token
-        self.pos_token = self.tokenizer.encode(pos_token, return_tensors="pt")[0]
-        self.neg_token = self.tokenizer.encode(neg_token, return_tensors="pt")[0]
+        # Single vocabulary ids. `encode(..., return_tensors="pt")[0]` would
+        # return the whole sequence, including T5's trailing EOS.
+        self.pos_token = self._single_token_id(pos_token)
+        self.neg_token = self._single_token_id(neg_token)
 
         self._device = utils.get_device()
-        self.model_name_or_path = get_official_model_name(model_name_or_path)
         self.__hf_model = (
             AutoModelForSeq2SeqLM.from_pretrained(model_name_or_path)
             .eval()
@@ -50,13 +53,46 @@ class MonoT5(HookedRootModule, PatchedMixin, SAEMixin):
 
         self.setup()
 
+    def _single_token_id(self, token: str) -> int:
+        """Resolve ``token`` to one vocabulary id.
+
+        The relevance head reads a single logit per class, so a label that
+        does not map to exactly one token cannot be scored.
+        """
+        ids = self.tokenizer.encode(token, add_special_tokens=False)
+        if len(ids) != 1:
+            raise ValueError(
+                f"Relevance label {token!r} maps to {len(ids)} tokens ({ids}); "
+                "MonoT5 scoring needs labels that are a single token."
+            )
+        return ids[0]
+
+    def _decoder_start(
+        self, input_ids: Float[torch.Tensor, "batch seq"]
+    ) -> Float[torch.Tensor, "batch 1"]:
+        """One decoder step holding just the start token.
+
+        MonoT5 reads the relevance label off the first decoder position, so
+        the decoder only ever needs to be run for a single step.
+        """
+        start_id = self._model.cfg.decoder_start_token_id or 0
+        return torch.full(
+            (input_ids.shape[0], 1),
+            start_id,
+            dtype=torch.long,
+            device=input_ids.device,
+        )
+
     def forward(
         self,
         input_ids: Float[torch.Tensor, "batch seq"],
         attention_mask: Float[torch.Tensor, "batch seq"],
     ):
         model_output = self._model(
-            input=input_ids, one_hot_attention_mask=attention_mask, return_type="logits"
+            input=input_ids,
+            one_zero_attention_mask=attention_mask,
+            decoder_input=self._decoder_start(input_ids),
+            return_type="logits",
         )
         model_output = (
             model_output[:, 0, (self.pos_token, self.neg_token)].softmax(dim=-1)[:, 0]
