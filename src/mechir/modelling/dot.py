@@ -1,9 +1,8 @@
 from typing import Callable, Dict, Tuple, Union
 import logging
-import os
 import torch
 from jaxtyping import Float
-from transformers import AutoModel, AutoTokenizer
+from transformers import AutoTokenizer
 from transformer_lens.ActivationCache import ActivationCache
 from transformer_lens.hook_points import HookedRootModule
 import transformer_lens.utils as utils
@@ -11,14 +10,9 @@ from mechir.modelling.patched import PatchedMixin
 from mechir.modelling.sae import SAEMixin
 from mechir.modelling.hooked.loading_from_pretrained import get_official_model_name
 from mechir.util import batched_dot_product, linear_rank_function
-from mechir.modelling.architectures import HookedEncoder
+from mechir.modelling.backbones import POOLING, load_backbone
 
 logger = logging.getLogger(__name__)
-
-POOLING = {
-    "cls": lambda x: x[:, 0, :],
-    "mean": lambda x: x.mean(dim=1),
-}
 
 
 class Dot(HookedRootModule, PatchedMixin, SAEMixin):
@@ -39,11 +33,13 @@ class Dot(HookedRootModule, PatchedMixin, SAEMixin):
         self.special_token = special_token
         self._device = utils.get_device()
         self.model_name_or_path = get_official_model_name(model_name_or_path)
-        self.__hf_model = (
-            AutoModel.from_pretrained(model_name_or_path).eval().to(self._device)
+
+        assert pooling_type in POOLING, (
+            f"Unknown pooling_type {pooling_type!r}. " f"Choose from {sorted(POOLING)}"
         )
-        self._model = HookedEncoder.from_pretrained(
-            self.model_name_or_path, device=self._device, hf_model=self.__hf_model
+
+        self._model, self.__hf_model, self._is_decoder = load_backbone(
+            model_name_or_path, self.model_name_or_path, self._device
         )
 
         self._pooling_type = pooling_type
@@ -58,13 +54,25 @@ class Dot(HookedRootModule, PatchedMixin, SAEMixin):
         attention_mask: Float[torch.Tensor, "batch seq"],
         token_type_ids: Float[torch.Tensor, "batch seq"] = None,
     ):
-        model_output = self._model(
-            input=input_ids,
-            attention_mask=attention_mask,
-            token_type_ids=token_type_ids,
-            return_type="embeddings",
-        )
-        return self._pooling(model_output)
+        if self._is_decoder:
+            # HookedTransformer has no return_type="embeddings": stopping
+            # after the last block gives the residual stream, and the final
+            # norm has to be applied by hand to match the source model's
+            # last_hidden_state.
+            resid = self._model(
+                input_ids,
+                attention_mask=attention_mask,
+                stop_at_layer=self._model.cfg.n_layers,
+            )
+            model_output = self._model.ln_final(resid)
+        else:
+            model_output = self._model(
+                input=input_ids,
+                attention_mask=attention_mask,
+                token_type_ids=token_type_ids,
+                return_type="embeddings",
+            )
+        return self._pooling(model_output, attention_mask)
 
     def get_act_patch_block_every(
         self,

@@ -954,3 +954,29 @@ def get_basic_config(model_name: str, **kwargs) -> Config:
 ### HARDCODED REGISTRATION OF MODELS ###
 add_official_model("sebastian-hofstaetter/distilbert-dot-tas_b-b256-msmarco")
 add_official_model("crystina-z/monoELECTRA_LCE_nneg31")
+# MonoT5 checkpoints. Without these, TransformerLens rejects the name in its
+# own `from_pretrained` and MonoT5 cannot be constructed at all. These are
+# standard T5 architectures, so they use the existing T5 conversion path.
+add_official_model("castorini/monot5-small-msmarco-10k")
+add_official_model("castorini/monot5-small-msmarco-100k")
+add_official_model("castorini/monot5-base-msmarco")
+add_official_model("castorini/monot5-base-msmarco-10k")
+add_official_model("castorini/monot5-large-msmarco")
+# BERT-family cross-encoders for Cat.
+add_official_model("cross-encoder/ms-marco-MiniLM-L-6-v2")
+add_official_model("cross-encoder/ms-marco-MiniLM-L-12-v2")
+add_official_model("cross-encoder/ms-marco-TinyBERT-L-2-v2")
+add_official_model("naver/trecdl22-crossencoder-electra")
+# Decoder-backbone IR models. These are architecturally unmodified Qwen2/Qwen3
+# checkpoints, so TransformerLens's existing conversion handles them; only the
+# names need registering. Bi-encoders use pooling_type="last" via Dot, and the
+# rerankers score through GenerativeRanker.
+add_official_model("Qwen/Qwen3-Embedding-0.6B")
+add_official_model("Qwen/Qwen3-Embedding-4B")
+add_official_model("Qwen/Qwen3-Embedding-8B")
+add_official_model("Qwen/Qwen3-Reranker-0.6B")
+add_official_model("Qwen/Qwen3-Reranker-4B")
+add_official_model("Qwen/Qwen3-Reranker-8B")
+add_official_model("Alibaba-NLP/gte-Qwen2-1.5B-instruct")
+add_official_model("Alibaba-NLP/gte-Qwen2-7B-instruct")
+add_official_model("castorini/rankllama-v1-7b-lora-passage")

@@ -20,8 +20,53 @@ def batched_dot_product(a: Tensor, b: Tensor):
     return (a * b).sum(dim=-1)
 
 
-def linear_rank_function(patch_score: Tensor, score: Tensor, score_p: Tensor):
-    return (patch_score - score) / (score_p - score)
+def linear_rank_function(
+    patch_score: Tensor,
+    score: Tensor,
+    score_p: Tensor,
+    eps: float = 1e-8,
+) -> Tensor:
+    """Normalised recovery of the perturbed score by a patched component.
+
+    Returns 0 where the component recovers none of the perturbation's effect
+    and 1 where it recovers all of it.
+
+    Parameters
+    ----------
+    patch_score: torch.Tensor
+        Score with the component patched in from the clean run.
+    score: torch.Tensor
+        Score on the unperturbed input.
+    score_p: torch.Tensor
+        Score on the perturbed input.
+    eps: float
+        Magnitude below which ``score_p - score`` counts as no change.
+
+    Returns
+    -------
+    torch.Tensor
+        Same shape as the inputs. Entries where the perturbation did not move
+        the score are 0 rather than NaN -- see Notes.
+
+    Notes
+    -----
+    The denominator ``score_p - score`` is zero whenever the perturbation
+    leaves the score untouched, which happens routinely: a perturbation
+    beyond the truncation window, a no-op perturbation, or a degenerate
+    scoring head. Dividing by it yielded NaN, and because NaN propagates
+    through the ``.mean()`` in the patching loops a single affected batch
+    item poisoned the entire patch map.
+
+    Those entries are reported as 0, which reads correctly: if the
+    perturbation changed nothing, no component can have recovered anything.
+    """
+    delta = score_p - score
+    numerator = patch_score - score
+    return torch.where(
+        delta.abs() < eps,
+        torch.zeros_like(numerator),
+        numerator / torch.where(delta.abs() < eps, torch.ones_like(delta), delta),
+    )
 
 
 def seed_everything(seed=42):
