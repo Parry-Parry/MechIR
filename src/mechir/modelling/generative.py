@@ -90,7 +90,10 @@ class GenerativeRanker(HookedRootModule, PatchedMixin, SAEMixin):
         self,
         logits: Float[torch.Tensor, "batch pos d_vocab"],
         attention_mask: Optional[Float[torch.Tensor, "batch pos"]] = None,
-    ) -> Float[torch.Tensor, "batch"]:
+        # noqa below: flake8 reads a single-token jaxtyping shape as a forward
+        # reference and reports F821. Multi-token shapes land as F722, which
+        # is ignored globally in .flake8.
+    ) -> Float[torch.Tensor, "batch"]:  # noqa: F821
         """Reduce full logits to one relevance score per item.
 
         The label is predicted at the last non-padding position, which with
