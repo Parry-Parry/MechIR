@@ -967,3 +967,16 @@ add_official_model("cross-encoder/ms-marco-MiniLM-L-6-v2")
 add_official_model("cross-encoder/ms-marco-MiniLM-L-12-v2")
 add_official_model("cross-encoder/ms-marco-TinyBERT-L-2-v2")
 add_official_model("naver/trecdl22-crossencoder-electra")
+# Decoder-backbone IR models. These are architecturally unmodified Qwen2/Qwen3
+# checkpoints, so TransformerLens's existing conversion handles them; only the
+# names need registering. Bi-encoders use pooling_type="last" via Dot, and the
+# rerankers score through GenerativeRanker.
+add_official_model("Qwen/Qwen3-Embedding-0.6B")
+add_official_model("Qwen/Qwen3-Embedding-4B")
+add_official_model("Qwen/Qwen3-Embedding-8B")
+add_official_model("Qwen/Qwen3-Reranker-0.6B")
+add_official_model("Qwen/Qwen3-Reranker-4B")
+add_official_model("Qwen/Qwen3-Reranker-8B")
+add_official_model("Alibaba-NLP/gte-Qwen2-1.5B-instruct")
+add_official_model("Alibaba-NLP/gte-Qwen2-7B-instruct")
+add_official_model("castorini/rankllama-v1-7b-lora-passage")
