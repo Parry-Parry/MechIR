@@ -1,6 +1,13 @@
+transformer_lens>=2.15,<3
+sae_lens>=6
 torch
 transformers
-transformer_lens
-sae_lens
 ir_datasets
+numpy>=1.26,<2
+datasets<4
+pyarrow<21
+jaxtyping
+pandas
+plotly
 streamlit
+seaborn
