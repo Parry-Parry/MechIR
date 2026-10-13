@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mechir"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
   # Upper bound is load-bearing: TransformerLens 4.0 removed
   # `loading_from_pretrained`, `pretrained.weight_conversions` and
@@ -23,9 +23,6 @@ dependencies = [
   # Imported unconditionally but previously undeclared.
   "jaxtyping",
   "pandas",
-  "plotly",
-  "streamlit",
-  "seaborn",
 ]
 requires-python = ">=3.10"
 authors = [
@@ -50,6 +47,15 @@ classifiers = [
 ]
 
 [project.optional-dependencies]
+# Plotting was core until 0.2.0, which meant `pip install mechir` pulled
+# seaborn, matplotlib, plotly and streamlit -- a web framework -- for four
+# helper functions.
+plotting = [
+  "seaborn",
+  "matplotlib",
+  "plotly",
+  "streamlit",
+]
 # Guarded behind util.is_pyterrier_availible / is_ir_axioms_availible, so
 # only needed for the index-backed axiomatic perturbations.
 axiomatic = [

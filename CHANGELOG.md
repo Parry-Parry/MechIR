@@ -1,5 +1,43 @@
 # Changelog
 
+## 0.2.0
+
+### Plotting is an extra
+
+`pip install mechir` used to pull seaborn, matplotlib, plotly **and
+streamlit** -- a web framework -- for four helper functions. They now live
+behind `pip install "mechir[plotting]"`.
+
+**Breaking** if you relied on `mechir.plotting` working from a bare install.
+
+Imports also resolve lazily per function instead of eagerly for the whole
+package, which fixes a real bug: `visualize_attn_patterns` needs streamlit
+while `plotting_funcs` does not, and the old star-import of both meant a
+missing streamlit broke `plot_components` too, even though it only needs
+seaborn. A missing dependency now raises an error naming the extra rather
+than a bare `ModuleNotFoundError: streamlit`.
+
+### The publish workflow no longer re-runs the test suite
+
+Releasing re-ran the full suite, which downloads several models -- roughly
+five minutes and hundreds of megabytes re-fetched per release, duplicating
+what `python-package.yml` had already run on the same commit.
+
+It now verifies the **built artefact** instead, which is what a release can
+uniquely break and what the source tree cannot check: the wheel installs
+into a clean environment, the public API imports from it, `__version__`
+matches the installed metadata, `stopwords.txt` is present as package data,
+and the `plotting` extra resolves. The artefact is built once and published
+unchanged, where before `deploy` rebuilt it and uploaded files nothing had
+verified.
+
+### Fixed
+
+- `black` is pinned (`==26.10.1`). It was unpinned, so CI installed a
+  version two years newer than local and rejected correctly-formatted code,
+  which failed the 0.1.0 release on its first attempt. An unpinned formatter
+  in a gating step lets any upstream release break the build with no commit.
+
 ## 0.1.0
 
 First release that can actually be installed. `0.0.4` on PyPI cannot be

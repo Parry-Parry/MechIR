@@ -1,4 +1,4 @@
-# Builds, tests and publishes to PyPI when a release is published.
+# Builds, verifies and publishes to PyPI when a release is published.
 # https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python#publishing-to-package-registries
 
 name: Upload Python Package
@@ -11,9 +11,9 @@ permissions:
   contents: read
 
 jobs:
-  # A PyPI version number cannot be reused, so a bad publish is permanent.
-  # Verify the package imports and its tests pass before the upload step.
-  test:
+  # Build once, publish exactly these files. Rebuilding in the deploy job
+  # would upload artefacts nothing had verified.
+  build:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
@@ -21,22 +21,72 @@ jobs:
       with:
         python-version: '3.11'
         cache: pip
-    - name: Install package
+    - name: Build sdist and wheel
       run: |
-        python -m pip install --upgrade pip
-        python -m pip install -e ".[dev]"
-    - name: Lint (errors)
-      run: |
-        flake8 src test --count --show-source --statistics \
-          --select=E9,F63,F701,F702,F811,F821,F82
-    - name: Check formatting
-      run: black --check --diff src test
-    - name: Test
-      run: pytest test/unit test/acceptance -v
+        python -m pip install --upgrade pip build
+        python -m build
+    - uses: actions/upload-artifact@v4
+      with:
+        name: dist
+        path: dist/
 
-  # Guards against tagging a release whose version does not match the one
-  # that would be uploaded -- the kind of mismatch only noticed after the
-  # upload cannot be undone.
+  # Verifies the built artefact rather than the source tree. python-package.yml
+  # already lints and tests every push and pull request to main, so re-running
+  # the suite here would duplicate it -- and that suite downloads several
+  # models, which made the previous version of this workflow spend ~5 minutes
+  # and hundreds of megabytes re-fetching them on every release.
+  #
+  # What a release can uniquely break is packaging: missing package data, bad
+  # metadata, a module that imports from a source checkout but not from an
+  # installed wheel. That is what this checks, and the source tree cannot.
+  verify-wheel:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/download-artifact@v4
+      with:
+        name: dist
+        path: dist/
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+        cache: pip
+    - name: Install the wheel into a clean environment
+      run: python -m pip install "$(ls dist/*.whl)"
+    - name: Public API must import from the installed wheel
+      run: |
+        python - <<'PY'
+        import importlib.metadata as md
+        import mechir
+        from mechir import Cat, Dot, MonoT5, GenerativeRanker, PatchedMixin, SAEMixin
+        from mechir.data import MechIRDataset, CatDataCollator, DotDataCollator
+        from mechir.modelling.architectures import HookedEncoder, HookedDistilBert
+        from mechir.modelling.backbones import POOLING, get_backbone
+        from mechir.perturb import perturbation
+        import mechir.plotting  # must not need the plotting extra
+
+        assert mechir.__version__ == md.version("mechir"), (
+            f"__version__ {mechir.__version__} != metadata {md.version('mechir')}"
+        )
+        assert sorted(POOLING) == ["cls", "last", "mean"], sorted(POOLING)
+        print("public API OK, version", mechir.__version__)
+        PY
+    - name: Packaged data files must be present
+      run: |
+        python - <<'PY'
+        from importlib.resources import files
+        stopwords = files("mechir.perturb.data") / "stopwords.txt"
+        assert stopwords.is_file(), "stopwords.txt missing from the wheel"
+        assert len(stopwords.read_text().split()) > 10
+        print("package data OK")
+        PY
+    - name: Plotting extra must install and resolve
+      run: |
+        python -m pip install "$(ls dist/*.whl)[plotting]"
+        python -c "from mechir.plotting import plot_components; print('plotting extra OK')"
+
+  # Catches a release tagged at a version other than the one being uploaded --
+  # a mismatch otherwise noticed only after the upload cannot be undone.
   check-version:
     runs-on: ubuntu-latest
     steps:
@@ -56,17 +106,13 @@ jobs:
         fi
 
   deploy:
-    needs: [test, check-version]
+    needs: [verify-wheel, check-version]
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-python@v5
+    - uses: actions/download-artifact@v4
       with:
-        python-version: '3.11'
-    - name: Build package
-      run: |
-        python -m pip install --upgrade pip build
-        python -m build
+        name: dist
+        path: dist/
     - name: Publish package
       uses: pypa/gh-action-pypi-publish@27b31702a0e7fc50959f5ad993c78deac1bdfc29
       with:
