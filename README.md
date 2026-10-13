@@ -34,9 +34,15 @@ pip install mechir
 
 Currently we support common bi- and cross-encoder models for neural retrieval. The following models are available:
 
-* Dot: A simple dot-product model allowing multiple forms of pooling
-* Cat: A cross-encoder model with joint query-document embeddings and a linear classification head
-* MonoT5: A sequence-to-sequence cross-encoder model based on T5
+* Dot: A bi-encoder scored by dot product, with `cls`, `mean` or `last` pooling
+* Cat: A cross-encoder with joint query-document encoding and a classification head
+* MonoT5: An encoder-decoder cross-encoder scored by contrasting `true`/`false` token logits
+* GenerativeRanker: A decoder-backbone reranker scored by contrasting two label-token logits, e.g. Qwen3-Reranker
+
+Encoder backbones (BERT, DistilBERT, ELECTRA) and decoder backbones
+(Qwen2/Qwen3, Llama, Mistral) are both supported; `Dot` picks the right one
+from the checkpoint's architecture. Decoder bi-encoders such as
+Qwen3-Embedding use `pooling_type="last"`.
 
 To load a model, for example TAS-B, you can use the following code:
 
@@ -51,7 +57,7 @@ model = Dot('sebastian-hofstaetter/distilbert-dot-tas_b-b256-msmarco')
 To probe model behaviour we need queries and documents, we retrieve these from ir-datasets though you can use your own (MechDataset). To load an IR dataset, for example MS MARCO, you can use the following code:
 
 ```python
-from mechir import MechIRDataset
+from mechir.data import MechIRDataset
 
 dataset = MechIRDataset('msmarco-passage/dev')
 ```
@@ -81,11 +87,16 @@ dataloader = DataLoader(dataset, collate_fn=collate_fn, batch_size=8)
 Activation patching is a method to isolate model behaviour to particular components of the model commonly attention heads. There are several ways to perform activation patching, a simple case is to patch all heads:
 
 ```python
+import torch
+
 patch_output = []
 for batch in dataloader:
-    patch_output.append(model.patch(**batch, patch_type="head_all"))
+    # patch() returns (result, cache); cache is None unless the model was
+    # built with return_cache=True.
+    result, _ = model.patch(**batch, patch_type="head_all")
+    patch_output.append(result)
 
-patch_output = torch.mean(torch.stack(patch_output), axis=0)
+patch_output = torch.mean(torch.stack(patch_output), dim=0)
 ```
 
 We can then easily visualise the attention heads which activate strongly for our perturbation:

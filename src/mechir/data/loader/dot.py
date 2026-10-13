@@ -29,7 +29,7 @@ class DotDataCollator(BaseCollator):
         tokenized_queries = self.tokenizer(
             queries,
             padding="max_length",
-            truncation=False,
+            truncation=True,
             max_length=self.q_max_length,
             return_tensors="pt",
             return_special_tokens_mask=self.special_mask,
@@ -37,7 +37,7 @@ class DotDataCollator(BaseCollator):
         tokenized_docs = self.tokenizer(
             batch_padded_docs,
             padding="max_length",
-            truncation=False,
+            truncation=True,
             max_length=self.d_max_length,
             return_tensors="pt",
             return_special_tokens_mask=self.special_mask,
@@ -46,7 +46,7 @@ class DotDataCollator(BaseCollator):
         tokenized_perturbed_docs = self.tokenizer(
             batch_padded_perturbed_docs,
             padding="max_length",
-            truncation=False,
+            truncation=True,
             max_length=self.d_max_length,
             return_tensors="pt",
             return_special_tokens_mask=self.special_mask,

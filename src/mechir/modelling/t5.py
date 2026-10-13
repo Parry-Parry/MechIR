@@ -210,11 +210,21 @@ class MonoT5(HookedRootModule, PatchedMixin, SAEMixin):
     def patch(
         self,
         sequences: dict,
-        sequences_p: dict,
+        sequences_p: dict = None,
         patch_type: str = "block_all",
         layer_head_list: list = [],
         patching_metric: Callable = linear_rank_function,
+        perturbed_sequences: dict = None,
     ):
+        # MonoT5DataCollator emits "perturbed_sequences", so accept that name too --
+        # otherwise the documented `model.patch(**batch)` workflow raises
+        # TypeError.
+        sequences_p = sequences_p if sequences_p is not None else perturbed_sequences
+        if sequences_p is None:
+            raise TypeError(
+                "patch() needs sequences_p (or perturbed_sequences, the key "
+                "MonoT5DataCollator emits)"
+            )
         assert (
             patch_type in self._patch_funcs
         ), f"Patch type {patch_type} not recognized. Choose from {self._patch_funcs.keys()}"

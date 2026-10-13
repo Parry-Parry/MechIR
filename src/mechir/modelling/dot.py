@@ -221,11 +221,21 @@ class Dot(HookedRootModule, PatchedMixin, SAEMixin):
         self,
         queries: dict,
         documents: dict,
-        documents_p: dict,
+        documents_p: dict = None,
         patch_type: str = "block_all",
         layer_head_list: list = [],
         patching_metric: Callable = linear_rank_function,
+        perturbed_documents: dict = None,
     ):
+        # DotDataCollator emits "perturbed_documents", so accept that name
+        # too -- otherwise the documented `model.patch(**batch)` workflow
+        # raises TypeError.
+        documents_p = documents_p if documents_p is not None else perturbed_documents
+        if documents_p is None:
+            raise TypeError(
+                "patch() needs documents_p (or perturbed_documents, the key "
+                "DotDataCollator emits)"
+            )
         assert (
             patch_type in self._patch_funcs
         ), f"Patch type {patch_type} not recognized. Choose from {self._patch_funcs.keys()}"
