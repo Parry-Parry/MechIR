@@ -1,11 +1,14 @@
+# Requires the examples extra (pyterrier_dr comes with it):
+#
+#     pip install "mechir[examples]"   # from a checkout: uv sync --extra examples
 import os
 from fire import Fire
 import ir_datasets as irds
 import pandas as pd
 import pyterrier as pt
 
-if not pt.started():
-    pt.init()
+if not pt.java.started():
+    pt.java.init()
 
 DL19 = r"msmarco-passage/trec-dl-2019/judged"
 DL20 = r"msmarco-passage/trec-dl-2020/judged"

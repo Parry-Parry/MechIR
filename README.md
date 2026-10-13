@@ -4,7 +4,9 @@
 
 This library exists to make encoders first-class citizens in Mechanistic Interpretability, particularly with a focus on Information Retrieval and representation learning. We presented this work as a demo at ECIR 2025: https://arxiv.org/pdf/2501.10165
 
-We have done our best to support many of the features present in [transformer_lens](https://github.com/TransformerLensOrg/TransformerLens/tree/main). Additionally, we provide extensive functionality for activation patching (more details in our demo!). We are in the process of producing SAEs for different common IR models!.
+We have done our best to support many of the features present in [transformer_lens](https://github.com/TransformerLensOrg/TransformerLens/tree/main). Additionally, we provide extensive functionality for activation patching (more details in our demo!).
+
+We have not released any SAEs. `mechir.modelling.sae.SAEMixin` lets you attach an existing [sae_lens](https://github.com/jbloomAus/SAELens) 6 SAE to a `Dot`, `Cat`, `MonoT5` or `GenerativeRanker` model and run with it hooked in, but that path is currently untested — treat it as experimental.
 
 
 Heavily inspired by the paper **Axiomatic Causal Interventions for Reverse Engineering Relevance Computation in Neural Retrieval Models** by Catherine Chen, Jack Merullo, and Carsten Eickhoff (Brown University, University of Tübingen), their original code can be found [here](https://github.com/catherineschen/axiomatic-ir-interventions/tree/main)
@@ -33,6 +35,7 @@ pip install mechir
 ```
 pip install "mechir[plotting]"    # seaborn / plotly / streamlit, for mechir.plotting
 pip install "mechir[axiomatic]"   # pyterrier / ir_axioms, for index-backed perturbations
+pip install "mechir[examples]"    # fire / pyterrier / pyterrier_dr, for examples/ and scripts/
 ```
 
 Plotting dependencies are an extra as of 0.2.0. `mechir.plotting` imports
