@@ -59,7 +59,10 @@ axiomatic = [
 dev = [
   "pytest",
   "flake8",
-  "black",
+  # Pinned: black's formatting rules change between releases, so an
+  # unpinned version means CI can reject code that is correctly formatted
+  # locally. 26.10.1 rejected what 24.10.0 accepted and failed a release.
+  "black==26.10.1",
 ]
 
 [project.urls]

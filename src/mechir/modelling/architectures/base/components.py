@@ -1,5 +1,4 @@
-"""Hooked Transformer DistilBert Embed Component.
-"""
+"""Hooked Transformer DistilBert Embed Component."""
 
 from typing import Dict, Optional, Union
 
