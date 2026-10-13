@@ -91,9 +91,9 @@ def assert_separates(positive_scores, negative_scores):
     )
 
     win_rate = (positive > negative).float().mean().item()
-    assert (
-        win_rate >= MIN_PAIRWISE_WIN_RATE
-    ), f"relevant won only {win_rate:.0%} of pairs"
+    assert win_rate >= MIN_PAIRWISE_WIN_RATE, (
+        f"relevant won only {win_rate:.0%} of pairs"
+    )
 
 
 # --------------------------------------------------------------------------
@@ -283,24 +283,42 @@ def test_monot5_separates_relevant_from_random(monot5, collection):
     )
 
 
-def test_monot5_patching_still_unsupported(monot5, collection):
-    """Pins the encoder-decoder hook-naming gap on real data.
+def test_monot5_patching_works_on_real_data(monot5, collection):
+    """Regression: the encoder-decoder hook-naming gap, on real data.
 
-    PatchedMixin builds `blocks.{layer}.…` names; T5 uses
-    `encoder.{layer}.…` / `decoder.{layer}.…`.
+    `PatchedMixin` built `blocks.{layer}.…` names while `HookedEncoderDecoder`
+    uses `encoder.{layer}.…` / `decoder.{layer}.…`, so every patching run
+    raised `KeyError: '_model.blocks.0.hook_resid_pre'`. Hook naming is now an
+    architecture-level strategy and MonoT5 selects the encoder stack.
     """
-    pairs = collection["positive"][:1]
-    enc = monot5.tokenizer(
-        [f"Query: {q} Document: {d} Relevant:" for q, d in pairs],
-        return_tensors="pt",
-        padding="max_length",
-        max_length=32,
-        truncation=True,
-    )
-    batch = {"input_ids": enc.input_ids, "attention_mask": enc.attention_mask}
+    query, document = collection["positive"][0]
 
-    with pytest.raises(KeyError, match=r"blocks\.0"):
-        monot5.patch(batch, batch, patch_type="head_all")
+    def encode(text):
+        # Vaswani queries alone fill ~30 tokens, so a shorter window truncates
+        # the document away entirely and the perturbation becomes a no-op.
+        enc = monot5.tokenizer(
+            [text],
+            return_tensors="pt",
+            padding="max_length",
+            max_length=128,
+            truncation=True,
+        )
+        return {"input_ids": enc.input_ids, "attention_mask": enc.attention_mask}
+
+    # Inject the query at the head of the document, where it survives
+    # truncation and moves the score.
+    clean = encode(f"Query: {query} Document: {document} Relevant:")
+    perturbed = encode(f"Query: {query} Document: {query} {document} Relevant:")
+    assert not torch.allclose(monot5.score(clean)[0], monot5.score(perturbed)[0]), (
+        "perturbation did not move the score, so there is nothing to patch"
+    )
+
+    result = monot5.patch(clean, perturbed, patch_type="head_all")
+
+    assert result.shape == (monot5._model.cfg.n_layers, monot5._model.cfg.n_heads)
+    assert torch.isfinite(result).all()
+    # Shapes alone would also be satisfied by a loop that patched nothing.
+    assert (result != 0).any()
 
 
 # --------------------------------------------------------------------------

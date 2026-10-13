@@ -35,7 +35,7 @@ class Dot(HookedRootModule, PatchedMixin, SAEMixin):
         self.model_name_or_path = get_official_model_name(model_name_or_path)
 
         assert pooling_type in POOLING, (
-            f"Unknown pooling_type {pooling_type!r}. " f"Choose from {sorted(POOLING)}"
+            f"Unknown pooling_type {pooling_type!r}. Choose from {sorted(POOLING)}"
         )
 
         self._model, self.__hf_model, self._is_decoder = load_backbone(
@@ -74,100 +74,25 @@ class Dot(HookedRootModule, PatchedMixin, SAEMixin):
             )
         return self._pooling(model_output, attention_mask)
 
-    def get_act_patch_block_every(
+    def _patch_score(
         self,
-        corrupted_tokens: Float[torch.Tensor, "batch pos"],
-        clean_cache: ActivationCache,
-        reps_q: Float[torch.Tensor, "batch pos model"],
-        patching_metric: Callable[[Float[torch.Tensor, "batch pos d_vocab"]], float],
-        scores: Float[torch.Tensor, "batch pos"],
-        scores_p: Float[torch.Tensor, "batch pos"],
-        **kwargs,
-    ) -> Float[torch.Tensor, "3 layer pos"]:
+        patched_output: Float[torch.Tensor, "batch d_model"],
+        reps_q: Float[torch.Tensor, "batch d_model"] = None,
+        **context,
+    ) -> torch.Tensor:
+        """Score patched document embeddings against the query embeddings.
+
+        The per-family scoring seam of :class:`~mechir.modelling.patched.PatchedMixin`.
+        A bi-encoder's ``forward`` returns pooled document embeddings rather
+        than a score, so the relevance score only exists once they are
+        contracted with the query side.
         """
-        Returns an array of results of patching each position at each layer in the residual
-        stream, using the value from the clean cache.
-
-        The results are calculated using the patching_metric function, which should be
-        called on the model's logit output.
-        """
-
-        _, seq_len = corrupted_tokens["input_ids"].size()
-        results = torch.zeros(
-            3,
-            self._model.cfg.n_layers,
-            seq_len,
-            device=self._device,
-            dtype=torch.float32,
-        )
-
-        for index, output in self._get_act_patch_block_every(
-            corrupted_tokens=corrupted_tokens, clean_cache=clean_cache
-        ):
-            output = batched_dot_product(reps_q, output)
-            results[index] = patching_metric(output, scores, scores_p).mean()
-
-        return results
-
-    def get_act_patch_attn_head_out_all_pos(
-        self,
-        corrupted_tokens: Float[torch.Tensor, "batch pos"],
-        clean_cache: ActivationCache,
-        reps_q: Float[torch.Tensor, "batch pos model"],
-        patching_metric: Callable,
-        scores: Float[torch.Tensor, "batch pos"],
-        scores_p: Float[torch.Tensor, "batch pos"],
-        **kwargs,
-    ) -> Float[torch.Tensor, "layer head"]:
-        """
-        Returns an array of results of patching at all positions for each head in each
-        layer, using the value from the clean cache.
-
-        The results are calculated using the patching_metric function, which should be
-        called on the model's embedding output.
-        """
-
-        results = torch.zeros(
-            self._model.cfg.n_layers,
-            self._model.cfg.n_heads,
-            device=self._device,
-            dtype=torch.float32,
-        )
-
-        for index, output in self._get_act_patch_attn_head_out_all_pos(
-            corrupted_tokens=corrupted_tokens, clean_cache=clean_cache
-        ):
-            output = batched_dot_product(reps_q, output)
-            results[index] = patching_metric(output, scores, scores_p).mean()
-
-        return results
-
-    def get_act_patch_attn_head_by_pos(
-        self,
-        corrupted_tokens: Float[torch.Tensor, "batch pos"],
-        reps_q: Float[torch.Tensor, "batch pos model"],
-        clean_cache: ActivationCache,
-        layer_head_list,
-        patching_metric: Callable,
-        scores: Float[torch.Tensor, "batch pos"],
-        scores_p: Float[torch.Tensor, "batch pos"],
-        **kwargs,
-    ) -> Float[torch.Tensor, "layer pos head"]:
-
-        _, seq_len = corrupted_tokens["input_ids"].size()
-        results = torch.zeros(
-            2, len(layer_head_list), seq_len, device=self._device, dtype=torch.float32
-        )
-
-        for index, output in self._get_act_patch_attn_head_by_pos(
-            corrupted_tokens=corrupted_tokens,
-            clean_cache=clean_cache,
-            layer_head_list=layer_head_list,
-        ):
-            output = batched_dot_product(reps_q, output)
-            results[index] = patching_metric(output, scores, scores_p).mean()
-
-        return results
+        if reps_q is None:
+            raise TypeError(
+                "Dot patching needs reps_q, the pooled query embeddings. "
+                "Call patch(), which supplies them."
+            )
+        return batched_dot_product(reps_q, patched_output)
 
     def run_with_cache(
         self,
@@ -236,9 +161,9 @@ class Dot(HookedRootModule, PatchedMixin, SAEMixin):
                 "patch() needs documents_p (or perturbed_documents, the key "
                 "DotDataCollator emits)"
             )
-        assert (
-            patch_type in self._patch_funcs
-        ), f"Patch type {patch_type} not recognized. Choose from {self._patch_funcs.keys()}"
+        assert patch_type in self._patch_funcs, (
+            f"Patch type {patch_type} not recognized. Choose from {self._patch_funcs.keys()}"
+        )
         scores, reps_q, _, _ = self.score(queries, documents)
         scores_p, _, _, cache_d = self.score(
             queries, documents_p, cache=True, reps_q=reps_q

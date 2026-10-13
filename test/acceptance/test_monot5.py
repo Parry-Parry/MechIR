@@ -1,8 +1,8 @@
 """MonoT5 coverage.
 
 MonoT5 previously could not be constructed at all, so none of this was
-exercised. See test_patch_is_not_yet_supported for the one part that is
-still broken.
+exercised. Patching was broken for a second reason -- the hook names were
+built for a single-stack model -- which the tests below now pin as fixed.
 """
 
 import pytest
@@ -75,18 +75,71 @@ def test_softmax_output_bounds(batch, softmax_output):
         assert torch.isfinite(scores).all()
 
 
-@pytest.mark.parametrize("patch_type", ["block_all", "head_all"])
-def test_patch_is_not_yet_supported(monot5, batch, patch_type):
-    """MonoT5 patching is broken, and this pins why.
+def test_hook_names_target_the_encoder_stack(monot5):
+    """Regression: hook names were built as `blocks.{layer}.…`.
 
-    PatchedMixin builds hook names with `utils.get_act_name`, which yields
-    `blocks.{layer}.…`. T5 is an encoder-decoder, so its hooks are named
-    `encoder.{layer}.…` and `decoder.{layer}.…` and the lookup misses:
-
-        KeyError: '_model.blocks.0.hook_resid_pre'
-
-    Fixing this needs the hook-naming scheme to become a property of the
-    architecture rather than a hardcoded string in the patching loops.
+    T5 is an encoder-decoder, so `HookedEncoderDecoder` names its hooks
+    `encoder.{layer}.…` and `decoder.{layer}.…`; every patching run died on
+    `KeyError: '_model.blocks.0.hook_resid_pre'`. Naming is now a property of
+    the architecture, so assert the names MonoT5 asks for really exist.
     """
-    with pytest.raises(KeyError, match=r"blocks\.0"):
-        monot5.patch(batch, batch, patch_type=patch_type)
+    for component in ("resid_pre", "attn_out", "mlp_out", "z", "pattern"):
+        name = monot5._hook_names(component, 0)
+        assert name.startswith("_model.encoder.0."), name
+        assert name in monot5.hook_dict, name
+
+
+@pytest.mark.parametrize(
+    "patch_type, shape",
+    [
+        ("block_all", lambda m, seq: (3, m._model.cfg.n_layers, seq)),
+        ("head_all", lambda m, seq: (m._model.cfg.n_layers, m._model.cfg.n_heads)),
+        ("head_by_pos", lambda m, seq: (2, 1, seq)),
+    ],
+)
+def test_patch_returns_the_shared_shapes(monot5, batch, patch_type, shape):
+    """Patching works, and returns the same shapes as Dot and Cat."""
+    seq_len = batch["input_ids"].shape[1]
+
+    result, _ = monot5.patch(
+        batch, batch, patch_type=patch_type, layer_head_list=[(0, 0)]
+    )
+
+    assert result.shape == shape(monot5, seq_len)
+    assert torch.isfinite(result).all()
+
+
+def test_patch_responds_to_a_perturbation(monot5):
+    """A patch map over a real perturbation is not identically zero.
+
+    Shapes alone would also be satisfied by a loop that patched nothing, so
+    pin that the hooks actually move the score.
+    """
+    enc = monot5.tokenizer(
+        [
+            "Query: what is a cat Document: a cat is an animal Relevant:",
+            "Query: what is a cat Document: a cat is an animal cat Relevant:",
+        ],
+        return_tensors="pt",
+        padding=True,
+    )
+    clean = {"input_ids": enc.input_ids[:1], "attention_mask": enc.attention_mask[:1]}
+    perturbed = {
+        "input_ids": enc.input_ids[1:],
+        "attention_mask": enc.attention_mask[1:],
+    }
+
+    result, _ = monot5.patch(clean, perturbed, patch_type="head_all")
+
+    assert torch.isfinite(result).all()
+    assert (result != 0).any()
+
+
+def test_patch_does_not_mutate_the_caller_batch(monot5, batch):
+    """The patching loops used to assign device tensors back into the batch."""
+    before = batch["input_ids"].clone()
+
+    monot5.patch(batch, batch, patch_type="head_all")
+
+    assert torch.equal(batch["input_ids"], before)
+    assert batch["input_ids"].device == before.device
