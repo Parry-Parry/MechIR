@@ -1,0 +1,5 @@
+# pip install -r requirements.plotting.txt   (or: pip install "mechir[plotting]")
+seaborn
+matplotlib
+plotly
+streamlit

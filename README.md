@@ -28,6 +28,17 @@ pip install git+https://github.com/Parry-Parry/MechIR.git
 pip install mechir
 ```
 
+### Extras
+
+```
+pip install "mechir[plotting]"    # seaborn / plotly / streamlit, for mechir.plotting
+pip install "mechir[axiomatic]"   # pyterrier / ir_axioms, for index-backed perturbations
+```
+
+Plotting dependencies are an extra as of 0.2.0. `mechir.plotting` imports
+them lazily, so a missing one raises an error naming the extra rather than a
+bare `ModuleNotFoundError`.
+
 ## Usage
 
 ### Models 

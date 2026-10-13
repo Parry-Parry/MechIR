@@ -8,6 +8,3 @@ datasets<4
 pyarrow<21
 jaxtyping
 pandas
-plotly
-streamlit
-seaborn
