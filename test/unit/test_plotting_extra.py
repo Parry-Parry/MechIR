@@ -77,7 +77,14 @@ def test_unknown_attribute_raises_attribute_error():
 
 def test_seaborn_helpers_do_not_require_streamlit(fresh_plotting):
     """Regression: the old star-import of both submodules meant a missing
-    streamlit broke `plot_components`, which only needs seaborn."""
+    streamlit broke `plot_components`, which only needs seaborn.
+
+    Needs the plotting extra to say anything, since the assertion is that
+    plot_components *resolves*. Skips rather than fails without it, so a
+    bare `pip install -e ".[dev]"` environment stays usable.
+    """
+    pytest.importorskip("seaborn", reason="needs mechir[plotting]")
+    pytest.importorskip("matplotlib", reason="needs mechir[plotting]")
     plotting = fresh_plotting("streamlit")
 
     assert callable(plotting.plot_components)
