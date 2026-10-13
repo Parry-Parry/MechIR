@@ -8,8 +8,9 @@ import logging
 import math
 import os
 import re
+from collections.abc import Mapping
 from pathlib import Path
-from typing import Dict, List, Optional, Union, Callable
+from typing import Any, Dict, List, Optional, Union, Callable
 import sys
 
 import torch
@@ -227,6 +228,67 @@ def get_official_model_name(model_name: str):
         return official_model_name
 
 
+# Fallback used when a checkpoint's config.json omits `architectures`. Keys are
+# HuggingFace `model_type` values; values are architecture names that have a
+# registered config builder (see `mechir.modelling.hooked.states`).
+MODEL_TYPE_TO_ARCHITECTURE: Dict[str, str] = {
+    "bert": "BertModel",
+    "distilbert": "DistilBertModel",
+    "electra": "ElectraForPreTraining",
+}
+
+
+def _config_field(hf_config: Any, field: str) -> Any:
+    """Read ``field`` from a HuggingFace config object or a plain dict."""
+    if isinstance(hf_config, Mapping):
+        return hf_config.get(field)
+    return getattr(hf_config, field, None)
+
+
+def resolve_architecture(hf_config: Any, model_name: str) -> str:
+    """Return the HuggingFace architecture name for a loaded model config.
+
+    Args:
+        hf_config: A ``PretrainedConfig`` (or an equivalent mapping) for
+            ``model_name``.
+        model_name: The checkpoint the config came from, used in error messages.
+
+    Returns:
+        The architecture name to look up in the architecture registry.
+
+    Raises:
+        ValueError: If the config declares no ``architectures`` and its
+            ``model_type`` cannot be mapped to a supported architecture.
+    """
+    architectures = _config_field(hf_config, "architectures")
+    if architectures:
+        return architectures[0]
+
+    # Plenty of real checkpoints (e.g. prajjwal1/bert-tiny) ship a config.json
+    # with no `architectures` key at all, so this is None rather than a list.
+    model_type = _config_field(hf_config, "model_type")
+    architecture = MODEL_TYPE_TO_ARCHITECTURE.get(model_type)
+    if architecture is not None:
+        logger.warning(
+            "Checkpoint %r declares no `architectures`; inferred %r from "
+            "model_type %r.",
+            model_name,
+            architecture,
+            model_type,
+        )
+        return architecture
+
+    raise ValueError(
+        f"Checkpoint {model_name!r} declares no `architectures` in its config "
+        f"and its model_type {model_type!r} cannot be mapped to a supported "
+        "architecture. Either use a checkpoint whose config.json lists "
+        "`architectures`, or register a config builder for this model_type "
+        "with mechir.modelling.hooked.loading_from_pretrained."
+        "extend_transformer_lens_registry and add it to "
+        "MODEL_TYPE_TO_ARCHITECTURE."
+    )
+
+
 def convert_hf_model_config(model_name: str, **kwargs):
     """
     Returns the model config for a HuggingFace model, converted to a dictionary
@@ -256,7 +318,7 @@ def convert_hf_model_config(model_name: str, **kwargs):
             token=huggingface_token,
             **kwargs,
         )
-        architecture = hf_config.architectures[0]
+        architecture = resolve_architecture(hf_config, official_model_name)
 
     if official_model_name.startswith(
         ("llama-7b", "meta-llama/Llama-2-7b")
@@ -681,9 +743,9 @@ def get_pretrained_model_config(
             cfg_dict["checkpoint_index"] = checkpoint_index
             cfg_dict["checkpoint_value"] = checkpoint_labels[checkpoint_index]
         elif checkpoint_value is not None:
-            assert (
-                checkpoint_value in checkpoint_labels
-            ), f"Checkpoint value {checkpoint_value} is not in list of available checkpoints"
+            assert checkpoint_value in checkpoint_labels, (
+                f"Checkpoint value {checkpoint_value} is not in list of available checkpoints"
+            )
             cfg_dict["checkpoint_value"] = checkpoint_value
             cfg_dict["checkpoint_index"] = checkpoint_labels.index(checkpoint_value)
     else:
