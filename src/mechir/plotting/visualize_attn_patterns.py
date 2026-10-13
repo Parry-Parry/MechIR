@@ -17,7 +17,6 @@ def load_doc(fname):
 
 # Plots and interactive plotly graph to visualize the attention pattern for a single document.
 def plot_attn_for_doc(attn_pattern, doc_tokens):
-
     fig = go.Figure(data=go.Heatmap(z=attn_pattern, colorscale="RdBu", zmin=-1, zmax=1))
     fig.update_layout(
         title="Attention Pattern",

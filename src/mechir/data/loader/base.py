@@ -43,9 +43,9 @@ class BaseCollator(object):
         perturb_type=None,
         pre_perturbed=False,
     ) -> None:
-        assert (
-            transformation_func is not None or pre_perturbed
-        ), "Either a transformation function or pre-perturbed data must be provided."
+        assert transformation_func is not None or pre_perturbed, (
+            "Either a transformation function or pre-perturbed data must be provided."
+        )
         self.tokenizer = tokenizer
         # self.tokenizer.add_special_tokens({"additional_special_tokens": [special_token]})
         # self.special_token_id = self.tokenizer.convert_tokens_to_ids(special_token)
@@ -93,22 +93,22 @@ class BaseCollator(object):
 
     def pad_by_perturb_type(self, doc_a: str, doc_b: str):
         accepted_perturb_types = ["append", "prepend", "replace", "inject"]
-        assert (
-            self.perturb_type in accepted_perturb_types
-        ), f"Perturbation type must be one of the following: {accepted_perturb_types}"
+        assert self.perturb_type in accepted_perturb_types, (
+            f"Perturbation type must be one of the following: {accepted_perturb_types}"
+        )
 
         doc_a = self.tokenizer.tokenize(doc_a)
         doc_b = self.tokenizer.tokenize(doc_b)
 
         if self.perturb_type == "append":
-            assert len(doc_a) < len(
-                doc_b
-            ), "Perturbed document should be longer than original for append perturbation."
+            assert len(doc_a) < len(doc_b), (
+                "Perturbed document should be longer than original for append perturbation."
+            )
             doc_a = doc_a + [self.special_token] * (len(doc_b) - len(doc_a))
         elif self.perturb_type == "prepend":
-            assert len(doc_a) < len(
-                doc_b
-            ), "Perturbed document should be longer than original for prepend perturbation."
+            assert len(doc_a) < len(doc_b), (
+                "Perturbed document should be longer than original for prepend perturbation."
+            )
             doc_a = [self.special_token] * (len(doc_b) - len(doc_a)) + doc_a
         elif self.perturb_type == "replace":
             if len(doc_a) == len(doc_b):
@@ -150,9 +150,9 @@ class BaseCollator(object):
         elif self.perturb_type == "inject":
             pass
 
-        assert len(doc_a) == len(
-            doc_b
-        ), "Failed to pad input pairs, mismatch in document lengths post-padding."
+        assert len(doc_a) == len(doc_b), (
+            "Failed to pad input pairs, mismatch in document lengths post-padding."
+        )
         return self.tokenizer.convert_tokens_to_string(
             doc_a
         ), self.tokenizer.convert_tokens_to_string(doc_b)
@@ -163,7 +163,6 @@ def pad_tokenized(
     b_batch: torch.Tensor,
     pad_tok: int,
 ):
-
     a_batch_input_ids, b_batch_input_ids = a_batch["input_ids"], b_batch["input_ids"]
     a_batch_attn_mask, b_batch_attn_mask = (
         a_batch["attention_mask"],

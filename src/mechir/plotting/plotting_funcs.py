@@ -22,7 +22,6 @@ def plot_blocks(
     save_path,
     title="Activation Patching Per Block",
 ):
-
     fig = sp.make_subplots(
         rows=1,
         cols=3,
@@ -82,7 +81,6 @@ def plot_components(
     title="Component Patching Results",
     include_mlp=False,
 ):
-
     data = data.astype(float)
     plt.figure(figsize=(10, 6))
 

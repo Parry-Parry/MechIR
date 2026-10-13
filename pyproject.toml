@@ -12,7 +12,13 @@ dependencies = [
   "transformer_lens>=2.15,<3",
   "sae_lens>=6",
   "torch",
-  "transformers",
+  # Upper bound is load-bearing, like the TransformerLens one above and for the
+  # same reason: TransformerLens 2.x reaches into transformers internals that
+  # 5.0 reorganised. Against transformers 5 every HookedTransformer test dies
+  # with "'GPTNeoXConfig' object has no attribute 'rotary_pct'". Unpinned, this
+  # resolves to 5.x locally while CI happens to get 4.57.6 -- the same
+  # unpinned-dependency drift that kept `main` red for two days.
+  "transformers>=4.40,<5",
   "ir_datasets",
   # TransformerLens 2.x caps numpy<2; pyarrow>=21 requires numpy>=2 at
   # runtime without declaring it, so both need bounding or `import mechir`
@@ -65,6 +71,16 @@ plotting = [
   "matplotlib",
   "plotly",
   "streamlit",
+]
+# Only for the runnable scripts under examples/ and scripts/ -- the library
+# itself imports none of these. `fire` gives them a CLI, pyterrier and
+# pyterrier_dr provide the first-stage retrieval and scorers they compare
+# against. scripts/generate_data.py additionally needs the axiomatic extra.
+examples = [
+  "fire",
+  "tqdm",
+  "python-terrier",
+  "pyterrier-dr",
 ]
 # Guarded behind util.is_pyterrier_availible / is_ir_axioms_availible, so
 # only needed for the index-backed axiomatic perturbations.
