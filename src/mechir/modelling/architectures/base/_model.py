@@ -60,9 +60,9 @@ class HookedEncoder(HookedRootModule):
             )
         self.cfg = cfg
 
-        assert (
-            self.cfg.n_devices == 1
-        ), "Multiple devices not supported for HookedEncoder"
+        assert self.cfg.n_devices == 1, (
+            "Multiple devices not supported for HookedEncoder"
+        )
         if tokenizer is not None:
             self.tokenizer = tokenizer
         elif self.cfg.tokenizer_name is not None:
@@ -76,9 +76,9 @@ class HookedEncoder(HookedRootModule):
 
         if self.cfg.d_vocab == -1:
             # If we have a tokenizer, vocab size can be inferred from it.
-            assert (
-                self.tokenizer is not None
-            ), "Must provide a tokenizer if d_vocab is not provided"
+            assert self.tokenizer is not None, (
+                "Must provide a tokenizer if d_vocab is not provided"
+            )
             self.cfg.d_vocab = max(self.tokenizer.vocab.values()) + 1
         if self.cfg.d_vocab_out == -1:
             self.cfg.d_vocab_out = self.cfg.d_vocab
@@ -173,10 +173,19 @@ class HookedEncoder(HookedRootModule):
             AssertionError: If using string input without a tokenizer
         """
 
-        if tokens.device.type != self.cfg.device:
+        # `.type` on both sides: cfg.device holds a torch.device, so comparing
+        # it to `tokens.device.type` (a str) was always unequal and re-ran
+        # `.to()` on every forward. Comparing the devices directly is also
+        # wrong -- torch.device("mps") != torch.device("mps:0") -- hence the
+        # type-to-type comparison, which tolerates either spelling.
+        if tokens.device.type != torch.device(self.cfg.device).type:
             tokens = tokens.to(self.cfg.device)
             if one_zero_attention_mask is not None:
                 one_zero_attention_mask = one_zero_attention_mask.to(self.cfg.device)
+            # Previously left behind, then handed straight to self.embed below:
+            # on any accelerator that made the embedding a cross-device op.
+            if token_type_ids is not None:
+                token_type_ids = token_type_ids.to(self.cfg.device)
 
         resid = self.hook_full_embed(self.embed(tokens, token_type_ids))
 
@@ -222,9 +231,9 @@ class HookedEncoder(HookedRootModule):
 
         if start_at_layer is None:
             if isinstance(input, str) or isinstance(input, list):
-                assert (
-                    self.tokenizer is not None
-                ), "Must provide a tokenizer if input is a string"
+                assert self.tokenizer is not None, (
+                    "Must provide a tokenizer if input is a string"
+                )
                 input, token_type_ids_from_tokenizer, attention_mask = self.to_tokens(
                     input
                 )
@@ -239,7 +248,8 @@ class HookedEncoder(HookedRootModule):
             assert type(input) is torch.Tensor
         residual = input
 
-        if residual.device.type != self.cfg.device:
+        # See the equivalent comparison in encoder_output above.
+        if residual.device.type != torch.device(self.cfg.device).type:
             residual = residual.to(self.cfg.device)
             if attention_mask is not None:
                 attention_mask = attention_mask.to(self.cfg.device)

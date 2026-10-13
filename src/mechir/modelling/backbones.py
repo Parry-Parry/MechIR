@@ -117,7 +117,10 @@ def _pool_mean(x: torch.Tensor, mask: Optional[torch.Tensor] = None) -> torch.Te
     if mask is None:
         return x.mean(dim=1)
 
-    mask = mask.unsqueeze(-1).to(x.dtype)
+    # Device as well as dtype: the model moves its own copy of the inputs to
+    # cfg.device, but the mask reaching the pooler is the caller's, so on MPS
+    # or CUDA `x` is on the accelerator while `mask` is still on the CPU.
+    mask = mask.unsqueeze(-1).to(device=x.device, dtype=x.dtype)
     return (x * mask).sum(dim=1) / mask.sum(dim=1).clamp(min=1.0)
 
 
@@ -129,7 +132,8 @@ def _pool_last(x: torch.Tensor, mask: Optional[torch.Tensor] = None) -> torch.Te
     """
     if mask is None:
         return x[:, -1, :]
-    last = mask.sum(dim=1) - 1
+    # See _pool_mean: `last` indexes `x`, so it has to live on x's device.
+    last = mask.to(x.device).sum(dim=1) - 1
     return x[torch.arange(x.shape[0], device=x.device), last]
 
 
