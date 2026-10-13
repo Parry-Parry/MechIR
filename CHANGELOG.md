@@ -2,6 +2,37 @@
 
 ## 0.2.0
 
+### New: `mechir.pipeline`, behind the `rag` extra
+
+Ranker-and-reader interpretability: holds both with hooks on each side, so an
+intervention on one can be measured on the other, with the metric read off
+the reader's generation rather than the ranker's score.
+
+    pip install "mechir[rag]"
+
+Optional and opt-in -- `import mechir` does not pull it, and the publish
+workflow asserts that. Research code rather than settled library surface;
+the API will change.
+
+  `boundary`    HardPermutation: exact interventional reordering of a fixed
+                candidate set, so no relaxation has to be defended
+  `context`     prompt assembly recording per-document token spans
+  `metrics`     answer_logprob, attention_to_documents
+  `ablation`    causal measures -- masking and resampling, necessity and
+                sufficiency
+  `pipeline`    position_sensitivity, position_controlled_attention,
+                causal_report, cross-boundary head patching
+  `benchmarks`  TREC DL 2019/2020 and HotpotQA as labelled candidate sets
+                (in `mechir.data`)
+
+`docs/research-notes.md` records what has been measured and four ways to
+produce a result here that looks like a finding and is not -- attention
+anti-correlated with causation, attention mass confounded by span length and
+recency, ablation style changing per-document conclusions, and a
+piecewise-constant ranker/reader boundary where ~40% of real TREC DL queries
+yield no signal. Everything there is preliminary: 25 questions, small
+readers, no error bars.
+
 ### Plotting is an extra
 
 `pip install mechir` used to pull seaborn, matplotlib, plotly **and

@@ -47,6 +47,16 @@ classifiers = [
 ]
 
 [project.optional-dependencies]
+# mechir.pipeline -- ranker-and-reader interpretability. Research code, not
+# settled library surface. The HotpotQA loader reads answers from the
+# HuggingFace `datasets` distractor config, because beir/hotpotqa exposes no
+# answer field; core already constrains `datasets` for an unrelated numpy
+# reason, so this names the dependency the feature actually needs rather
+# than relying on that.
+rag = [
+  "datasets<4",
+  "ir_datasets",
+]
 # Plotting was core until 0.2.0, which meant `pip install mechir` pulled
 # seaborn, matplotlib, plotly and streamlit -- a web framework -- for four
 # helper functions.

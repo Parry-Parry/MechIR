@@ -65,6 +65,11 @@ jobs:
         from mechir.perturb import perturbation
         import mechir.plotting  # must not need the plotting extra
 
+        import sys
+        assert "mechir.pipeline" not in sys.modules, (
+            "mechir.pipeline is optional and must not be imported by `import mechir`"
+        )
+
         assert mechir.__version__ == md.version("mechir"), (
             f"__version__ {mechir.__version__} != metadata {md.version('mechir')}"
         )
@@ -80,10 +85,12 @@ jobs:
         assert len(stopwords.read_text().split()) > 10
         print("package data OK")
         PY
-    - name: Plotting extra must install and resolve
+    - name: Optional extras must install and resolve
       run: |
-        python -m pip install "$(ls dist/*.whl)[plotting]"
+        python -m pip install "$(ls dist/*.whl)[plotting,rag]"
         python -c "from mechir.plotting import plot_components; print('plotting extra OK')"
+        python -c "from mechir.pipeline import Pipeline, HardPermutation; print('rag extra OK')"
+        python -c "from mechir.data import load_trec_dl, load_hotpotqa; print('benchmarks OK')"
 
   # Catches a release tagged at a version other than the one being uploaded --
   # a mismatch otherwise noticed only after the upload cannot be undone.
