@@ -1,5 +1,40 @@
 # Changelog
 
+## 0.3.0
+
+### Removed: `SAEMixin` and the `sae_lens` dependency
+
+**Breaking.** `mechir.SAEMixin`, `mechir.modelling.SAEMixin` and
+`mechir.modelling.sae` are gone, and `Dot`, `Cat`, `MonoT5` and
+`GenerativeRanker` no longer inherit from the mixin. Nothing else in the
+public API changes.
+
+`sae_lens` declares `transformer-lens<4.0.0`, so while it was a hard
+dependency, TransformerLens 4 could not be installed alongside it at all.
+Removing it was a precondition for evaluating that upgrade. It also cost more
+than it provided: the mixin had no tests, no SAEs have ever been released
+here, nothing in the package called any of its methods, and TransformerLens 4
+has dropped `HookedSAETransformer`, `HookedSAE` and `HookedSAEConfig`
+entirely, so there was no supported upstream to port it to.
+
+### The TransformerLens pin stays, and now says why
+
+`docs/upgrading.md` records the result of actually booting the ranker
+checkpoints against TransformerLens 4.2 rather than reading its release notes.
+
+Removing `sae_lens` was necessary and not sufficient: 4.2's
+`TransformerBridge` loads `MonoT5` but cannot load either of the other two
+ranker families. A `BertForSequenceClassification` cross-encoder fails looking
+for an MLM `cls` head, and DistilBERT is not a supported architecture at all —
+nor is ELECTRA. That is the same gap `modelling/architectures/` was written to
+fill, so porting would mean rewriting that directory against a new API rather
+than deleting it, while also forcing transformers 5.
+
+The cheap half does port: every component mechir patches resolves to a hook
+name that exists on the 4.2 bridge, and `get_act_name` keeps its semantics and
+only changes module. The page records the measured hook-name table and the one
+stack-naming change T5 needs, so the next attempt starts from facts.
+
 ## 0.2.0
 
 ### MonoT5 patching works
