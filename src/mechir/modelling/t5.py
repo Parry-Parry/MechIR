@@ -8,7 +8,6 @@ from transformer_lens.hook_points import HookedRootModule
 import transformer_lens.utils as utils
 from mechir.modelling.hook_names import ENCODER_HOOK_NAMES, HookNameStrategy
 from mechir.modelling.patched import PatchedMixin
-from mechir.modelling.sae import SAEMixin
 from mechir.modelling.hooked.loading_from_pretrained import get_official_model_name
 from mechir.util import linear_rank_function
 
@@ -19,7 +18,7 @@ monoT5
 """
 
 
-class MonoT5(HookedRootModule, PatchedMixin, SAEMixin):
+class MonoT5(HookedRootModule, PatchedMixin):
     def __init__(
         self,
         model_name_or_path: str,

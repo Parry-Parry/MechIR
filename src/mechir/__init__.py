@@ -76,7 +76,6 @@ from .modelling import (
     GenerativeRanker,
     MonoT5,
     PatchedMixin,
-    SAEMixin,
 )
 from .modelling.hooked import conversion
 from .modelling.hooked import states

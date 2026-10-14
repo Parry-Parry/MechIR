@@ -63,7 +63,7 @@ jobs:
         python - <<'PY'
         import importlib.metadata as md
         import mechir
-        from mechir import Cat, Dot, MonoT5, GenerativeRanker, PatchedMixin, SAEMixin
+        from mechir import Cat, Dot, MonoT5, GenerativeRanker, PatchedMixin
         from mechir.data import MechIRDataset, CatDataCollator, DotDataCollator
         from mechir.modelling.architectures import HookedEncoder, HookedDistilBert
         from mechir.modelling.backbones import POOLING, get_backbone

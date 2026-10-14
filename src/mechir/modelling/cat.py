@@ -8,7 +8,6 @@ from transformer_lens.hook_points import HookedRootModule
 import transformer_lens.utils as utils
 import torch.nn.functional as F
 from mechir.modelling.patched import PatchedMixin
-from mechir.modelling.sae import SAEMixin
 from mechir.modelling.hooked.loading_from_pretrained import get_official_model_name
 from mechir.util import linear_rank_function
 from mechir.modelling.architectures import HookedEncoderForSequenceClassification
@@ -16,7 +15,7 @@ from mechir.modelling.architectures import HookedEncoderForSequenceClassificatio
 logger = logging.getLogger(__name__)
 
 
-class Cat(HookedRootModule, PatchedMixin, SAEMixin):
+class Cat(HookedRootModule, PatchedMixin):
     def __init__(
         self,
         model_name_or_path: str,

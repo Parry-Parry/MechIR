@@ -4,13 +4,12 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mechir"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
   # Upper bound is load-bearing: TransformerLens 4.0 removed
   # `loading_from_pretrained`, `pretrained.weight_conversions` and
   # `HookedEncoder`, all of which mechir imports. See docs/upgrading.md.
   "transformer_lens>=2.15,<3",
-  "sae_lens>=6",
   "torch",
   # Upper bound is load-bearing, like the TransformerLens one above and for the
   # same reason: TransformerLens 2.x reaches into transformers internals that
