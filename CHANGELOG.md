@@ -2,6 +2,90 @@
 
 ## 0.2.0
 
+### MonoT5 patching works
+
+`PatchedMixin` built `blocks.{n}` hook names while T5 names its stacks
+`encoder.{n}` and `decoder.{n}`, so every patching call against MonoT5 raised
+`KeyError: blocks.0`. Two tests asserted that error, recording the defect
+rather than a contract.
+
+Hook naming is now a property of the architecture, so the encoder-decoder
+case is just another strategy, and the three `get_act_patch_*` methods live
+once on the mixin instead of being copied per ranker family -- 336
+near-identical lines across twelve methods replaced by 47 lines of overrides.
+Adding a ranker family is now one scoring strategy; adding a patching method
+is one driver.
+
+The pre-refactor loops were re-implemented verbatim and diffed against the
+new public methods on `bert-base-uncased` and `ms-marco-MiniLM-L-6-v2`:
+bit-exact across every patch type. `patch()` is unchanged, and so is every
+documented return shape.
+
+**Breaking** if you call `Dot.get_act_patch_*` directly: `reps_q` now arrives
+by keyword. It was positional before -- third in two methods and second in
+`head_by_pos`, so they disagreed with each other. `patch()` is unaffected.
+
+### Activations and masks stay on one device
+
+`tokens.device.type != self.cfg.device` compared a `str` to a `torch.device`,
+so it was always unequal and re-ran `.to()` on every forward. The wasted copy
+hid a real failure: the model moved its own copy of the inputs, but the
+pooling functions received the caller's attention mask, and `token_type_ids`
+was never moved at all. On an accelerator the activations and the mask ended
+up on different devices.
+
+CPU-only machines never saw this, which is why CI stayed green; on Apple
+Silicon it failed twelve tests. `cfg.device`'s annotation said `Optional[str]`
+while holding a `torch.device`, which is what made the broken comparisons look
+right.
+
+### Steering is no longer dead code
+
+`mechir.modelling.steering` could not run: `increase` and `decrease` had their
+signs swapped, the steering direction was computed in a `__post_init__` on a
+class that is an `nn.Module` rather than a dataclass -- so the hook never
+fired and the attribute never existed -- and `forward` returned `None`.
+
+The direction is now the top *right* singular vector. For an embedding stored
+`[d_vocab, d_model]`, the left vector is vocab-length and cannot be added to a
+`d_model` activation at all.
+
+### Checkpoints that declare no architectures load
+
+`convert_hf_model_config` read `architectures[0]` unconditionally, so any
+config omitting that field -- `prajjwal1/bert-tiny`, and anything built
+directly as `BertConfig()` -- died with a `TypeError`. It falls back to
+`model_type`, and names the checkpoint and the fix when that cannot be mapped.
+
+### Examples that run, and docs for what `patch` returns
+
+`examples/cat.py` imported a `PairDataset` that exists nowhere in the package,
+took two more names from the wrong modules, and imported `DataLoader` from
+`torch.data`. `scripts/generate_data.py` referenced the removed `TFC1` and
+`TDC` axioms. Three of the four notebooks -- the ones the README links as the
+primary demos, Colab included -- imported `MechIRDataset` from `mechir` rather
+than `mechir.data`, so they failed on the first cell.
+
+All are fixed. The notebooks' saved outputs still predate the current API.
+There is now a page per model class stating what `patch()` returns and the
+shape of it, plus a worked end-to-end example; previously the ECIR paper was
+the de facto documentation. The runnable scripts' third-party dependencies
+(`fire`, `pyterrier`, `pyterrier_dr`) were undeclared and are now an
+`examples` extra.
+
+### Packaging and CI
+
+`transformers` was the last unpinned dependency and now has an upper bound.
+TransformerLens 2.x reaches into internals that transformers 5.0 reorganised,
+so unpinned, a fresh environment resolves to 5.x and every HookedTransformer
+test dies with `'GPTNeoXConfig' object has no attribute 'rotary_pct'`, while
+CI happens to resolve 4.57.6 and stays green.
+
+Four `requirements*.txt` files duplicated `pyproject.toml` and are gone, along
+with the Dockerfile's pip-compile step. black and flake8 are replaced by ruff.
+`test/integration` now runs nightly and on dispatch, selected by marker rather
+than by directory so `make test`, the Docker image and CI cannot drift apart.
+
 ### New: `mechir.pipeline`, behind the `rag` extra
 
 Ranker-and-reader interpretability: holds both with hooks on each side, so an
