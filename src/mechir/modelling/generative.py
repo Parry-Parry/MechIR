@@ -19,13 +19,12 @@ import transformer_lens.utils as utils
 from mechir.modelling.backbones import load_backbone
 from mechir.modelling.hooked.loading_from_pretrained import get_official_model_name
 from mechir.modelling.patched import PatchedMixin
-from mechir.modelling.sae import SAEMixin
 from mechir.util import linear_rank_function
 
 logger = logging.getLogger(__name__)
 
 
-class GenerativeRanker(HookedRootModule, PatchedMixin, SAEMixin):
+class GenerativeRanker(HookedRootModule, PatchedMixin):
     """Decoder-backbone reranker scored by a two-token logit contrast.
 
     Parameters

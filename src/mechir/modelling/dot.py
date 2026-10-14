@@ -7,7 +7,6 @@ from transformer_lens.ActivationCache import ActivationCache
 from transformer_lens.hook_points import HookedRootModule
 import transformer_lens.utils as utils
 from mechir.modelling.patched import PatchedMixin
-from mechir.modelling.sae import SAEMixin
 from mechir.modelling.hooked.loading_from_pretrained import get_official_model_name
 from mechir.util import batched_dot_product, linear_rank_function
 from mechir.modelling.backbones import POOLING, load_backbone
@@ -15,7 +14,7 @@ from mechir.modelling.backbones import POOLING, load_backbone
 logger = logging.getLogger(__name__)
 
 
-class Dot(HookedRootModule, PatchedMixin, SAEMixin):
+class Dot(HookedRootModule, PatchedMixin):
     def __init__(
         self,
         model_name_or_path: str,

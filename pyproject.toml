@@ -10,7 +10,6 @@ dependencies = [
   # `loading_from_pretrained`, `pretrained.weight_conversions` and
   # `HookedEncoder`, all of which mechir imports. See docs/upgrading.md.
   "transformer_lens>=2.15,<3",
-  "sae_lens>=6",
   "torch",
   # Upper bound is load-bearing, like the TransformerLens one above and for the
   # same reason: TransformerLens 2.x reaches into transformers internals that

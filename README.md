@@ -6,7 +6,7 @@ This library exists to make encoders first-class citizens in Mechanistic Interpr
 
 We have done our best to support many of the features present in [transformer_lens](https://github.com/TransformerLensOrg/TransformerLens/tree/main). Additionally, we provide extensive functionality for activation patching (more details in our demo!).
 
-We have not released any SAEs. `mechir.modelling.sae.SAEMixin` lets you attach an existing [sae_lens](https://github.com/jbloomAus/SAELens) 6 SAE to a `Dot`, `Cat`, `MonoT5` or `GenerativeRanker` model and run with it hooked in, but that path is currently untested — treat it as experimental.
+We have not released any SAEs, and there is no SAE support in the package. `SAEMixin` was removed in 0.3.0: it was untested, and `sae_lens` pins `transformer-lens<4.0.0`, which blocked the TransformerLens 4 upgrade for the whole package. See [docs/upgrading.md](docs/upgrading.md).
 
 
 Heavily inspired by the paper **Axiomatic Causal Interventions for Reverse Engineering Relevance Computation in Neural Retrieval Models** by Catherine Chen, Jack Merullo, and Carsten Eickhoff (Brown University, University of Tübingen), their original code can be found [here](https://github.com/catherineschen/axiomatic-ir-interventions/tree/main)
