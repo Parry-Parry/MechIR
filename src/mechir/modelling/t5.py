@@ -4,9 +4,9 @@ import torch
 from jaxtyping import Float
 from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
 from transformer_lens import HookedEncoderDecoder
-from transformer_lens.ActivationCache import ActivationCache
 from transformer_lens.hook_points import HookedRootModule
 import transformer_lens.utils as utils
+from mechir.modelling.hook_names import ENCODER_HOOK_NAMES, HookNameStrategy
 from mechir.modelling.patched import PatchedMixin
 from mechir.modelling.sae import SAEMixin
 from mechir.modelling.hooked.loading_from_pretrained import get_official_model_name
@@ -101,99 +101,25 @@ class MonoT5(HookedRootModule, PatchedMixin, SAEMixin):
         )
         return model_output
 
-    def get_act_patch_block_every(
-        self,
-        corrupted_tokens: Float[torch.Tensor, "batch pos"],
-        clean_cache: ActivationCache,
-        patching_metric: Callable[[Float[torch.Tensor, "batch pos d_vocab"]], float],
-        scores: Float[torch.Tensor, "batch pos"],
-        scores_p: Float[torch.Tensor, "batch pos"],
-        **kwargs,
-    ) -> Float[torch.Tensor, "3 layer pos"]:
+    @property
+    def _hook_names(self) -> HookNameStrategy:
+        """Encoder-stack hook naming.
+
+        The architecture seam of
+        :class:`~mechir.modelling.patched.PatchedMixin`. ``HookedEncoderDecoder``
+        names its hooks ``encoder.{layer}.…`` and ``decoder.{layer}.…`` rather
+        than the single-stack ``blocks.{layer}.…``, so the inherited default
+        misses with ``KeyError: '_model.blocks.0.hook_resid_pre'``.
+
+        Patching targets the encoder: the positions being swept are the
+        encoder's input tokens, and the decoder is only ever run for the one
+        step that carries the relevance label.
         """
-        Returns an array of results of patching each position at each layer in the residual
-        stream, using the value from the clean cache.
+        return ENCODER_HOOK_NAMES
 
-        The results are calculated using the patching_metric function, which should be
-        called on the model's logit output.
-        """
-
-        _, seq_len = corrupted_tokens["input_ids"].size()
-        results = torch.zeros(
-            3,
-            self._model.cfg.n_layers,
-            seq_len,
-            device=self._device,
-            dtype=torch.float32,
-        )
-
-        for index, output in self._get_act_patch_block_every(
-            corrupted_tokens=corrupted_tokens, clean_cache=clean_cache
-        ):
-            output = (
-                output[:, 0, (self.pos_token, self.neg_token)].softmax(dim=-1)[:, 0]
-                if self.softmax_output
-                else output[:, 0, (self.pos_token, self.neg_token)][:, 0]
-            )
-            results[index] = patching_metric(output, scores, scores_p)
-
-        return results
-
-    def get_act_patch_attn_head_out_all_pos(
-        self,
-        corrupted_tokens: Float[torch.Tensor, "batch pos"],
-        clean_cache: ActivationCache,
-        patching_metric: Callable,
-        scores: Float[torch.Tensor, "batch pos"],
-        scores_p: Float[torch.Tensor, "batch pos"],
-        **kwargs,
-    ) -> Float[torch.Tensor, "layer head"]:
-        """
-        Returns an array of results of patching at all positions for each head in each
-        layer, using the value from the clean cache.
-
-        The results are calculated using the patching_metric function, which should be
-        called on the model's embedding output.
-        """
-
-        results = torch.zeros(
-            self._model.cfg.n_layers,
-            self._model.cfg.n_heads,
-            device=self._device,
-            dtype=torch.float32,
-        )
-
-        for index, output in self._get_act_patch_attn_head_out_all_pos(
-            corrupted_tokens=corrupted_tokens, clean_cache=clean_cache
-        ):
-            results[index] = patching_metric(output, scores, scores_p)
-
-        return results
-
-    def get_act_patch_attn_head_by_pos(
-        self,
-        corrupted_tokens: Float[torch.Tensor, "batch pos"],
-        clean_cache: ActivationCache,
-        layer_head_list,
-        patching_metric: Callable,
-        scores: Float[torch.Tensor, "batch pos"],
-        scores_p: Float[torch.Tensor, "batch pos"],
-        **kwargs,
-    ) -> Float[torch.Tensor, "layer pos head"]:
-
-        _, seq_len = corrupted_tokens["input_ids"].size()
-        results = torch.zeros(
-            2, len(layer_head_list), seq_len, device=self._device, dtype=torch.float32
-        )
-
-        for index, output in self._get_act_patch_attn_head_by_pos(
-            corrupted_tokens=corrupted_tokens,
-            clean_cache=clean_cache,
-            layer_head_list=layer_head_list,
-        ):
-            results[index] = patching_metric(output, scores, scores_p)
-
-        return results
+    # `forward` already reduces the decoder logits to one score per item, so
+    # the default `PatchedMixin._patch_score` (the identity) is correct and
+    # the patching methods are inherited unchanged.
 
     @torch.no_grad()
     def score(self, sequences: dict, cache=False):
@@ -225,9 +151,9 @@ class MonoT5(HookedRootModule, PatchedMixin, SAEMixin):
                 "patch() needs sequences_p (or perturbed_sequences, the key "
                 "MonoT5DataCollator emits)"
             )
-        assert (
-            patch_type in self._patch_funcs
-        ), f"Patch type {patch_type} not recognized. Choose from {self._patch_funcs.keys()}"
+        assert patch_type in self._patch_funcs, (
+            f"Patch type {patch_type} not recognized. Choose from {self._patch_funcs.keys()}"
+        )
         scores, _ = self.score(sequences)
         scores_p, cache = self.score(sequences_p, cache=True)
 

@@ -156,71 +156,9 @@ class GenerativeRanker(HookedRootModule, PatchedMixin, SAEMixin):
         scores = self.forward(sequences["input_ids"], sequences["attention_mask"])
         return scores, None
 
-    def get_act_patch_block_every(
-        self,
-        corrupted_tokens,
-        clean_cache: ActivationCache,
-        patching_metric: Callable,
-        scores,
-        scores_p,
-        **kwargs,
-    ):
-        _, seq_len = corrupted_tokens["input_ids"].size()
-        results = torch.zeros(
-            3,
-            self._model.cfg.n_layers,
-            seq_len,
-            device=self._device,
-            dtype=torch.float32,
-        )
-        for index, output in self._get_act_patch_block_every(
-            corrupted_tokens=corrupted_tokens, clean_cache=clean_cache
-        ):
-            results[index] = patching_metric(output, scores, scores_p).mean()
-        return results
-
-    def get_act_patch_attn_head_out_all_pos(
-        self,
-        corrupted_tokens,
-        clean_cache: ActivationCache,
-        patching_metric: Callable,
-        scores,
-        scores_p,
-        **kwargs,
-    ):
-        results = torch.zeros(
-            self._model.cfg.n_layers,
-            self._model.cfg.n_heads,
-            device=self._device,
-            dtype=torch.float32,
-        )
-        for index, output in self._get_act_patch_attn_head_out_all_pos(
-            corrupted_tokens=corrupted_tokens, clean_cache=clean_cache
-        ):
-            results[index] = patching_metric(output, scores, scores_p).mean()
-        return results
-
-    def get_act_patch_attn_head_by_pos(
-        self,
-        corrupted_tokens,
-        clean_cache: ActivationCache,
-        layer_head_list,
-        patching_metric: Callable,
-        scores,
-        scores_p,
-        **kwargs,
-    ):
-        _, seq_len = corrupted_tokens["input_ids"].size()
-        results = torch.zeros(
-            2, len(layer_head_list), seq_len, device=self._device, dtype=torch.float32
-        )
-        for index, output in self._get_act_patch_attn_head_by_pos(
-            corrupted_tokens=corrupted_tokens,
-            clean_cache=clean_cache,
-            layer_head_list=layer_head_list,
-        ):
-            results[index] = patching_metric(output, scores, scores_p).mean()
-        return results
+    # `forward` already reduces logits to one score per item via `_contrast`,
+    # so the default `PatchedMixin._patch_score` (the identity) is correct
+    # and the patching methods are inherited unchanged.
 
     @torch.no_grad()
     def patch(

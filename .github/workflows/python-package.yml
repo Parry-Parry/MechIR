@@ -28,32 +28,39 @@ jobs:
         python-version: ${{ matrix.python-version }}
         cache: pip
 
-    # Install the package itself rather than requirements.txt, so the pins in
-    # pyproject.toml are what actually gets exercised.
+    # Install the package itself, so the pins in pyproject.toml -- the single
+    # source of truth for dependencies -- are what actually gets exercised.
     - name: Install package
       run: |
         python -m pip install --upgrade pip
         # Install the extras too: the plotting and pipeline tests are
         # skipped without them, which would hide regressions.
         python -m pip install -e ".[dev,plotting,rag]"
+        # Pinned on purpose. An unpinned formatter is how `main` stayed red
+        # for two days: black 26.10.1 rejected code that 24.10.0 accepted,
+        # so CI failed on files that were correctly formatted locally. Bump
+        # this deliberately, with the reformat in the same commit.
+        python -m pip install "ruff==0.11.7"
 
     - name: Show resolved dependency versions
       run: python -m pip list
 
     # Hard gate. Syntax errors and undefined names fail the build.
-    # F701/F702 rather than the F7 prefix, which would also match the F722
-    # jaxtyping false positives -- see .flake8.
+    # F701/F702 rather than the F7 prefix, which would also match F722,
+    # "syntax error in forward annotation" -- a false positive on every one
+    # of the ~130 jaxtyping shapes in the codebase, because
+    # `Float[torch.Tensor, "batch pos"]` is not parseable as an annotation.
     - name: Lint (errors)
       run: |
-        flake8 src test --count --show-source --statistics \
+        ruff check src test --no-cache --statistics \
           --select=E9,F63,F701,F702,F811,F821,F82
 
     # Advisory. Style findings are reported but do not fail the build.
     - name: Lint (style, advisory)
-      run: flake8 src test --count --exit-zero --statistics
+      run: ruff check src test --no-cache --exit-zero --statistics
 
     - name: Check formatting
-      run: black --check --diff src test
+      run: ruff format --check --diff src test
 
     - name: Cache Hugging Face models
       uses: actions/cache@v4
@@ -61,5 +68,9 @@ jobs:
         path: ~/.cache/huggingface
         key: hf-${{ runner.os }}-bert-base-uncased
 
+    # The fast suite: unit and acceptance. Selected by marker rather than by
+    # directory so this and `make test` cannot drift apart, and so a new
+    # directory is covered by default. test/integration downloads ~1.4GB of
+    # checkpoints and runs nightly in integration.yml instead.
     - name: Test
-      run: pytest test/unit test/acceptance -v
+      run: pytest -m "not integration" -v

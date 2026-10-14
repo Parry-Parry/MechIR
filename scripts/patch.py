@@ -1,3 +1,6 @@
+# Requires the examples extra:
+#
+#     pip install "mechir[examples]"   # from a checkout: uv sync --extra examples
 from fire import Fire
 import ir_datasets as irds
 import numpy as np
@@ -9,8 +12,8 @@ from mechir import Cat, Dot
 from mechir.data import CatDataCollator, DotDataCollator, MechDataset
 import pyterrier as pt
 
-if not pt.started():
-    pt.init()
+if not pt.java.started():
+    pt.java.init()
 
 mechir.config("ignore-official", True)
 
@@ -29,7 +32,6 @@ def load_cross(model_name_or_path: str):
 
 
 def process_frame(frame):
-
     output = {
         "qid": [],
         "query": [],
@@ -93,14 +95,16 @@ def patch(
             documents = batch["documents"]
             perturbed_documents = batch["perturbed_documents"]
 
-            patch_head_out = model.patch(
+            # patch() returns (result, cache); cache is None unless the
+            # model was built with return_cache=True.
+            patch_head_out, _ = model.patch(
                 queries, documents, perturbed_documents, patch_type="head_all"
             )
         else:
             sequences = batch["sequences"]
             perturbed_sequences = batch["perturbed_sequences"]
 
-            patch_head_out = model.patch(
+            patch_head_out, _ = model.patch(
                 sequences, perturbed_sequences, patch_type="head_all"
             )
 

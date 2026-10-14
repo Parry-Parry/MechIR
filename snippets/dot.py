@@ -8,17 +8,19 @@ from torch.utils.data import DataLoader
 
 @perturbation
 def relevant_perturbation(text: str) -> str:
-    return text + 'relevant'
+    return text + "relevant"
 
 
-model = Dot('tasb')
-dataset = MechIRDataset('msmarco-passage/trec-dl-2019/judged')
+model = Dot("tasb")
+dataset = MechIRDataset("msmarco-passage/trec-dl-2019/judged")
 collator = DotDataCollator(model.tokenizer, transformation_func=relevant_perturbation)
 loader = DataLoader(dataset, batch_size=32, collate_fn=collator)
 
 patching_head_outputs = []
 for batch in loader:
-    output = model.patch(**batch, patch_type='head_all')
+    # patch() returns (result, cache); cache is None unless the model was
+    # built with return_cache=True.
+    output, _ = model.patch(**batch, patch_type="head_all")
     patching_head_outputs.append(output)
 
 mean_head_outputs = torch.mean(torch.stack(patching_head_outputs), axis=0)

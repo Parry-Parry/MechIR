@@ -10,7 +10,7 @@ import logging
 import pprint
 import random
 from dataclasses import dataclass
-from typing import Any, Dict, Union
+from typing import Any, Dict, Optional, Union
 
 import numpy as np
 import torch
@@ -87,8 +87,14 @@ class HookedTransformerConfig(_HookedTransformerConfig):
             & biases) and 'LNPre' (use LayerNorm, but no weights or biases), 'RMS'
             (use RMSNorm, including weights) and 'RMSPre' (use RMSNorm, but no weights or biases).
             Defaults to LN
-        device(str): The device to use for the model. Defaults to 'cuda' if
-            available, else 'cpu'. Must be 'cuda' if `n_devices` > 1.
+        device (str or torch.device, *optional*): The device to use for the
+            model. Defaults to None, in which case ``__post_init__`` resolves it
+            with ``transformer_lens.utils.get_device()``, so the stored value is
+            a :class:`torch.device` ('cuda' if available, else 'mps' on Apple
+            silicon, else 'cpu'). A string passed in by the caller is kept as a
+            string, so readers must accept both: compare device types with
+            ``torch.device(cfg.device).type`` rather than against ``cfg.device``
+            directly. Must be 'cuda' if `n_devices` > 1.
         n_devices (int): The number of devices to use for the model. Defaults to 1. Layers are loaded
             to support "pipeline parallelism", where each device is responsible for a subset of the layers.
         attention_dir (str): Whether to use causal (aka unidirectional aka GPT-2
@@ -183,6 +189,12 @@ class HookedTransformerConfig(_HookedTransformerConfig):
         use_token_type_ids (bool): Whether to use token type ids. Defaults to True.
     """
 
+    # Re-declared purely to correct the inherited annotation: upstream types
+    # this `Optional[str]`, but `__post_init__` assigns `utils.get_device()`,
+    # which returns a `torch.device`. Re-declaring an inherited field keeps its
+    # position in the generated `__init__`, so this changes the type only.
+    device: Optional[Union[str, torch.device]] = None
+
     num_labels: int = 1
     use_token_type_ids: bool = True
     use_mlp_head: bool = False
@@ -203,22 +215,22 @@ class HookedTransformerConfig(_HookedTransformerConfig):
         if self.seed is not None:
             self.set_seed_everywhere(self.seed)
         if self.use_local_attn:
-            assert (
-                self.window_size is not None
-            ), "window_size must be specified for local attention"
-            assert (
-                self.attn_types is not None
-            ), "attn_types must be specified for local attention"
+            assert self.window_size is not None, (
+                "window_size must be specified for local attention"
+            )
+            assert self.attn_types is not None, (
+                "attn_types must be specified for local attention"
+            )
         if not self.attn_only:
             if self.d_mlp is None:
                 # For some reason everyone hard codes in this hyper-parameter!
                 self.d_mlp: int = self.d_model * 4
-            assert (
-                self.act_fn is not None
-            ), "act_fn must be specified for non-attn-only models"
-            assert (
-                self.act_fn in SUPPORTED_ACTIVATIONS
-            ), f"act_fn={self.act_fn} must be one of {SUPPORTED_ACTIVATIONS}"
+            assert self.act_fn is not None, (
+                "act_fn must be specified for non-attn-only models"
+            )
+            assert self.act_fn in SUPPORTED_ACTIVATIONS, (
+                f"act_fn={self.act_fn} must be one of {SUPPORTED_ACTIVATIONS}"
+            )
         if self.initializer_range < 0 and self.init_mode == "gpt2":
             # Roughly copy the GPT-2 value, but proportional to sqrt(1/d_model)
             self.initializer_range = 0.8 / np.sqrt(self.d_model)
@@ -236,18 +248,16 @@ class HookedTransformerConfig(_HookedTransformerConfig):
             self.rotary_dim = self.d_head
 
         if self.num_experts is not None:
-            assert (
-                self.experts_per_token is not None
-            ), "experts_per_token must be set if num_experts is set"
+            assert self.experts_per_token is not None, (
+                "experts_per_token must be set if num_experts is set"
+            )
         if self.experts_per_token is not None:
-            assert (
-                self.num_experts is not None
-            ), "num_experts must be set if experts_per_token is set"
+            assert self.num_experts is not None, (
+                "num_experts must be set if experts_per_token is set"
+            )
 
         # The number of parameters in attention layers (ignoring biases and layer norm). 4 because W_Q, W_K, W_V and W_O
-        self.n_params = self.n_layers * (
-            (self.d_model * self.d_head * self.n_heads * 4)
-        )
+        self.n_params = self.n_layers * (self.d_model * self.d_head * self.n_heads * 4)
         if not self.attn_only:
             assert self.d_mlp is not None  # mypy
             # Number of parameters in MLP layers (ignoring biases and layer norm). 2 because W_in and W_out
@@ -264,9 +274,9 @@ class HookedTransformerConfig(_HookedTransformerConfig):
             self.device = utils.get_device()
 
         if self.n_devices > 1:
-            assert (
-                torch.cuda.device_count() >= self.n_devices
-            ), f"Not enough CUDA devices to support n_devices {self.n_devices}"
+            assert torch.cuda.device_count() >= self.n_devices, (
+                f"Not enough CUDA devices to support n_devices {self.n_devices}"
+            )
 
         if self.use_attn_scale and self.attn_scale == -1.0:
             self.attn_scale = np.sqrt(self.d_head)
@@ -274,7 +284,9 @@ class HookedTransformerConfig(_HookedTransformerConfig):
         assert self.default_prepend_bos in [
             True,
             False,
-        ], f"padding_side must be either True or False, but {self.default_prepend_bos} is given"
+        ], (
+            f"padding_side must be either True or False, but {self.default_prepend_bos} is given"
+        )
 
     @classmethod
     def unwrap(

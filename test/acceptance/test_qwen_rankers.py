@@ -63,9 +63,9 @@ def test_last_token_pooling_matches_huggingface(embedder):
     with torch.no_grad():
         got = embedder.forward(enc.input_ids, enc.attention_mask)
 
-    assert torch.allclose(
-        expected, got, atol=2e-3
-    ), f"maxdiff {(expected - got).abs().max().item()}"
+    assert torch.allclose(expected, got, atol=2e-3), (
+        f"maxdiff {(expected - got).abs().max().item()}"
+    )
 
 
 def test_embedder_ranks_relevant_above_irrelevant(embedder):

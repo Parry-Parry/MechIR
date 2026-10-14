@@ -24,6 +24,32 @@ def test_config_defaults():
     assert config.d_vocab == 100
 
 
+def test_device_annotation_admits_torch_device():
+    """The declared type must cover the ``torch.device`` ``__post_init__`` sets.
+
+    Regression test: upstream annotates this ``Optional[str]``, which made
+    ``cfg.device`` look like a string to every reader.
+    """
+    annotation = HookedTransformerConfig.__dataclass_fields__["device"].type
+    assert "torch.device" in str(annotation)
+
+
+def test_explicit_string_device_is_preserved():
+    """A caller-supplied string is stored as-is, so readers must accept both."""
+    config = HookedTransformerConfig(
+        d_model=64,
+        d_head=8,
+        n_layers=2,
+        n_ctx=128,
+        n_heads=8,
+        d_vocab=100,
+        act_fn="relu",
+        device="cpu",
+    )
+    assert config.device == "cpu"
+    assert torch.device(config.device).type == "cpu"
+
+
 def test_act_fn_required_for_non_attn_only():
     """A non-attn-only config without ``act_fn`` must be rejected."""
     with pytest.raises(AssertionError, match="act_fn must be specified"):
@@ -76,8 +102,9 @@ def test_config_defaults_and_post_init():
     assert config.initializer_range > 0
     assert config.d_vocab_out == 100
     assert config.act_fn == "relu"
-    # TODO: `device` is declared Optional[str] upstream but __post_init__
-    # assigns utils.get_device(), which returns a torch.device. Assert the
-    # real behaviour rather than the annotation.
+    # `device` is declared Optional[str] upstream, but __post_init__ assigns
+    # utils.get_device(), which returns a torch.device. mechir's subclass
+    # re-declares the field as Optional[Union[str, torch.device]] so the
+    # annotation matches this behaviour.
     assert isinstance(config.device, torch.device)
     assert config.device.type in VALID_DEVICE_TYPES

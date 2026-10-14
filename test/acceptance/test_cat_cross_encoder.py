@@ -87,9 +87,14 @@ def test_scores_match_huggingface(cat_model, tokenizer, hf_scores):
     """
     scores, _ = cat_model.score(encode(tokenizer, DOCS))
 
-    assert torch.allclose(
-        hf_scores, scores, atol=1e-3
-    ), f"mechir {scores.tolist()} != huggingface {hf_scores.tolist()}"
+    # The reference is computed on the CPU while mechir scores on cfg.device,
+    # so compare on the CPU: otherwise this fails on device, not on value,
+    # anywhere an accelerator is present (MPS, CUDA).
+    scores = scores.cpu()
+
+    assert torch.allclose(hf_scores, scores, atol=1e-3), (
+        f"mechir {scores.tolist()} != huggingface {hf_scores.tolist()}"
+    )
 
 
 def test_token_type_ids_change_the_score(cat_model, tokenizer):
@@ -99,9 +104,9 @@ def test_token_type_ids_change_the_score(cat_model, tokenizer):
     without = {k: v for k, v in batch.items() if k != "token_type_ids"}
     without_types, _ = cat_model.score(without)
 
-    assert not torch.allclose(
-        with_types, without_types
-    ), "token_type_ids had no effect, so it is being dropped somewhere"
+    assert not torch.allclose(with_types, without_types), (
+        "token_type_ids had no effect, so it is being dropped somewhere"
+    )
 
 
 def test_scores_rank_relevant_above_irrelevant(cat_model, tokenizer):

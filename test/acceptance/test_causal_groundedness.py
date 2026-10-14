@@ -112,9 +112,9 @@ def test_causal_groundedness_shows_the_answer_depends_on_evidence(reader, contex
 
     assert result["full"] > result["ablated"]
     assert result["effect"] == pytest.approx(result["full"] - result["ablated"])
-    assert (
-        result["effect"] > 0.5
-    ), "retrieved documents had almost no causal effect on the answer"
+    assert result["effect"] > 0.5, (
+        "retrieved documents had almost no causal effect on the answer"
+    )
 
 
 def test_groundedness_effect_is_reported_in_nats(reader, context):
@@ -188,9 +188,9 @@ def test_attention_disagrees_with_causal_importance(reader, context):
     most_necessary = max(necessity, key=necessity.get)
 
     assert most_necessary == GOLD
-    assert (
-        most_attended != most_necessary
-    ), "attention and causation agreed; this test's premise needs revisiting"
+    assert most_attended != most_necessary, (
+        "attention and causation agreed; this test's premise needs revisiting"
+    )
 
 
 # -- pipeline-level report -------------------------------------------------

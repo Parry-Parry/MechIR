@@ -53,7 +53,6 @@ class IndexPerturbation(AbstractPerturbation):
         stopwords: bool = False,
         exact_match: bool = False,
     ) -> None:
-
         self.index_location = index_location
         self.index = get_index(index_location)
         collection = self.index.getCollectionStatistics()

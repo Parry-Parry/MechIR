@@ -104,9 +104,13 @@ def test_mean_pooling_matches_huggingface(tokenizer):
     with torch.no_grad():
         got = model.forward(encoded.input_ids, encoded.attention_mask)
 
-    assert torch.allclose(
-        expected, got, atol=2e-3
-    ), f"maxdiff {(expected - got).abs().max():.2e}"
+    # See test_cat_cross_encoder: `expected` is a CPU reference, `got` comes
+    # back on cfg.device, so the comparison has to happen on one device.
+    got = got.cpu()
+
+    assert torch.allclose(expected, got, atol=2e-3), (
+        f"maxdiff {(expected - got).abs().max():.2e}"
+    )
 
 
 def test_unknown_pooling_type_is_rejected():

@@ -83,7 +83,11 @@ class HookedDistilBertForSequenceClassification(HookedDistilBert):
 
         tokens = input
 
-        if tokens.device.type != self.cfg.device:
+        # `.type` on both sides: cfg.device holds a torch.device, so comparing
+        # it to `tokens.device.type` (a str) was always unequal and re-ran
+        # `.to()` on every forward. Comparing devices directly is also wrong --
+        # torch.device("mps") != torch.device("mps:0"). Mirrors base/_model.py.
+        if tokens.device.type != torch.device(self.cfg.device).type:
             tokens = tokens.to(self.cfg.device)
             if attention_mask is not None:
                 attention_mask = attention_mask.to(self.cfg.device)

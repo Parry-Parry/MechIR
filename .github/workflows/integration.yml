@@ -1,0 +1,90 @@
+# Runs test/integration -- the tests that load real checkpoints and real IR
+# collections, with nothing mocked.
+#
+# Deliberately NOT part of the per-push job in python-package.yml. A cold run
+# of this suite downloads roughly 1.4GB:
+#
+#   sebastian-hofstaetter/distilbert-dot-tas_b-b256-msmarco   ~507MB
+#   castorini/monot5-small-msmarco-10k                        ~462MB
+#   hotpot_qa (distractor config, via `datasets`)              ~343MB
+#   cross-encoder/ms-marco-MiniLM-L-6-v2                       ~88MB
+#   ir_datasets vaswani                                       ~8.3MB
+#
+# Paying that on every push and pull request, across the two Python versions
+# in the matrix, would dominate CI time and provide the slowest possible
+# feedback on the things that break most often (imports, signatures,
+# formatting). So: nightly on a schedule, plus workflow_dispatch when someone
+# wants it on demand -- enough to stop the examples silently rotting, without
+# taxing every commit.
+#
+# The heaviest tests (Qwen3-Reranker-0.6B, the MS MARCO passage corpus) stay
+# behind MECHIR_RUN_LARGE and are opt-in even here; set `run_large` when
+# dispatching manually.
+
+name: Integration tests
+
+on:
+  schedule:
+    # 04:17 UTC daily. Scheduled workflows only run on the default branch.
+    - cron: "17 4 * * *"
+  workflow_dispatch:
+    inputs:
+      run_large:
+        description: "Also run the large-download tests (Qwen, MS MARCO)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  # One integration run at a time; a nightly that overlaps the previous one
+  # would fight over the model cache.
+  group: integration-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  integration:
+    runs-on: ubuntu-latest
+    # Generous, because a cold cache means ~1.4GB of downloads, but bounded:
+    # a hung model load should not burn six hours of runner time.
+    timeout-minutes: 60
+
+    env:
+      MECHIR_RUN_LARGE: ${{ inputs.run_large && '1' || '0' }}
+      HF_HUB_DISABLE_TELEMETRY: "1"
+      TOKENIZERS_PARALLELISM: "false"
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
+      with:
+        python-version: "3.11"
+        enable-cache: true
+
+    # Same extras as the per-push job: without `rag` the benchmark loaders are
+    # unimportable and without `plotting` those tests skip, either of which
+    # would turn a real regression into a green run.
+    - name: Install package
+      run: uv sync --extra dev --extra plotting --extra rag
+
+    - name: Show resolved dependency versions
+      run: uv pip list
+
+    # Checkpoints and collections are immutable, so a hit never needs
+    # refreshing. The key changes when the integration tests or the
+    # dependency set change, which is when the asset list can change too.
+    - name: Cache Hugging Face hub and datasets
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cache/huggingface
+          ~/.ir_datasets
+        key: integration-models-${{ runner.os }}-${{ hashFiles('test/integration/**/*.py', 'pyproject.toml') }}
+        restore-keys: |
+          integration-models-${{ runner.os }}-
+
+    - name: Integration tests
+      run: uv run pytest test/integration -v --durations=10
