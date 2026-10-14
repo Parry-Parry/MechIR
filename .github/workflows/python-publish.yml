@@ -47,10 +47,15 @@ jobs:
       with:
         name: dist
         path: dist/
+    # No `cache: pip` here, unlike the other jobs. This one deliberately does
+    # not check the repository out -- the whole point is to install from the
+    # built wheel and nothing else -- so there is no pyproject.toml for
+    # setup-python to hash, and it fails the job outright looking for one.
+    # There is nothing worth caching either: the only install is the local
+    # wheel.
     - uses: actions/setup-python@v5
       with:
         python-version: '3.11'
-        cache: pip
     - name: Install the wheel into a clean environment
       run: python -m pip install "$(ls dist/*.whl)"
     - name: Public API must import from the installed wheel
