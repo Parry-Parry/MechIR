@@ -76,6 +76,7 @@ from .modelling import (
     GenerativeRanker,
     MonoT5,
     PatchedMixin,
+    RankT5,
 )
 from .modelling.hooked import conversion
 from .modelling.hooked import states

@@ -10,6 +10,7 @@ from .patched import PatchedMixin as PatchedMixin
 from .cat import Cat as Cat
 from .dot import Dot as Dot
 from .t5 import MonoT5 as MonoT5
+from .rankt5 import RankT5 as RankT5
 from .generative import GenerativeRanker as GenerativeRanker
 from .backbones import POOLING as POOLING
 
@@ -25,6 +26,7 @@ __all__ = [
     "Cat",
     "Dot",
     "MonoT5",
+    "RankT5",
     "GenerativeRanker",
     "POOLING",
 ]
