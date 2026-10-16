@@ -12,12 +12,13 @@ from typing import List, Optional, Sequence
 import torch
 
 
-@dataclass
-class DocumentSpan:
-    """Where one document sits in the assembled context."""
+class Span:
+    """Shared behaviour for a half-open token range ``[start, end)``.
 
-    candidate: int
-    rank: int
+    Not a dataclass: it only supplies the arithmetic, so the concrete spans
+    below are free to declare their own fields in their own order.
+    """
+
     start: int
     end: int
 
@@ -26,6 +27,28 @@ class DocumentSpan:
 
     def slice(self) -> slice:
         return slice(self.start, self.end)
+
+
+@dataclass
+class TokenSpan(Span):
+    """A bare token range, for a region with no document identity.
+
+    A generated turn is the motivating case: it is a region of the sequence
+    that activations need attributing to, but it has no candidate or rank.
+    """
+
+    start: int
+    end: int
+
+
+@dataclass
+class DocumentSpan(Span):
+    """Where one document sits in the assembled context."""
+
+    candidate: int
+    rank: int
+    start: int
+    end: int
 
 
 @dataclass
@@ -139,4 +162,4 @@ class ContextBuilder:
         )
 
 
-__all__ = ["Context", "ContextBuilder", "DocumentSpan"]
+__all__ = ["Context", "ContextBuilder", "DocumentSpan", "Span", "TokenSpan"]

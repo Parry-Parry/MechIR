@@ -32,9 +32,10 @@ from .ablation import (
     resample_metric,
     resample_necessity,
 )
-from .context import Context, ContextBuilder, DocumentSpan
+from .context import Context, ContextBuilder, DocumentSpan, Span, TokenSpan
 from .metrics import answer_logprob, attention_to_documents, groundedness
 from .pipeline import Pipeline, PipelineRun
+from .rollout import Turn, generate_turn
 
 __all__ = [
     "Pipeline",
@@ -51,6 +52,10 @@ __all__ = [
     "Context",
     "ContextBuilder",
     "DocumentSpan",
+    "Span",
+    "TokenSpan",
+    "Turn",
+    "generate_turn",
     "answer_logprob",
     "attention_to_documents",
     "groundedness",
