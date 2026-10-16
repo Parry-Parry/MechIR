@@ -74,6 +74,7 @@ from .modelling import (
     Cat,
     Dot,
     GenerativeRanker,
+    LateInteraction,
     MonoT5,
     PatchedMixin,
 )

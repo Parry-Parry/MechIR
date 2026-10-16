@@ -120,7 +120,9 @@ def test_per_query_token_maxima_are_the_summands():
 
 # -- the regression: scores must not grow with document length -------------
 
-#: Document lengths the old implementation scored 18.8 / 54.7 / 208.5 at.
+#: Document lengths. With the `unit_vectors()` construction below the old
+#: implementation scores exactly `d_len` at each -- see
+#: `test_score_is_invariant_to_repeated_document_content`.
 DOC_LENGTHS = (7, 20, 100)
 
 

@@ -9,6 +9,7 @@ from .hook_names import StackHookNames as StackHookNames
 from .patched import PatchedMixin as PatchedMixin
 from .cat import Cat as Cat
 from .dot import Dot as Dot
+from .late_interaction import LateInteraction as LateInteraction
 from .t5 import MonoT5 as MonoT5
 from .generative import GenerativeRanker as GenerativeRanker
 from .backbones import POOLING as POOLING
@@ -24,6 +25,7 @@ __all__ = [
     "PatchedMixin",
     "Cat",
     "Dot",
+    "LateInteraction",
     "MonoT5",
     "GenerativeRanker",
     "POOLING",
